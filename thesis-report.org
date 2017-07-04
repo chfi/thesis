@@ -1,0 +1,143 @@
+* Cool Thesis Name
+
+* Abstract
+Purely functional programming is explored as a tool to assist in the
+maintenance and extensibility of object-oriented legacy codebases.
+This is done by extending the Biodalliance genome browser, which
+consists of some __k lines of Javascript code, with various functions
+and features using Purescript, a purely functional programming language
+that compiles to Javascript.
+
+A new genetics and genome browser is written in Purescript, making use
+of several JS libraries to create a new way of exploring genetic and
+genome data in multiple dimensions at once.
+
+
+* Introduction
+** Summary
+Part 1
++ define "legacy code"
++ describe the problems related to them
++ what attempts have been made to deal with them
++ how successful have those been
++ intro FP (both strengths and weaknesses)
++ previous work on FP
++ why FP may help
++ hypothesis: FP *will* help
+how I will test this hypothesis:
++ explain GN & BD
++ describe the codebase of BD
++ gn_server may apply as well!
++ describe the problem of expanding BD
++ intro PS
++ what will be added to BD and how
++ how it will be evaluated
+
+Part 2
++ describe the problem of discovery in today's biological data
++ the manual process
++ our task - automating it
++ hypothesis: this tool will be useful for scientists
++ describe cy.js
++ data visualization
+
+
+** Legacy codebases
+
+What problems are associated with working with legacy code?
+
+How have those been (/attempted to be) solved?
+
+*** Functional programming
+What is (pure) FP? Quick intro to Purescript (or should that be in method?)
+
+How could it help working when with legacy code?
+
+Algebraic data types
+
+(Maybe) some category theory
+
+Referential transparency
+
+Immutability
+
+Previous work
+
+
+** GeneNetwork2 (GN2)
+What it is, what it does, etc.
+
+How it relates to the project (got a bunch of data + needs a genome (+more) browser)
+
+
+** BioDalliance (BD)
+Written in JS
+
+Used in GN2 (the goal, anyway)
+
+Old project
+
+Complex codebase, difficult to extend
+
+Why one would want to extend it
+
+
+** Genetic/biological data
+What sorts of data are used in these kinds of research?
+
+Currently, finding connections between data is a tedious and manual process.
+
+Using semantic web technology, this process could be (partially) automated.
+
+
+** Data visualization
+*** Cytoscape.js
+What Cy.js is.
+
+How to connect it with BD? Both w.r.t. data as well as on a code/interaction level.
+
+
+** Intro conclusion
+The various advantages (and weaknesses) of FP have been described,
+together with the main tool that will be used, namely Purescript.
+Purescript will first be used to extend an existing JS program, before
+taking center stage and subsuming the existing JS program as a subcomponent.
+
+The discoveries of the first part will lead to the development of a tool
+used for visualizing biological data in a new manner, making use of the
+strengths of FP and PS from the very beginning. The type system of PS will
+be used to integrate PS and JS efficiently and in a way that ensures correctness.
+
+
+* Method
+** Extending BD
+
+*** The data - GWAS
+
+*** Problems w/ BD
+
+*** Process
+Some detail on the various parts of the BD improvements
+New renderer - that interfaces with old BD code
+Fetching system
+How it all fits together
+
+*** Evaluation
+How will success be evaluated?
+Plenty of literature on working w/ legacy code, will probably find something useful there
+
+
+** Connected data
+*** Cytoscape.js
+Writing a PS API (probably irrelevant tho)
+Connecting graph data w/ genomic data (in BD)
+Adding interactions
+*** Evaluation
+Is it useful? Ask scientists
+
+
+* Results
+
+* Discussion
+** Is FP usable/worthwhile for extending existing code?
+** Are the connected data additions useful?
