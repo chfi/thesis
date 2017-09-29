@@ -1,0 +1,27 @@
+* Notes
+Ignore Cy.js in report?
+After all, it's more or less superfluous;
+the interesting parts may be connecting BD to other data, that's it.
+
+
+* Transformations
+** Bio data
+
+** Events between components
+Untyped but "structurally safe";
+practically typesafe since it's in Maybe/(Either String)
+
+** UI/DOM
+Not (yet) directly applicable to my code, but interesting nonetheless:
+http://blog.functorial.com/posts/2016-08-07-Comonads-As-Spaces.html
+
+
+** User stats
+User stats = annotating and saving each UI interaction,
+in other words (more or less):
+
+#+BEGIN_SRC purescript
+type Stats = WriterT StatsLog UIMonad a
+#+END_SRC
+
+Adding this is a good example of extending an existing application with something real

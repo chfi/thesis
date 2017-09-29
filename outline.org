@@ -1,0 +1,226 @@
+* Name
+something with transformations and purescript
+both biological data & UI etc.
+maybe something with composition
+
+Transforming Data & Interactions with Purescript
+
+Transforming Data & User Interactions with Purescript
+
+Data and UI Transformations
+
+Pure/Functional Data and UI Transformations
+
+* Abstract
+(needs much more)
+
+Pure functional programming, using Purescript, is explored as a tool
+to work with an existing legacy codebase written in Javascript, by writing
+an application that extends the existing code while also being a fresh
+start of something new.
+
+* Introduction
+** Notes
+Describe what legacy code is and why it is a problem. How have people
+attempted to solve/deal with it previously? And to what level of success?
+
+Then present BD and the problems solved with using it, as well as the problems
+it brings: works and easy to configure, but difficult to add new renderers, data
+sources, communicate with; basically use in any new way
+
+Technical debt and how it relates to BD
+
+What we want, and how FP/PS may help -- my code is both an interface to
+(extending) BD as well as the start of something new
+
+** Legacy code
+*** What is it
+
+*** Why is it a problem
+
+*** How have people tried to solve the problem previously
+  (OOP)
+
+*** How FP can help
+  composability on multiple levels -- functions as well as data structures
+
+  Static types
+    purity/referential transparency
+      obviously makes it easier to modify & understand code
+
+    parametric polymorphism
+      free theorems maybe
+
+    higher-kinded types
+      easier to reason about large chunks of stuff
+
+  Immutability
+
+  ADTs
+
+
+
+** BD
+Describe Biodalliance
+Legacy codebase - 14 years, tens of thousands of lines of JS
+
+Bunch of ad-hoc solutions -> makes composition practically impossible,
+in turn requiring writing new code, a dark spiral to unmaintainable code
+
+** Background
+
+
+
+* Method/Architecture/PS tutorial
+** Notes
+Describe the architecture of the PS browser, with a focus on transformations
+and the interface to BD (the legacy codebase).
+
+Want to describe the architecture module by module, but presented as answers
+to the problems of interfacing with BD/transforming data. I.e. module-by-module,
+but still in a natural way that follows the story of the report...
+
+
+** Genetics browser
+*** Biodalliance
+(can grab from GSOC blog)
+
+**** Notes
+Start here since the interface to (extending) BD is the beginning, if not the core,
+of the project.
+
+Describe how BD is represented in PS, and how the FFI is used to communicate with it.
+Both calling BD API functions from PS, as well as providing functions/modules that
+are shunted into and called by BD (renderers, fetchers/sources)
+
+**** Types/FFI API
+
+**** Config
+General BD options/renderers/sources
+Tracks
+
+**** Source
+Implemented simple API that creates new sources given a function (Chr -> Bp -> Bp -> Aff _ a)
+like 10 lines of code!
+
+***** IPFS
+As simple as writing a function (Chr -> Bp -> Bp -> Aff (ipfs :: IPFS) a)
+
+
+*** Rendering for BD & Glyph(F)
+**** Notes
+Describe the overarching structure of BD's renderers; just an overview,
+transforming features to glyphs
+
+Problems with BD:
+  glyphs are a bunch of different objects, and not composable
+  the "essence" of each glyph is repeated many times:
+    how to draw it to the canvas
+    how to create an SVG representation of it
+    how to create its bounding box
+
+What we want: to create new BD-compatible glyphs, with as little code per glyph as possible
+Solution: Free monad with Canvas, SVG, Bounding box interpreters
+
+
+
+
+**** General architecture/BD interop
+Features -> Glyphs
+Addition to BD: WrappedRenderer
+
+
+**** Feature
+General representation of *anything* that exists on some contiguous length of a chromosome
+Smart constructor to keep track of coordinates (Bp or MBp) when creating Features
+
+Transformation: genome -> screen coordinate system, made trivial with (Bi)functor!
+
+Other transformations can be applied to the other data equally trivially, thanks
+to the right part of the bifunctor
+(e.g. extract some values from it and leave just the Y-component to be mapped to
+the screen by the glyph transformation in the renderer)
+
+**** Free monad
+How and why a free monad structure solves the problem (probably doesn't need much theory)
+
+how do-notation lets us describe Glyphs in a wonderfully simple way,
+and Free monads as DSLs
+
+ease of testing -- test each part of each interpreter on its own
+
+The guts of each interpreter; what monad each uses and why
+
+
+***** Interpreters
+****** Canvas
+Eff (canvas :: CANVAS) Unit
+****** Log (debug)
+Writer String
+****** Position
+What is GlyphPosition? The monoid of minimal 2D bounding boxes
+Writer GlyphPosition
+****** SVG
+StateT SVGContext (Writer (Array SVGElement))
+****** Putting it together
+transforming each interpreter into a JS function with the signature
+BD expects a glyph to contain
+
+serving an array of glyphs to BD
+
+
+**** Renderers
+***** GWAS
+Using do-notation to describe a one-to-one mapping of features to glyphs,
+e.g. map (Feature -> Glyph) on an Array Feature
+***** Lineplot
+Using a fold/catamorphism to describe a glyph which depends on many features,
+e.g. an algebra, Array Feature -> Glyph
+
+*** Units
+**** Notes
+Quick runthrough of the Chr, Bp, MBp newtypes, and why/how they've come in handy
+when dealing with BD (at least Bp/MBp, since they're isomorphic and I added
+a typeclass for that)
+
+Maybe move to Glyph(F) or Renderer? The Feature and Biodalliance modules are where
+they're used to the greatest effect.
+
+*** Cytoscape.js
+(can grab from GSOC blog)
+
+**** Types/FFI API
+**** Config
+
+*** Events
+**** Notes
+Mapping arbitrary (JSON) events from BD, Cy.js, or whatever,
+into user-defined schemas/templates (also JSON)
+
+Calling user-defined functions on JSON events that have been parsed into templates
+
+Runtime "type-checking" via comparing events to schemas -- TODO!
+
+**** Types
+**** TrackSource
+**** TrackSink
+**** Config
+**** Manager
+
+*** UI
+(can grab from GSOC blog)
+
+**** Notes
+Quick intro to Halogen
+Describe the various halogen components and how they work
+the `main` function; parsing configs
+
+Actually running the PS code, and configuring it from JS/HTML
+
+**** Halogen
+**** BD
+**** Cy.js
+
+
+** Graphics (maybe? probs not)
+*** SVG?
