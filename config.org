@@ -1,0 +1,23 @@
+* Config
+User configuration is about mapping one-time input from the user
+into a set of values that define the initial state of the application.
+
+Clearly, this is something that can fail, and something that must
+provide good error messages to the user.
+
+** Foreign
+The Foreign type in Purescript signifies any sort of foreign
+object whose type cannot be known for certain. This can be
+*anything*, including functions.
+
+Decoding Foreign values produces a type in Except, which is
+a value-level way of working with exceptions.
+
+** Json
+Argonaut's Json type only corresponds to actual JSON, i.e.
+things that are legal in JSON formatted files. Thus, functions
+and other values that cannot be serialized to JSON, cannot
+be represented in the Json type.
+
+On the other hand, Argonaut provides many functions for manipulating
+and parsing JSON.
