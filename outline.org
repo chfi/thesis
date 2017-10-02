@@ -33,7 +33,52 @@ Technical debt and how it relates to BD
 What we want, and how FP/PS may help -- my code is both an interface to
 (extending) BD as well as the start of something new
 
+TODO: Hypothesis
+
+** Chapter summary
+The concept of legacy code is introduced. How much of it there is in the world,
+and how important it is -- how many vital systems run on (are!) legacy code.
+
+The problems related to legacy code are introduced, as well as the ways people
+and researchers have tried to solve them. OOP is introduced as an often-used
+potential remedy.
+
+It is brought up that technical debt and the problems of legacy code do not
+appear to diminish despite OOP being very popular. Psychological issues related
+to code understanding are connected to code maintenance and extension, and how
+OOP fails to solve them (e.g. the number of concepts a person can hold in their
+short-term memory vs the cascading complexity of inheritance).
+
+Pure functional programming is introduced. It is argued that its virtues match
+well with solving the problems of code understanding (mathematical concepts that
+follow laws; provable correct programs; type-checking and semantically helpful
+types, etc.), and that this may imply that it could help with legacy code.
+
+Biodalliance is introduced as an example of a Javascript legacy codebase.
+Examples on how we've wanted and tried to extend BD are given, along with the
+related difficulties.
+
+Purescript is introduced as a pure FP language that compiles to JS, and that the
+FFI makes it useful for interacting with existing JS code.
+
+The project is presented: Writing a new genome browser in Purescript, that makes
+use of and extends Biodalliance. Intend to write an extensible and maintainable
+codebase, touching as little of BD as possible, yet integrating it in a seamless
+a way as possible.
+
+The idea of focusing on transformations, which is made natural in functional programming,
+is introduced. Programming as composition of smaller programs, indeed composition
+of transformations. Math concepts (functor, monoid) provide combinators with
+relevant semantics and laws which generalize reasoning across programs.
+
+The thesis report will explain the architecture of the application, what choices
+were made and why.
+
+
 ** Legacy code
+*** Section summary
+
+
 *** What is it
 
 *** Why is it a problem
@@ -61,6 +106,7 @@ What we want, and how FP/PS may help -- my code is both an interface to
 
 
 ** BD
+*** Section summary
 Describe Biodalliance
 Legacy codebase - 14 years, tens of thousands of lines of JS
 
@@ -68,7 +114,15 @@ Bunch of ad-hoc solutions -> makes composition practically impossible,
 in turn requiring writing new code, a dark spiral to unmaintainable code
 
 ** Background
+*** Section summary
 
+
+** Outro
+The problems of legacy code have been introduced, along with how various
+strengths of functional programming may help remedy them.
+
+To test the idea that FP can be useful in this manner, a new genome browser
+will be written, integrating with the existing Biodalliance browser.
 
 
 * Method/Architecture/PS tutorial
@@ -80,8 +134,41 @@ Want to describe the architecture module by module, but presented as answers
 to the problems of interfacing with BD/transforming data. I.e. module-by-module,
 but still in a natural way that follows the story of the report...
 
+** Chapter summary
+Purescript is given a somewhat more thorough introduction.
+
+The desired functionality of the genome browser is given, and how the features
+are in fact transformations of various inputs, with and without effects.
+
+Fetching data is transforming a tuple (Chr, Bp, Bp) to something that produces
+a value, then transforming that to something concrete, usable.
+
+Visualizing data is mapping that value to a glyph, one or many of either (thus
+potentially effectful). A glyph is itself a mapping of some feature/value to
+effectful functions drawing it to canvas etc.
+
+Detecting if a glyph was clicked is a mapping from click positions and bounding
+boxes to a boolean ((X,Y) -> [GlyphPosition] -> Boolean).
+
+UI can be viewed as an effectful state machine, with user interactions as edges
+(this is how Halogen works). Recording user stats is wrapping the UI monad in
+a writer transformer using an appropriate monoid.
+
+Configuring the browser is a mapping from user configurations to a coproduct of
+an initial UI state -- or potential errors. Each piece of the configuration is
+itself a similar mapping; they compose, and so do the errors.
+
+Events between tracks is transformations between unvalidated and validated JSON,
+and mappings from validated JSON to effects.
+
+Testing transformations, unit tests and property-based testing.
+
+The code related to each transformation is detailed, covering more or less
+the entire codebase.
+
 
 ** Genetics browser
+
 *** Biodalliance
 (can grab from GSOC blog)
 
@@ -92,6 +179,21 @@ of the project.
 Describe how BD is represented in PS, and how the FFI is used to communicate with it.
 Both calling BD API functions from PS, as well as providing functions/modules that
 are shunted into and called by BD (renderers, fetchers/sources)
+
+**** Section summary
+The Purescript module/API to Biodalliance is briefly described. How the FFI is used
+to instantiate and scroll the browser. Configuring it, validating BD track configurations
+while staying backward compatible.
+
+The basic architecture of a Biodalliance track is given. Source and renderer;
+a pipeline from producer of feature to glyph.
+
+Sources in greater detail -- something with a fetch(chr, min, max) function.
+First Purescript addition: A higher-order function that creates new sources,
+and how they are registered and used with BD. Examples are given, including
+an IPFS source.
+
+Adding renderers, requiring WrappedRenderer (or wait with that?)
 
 **** Types/FFI API
 
@@ -105,6 +207,8 @@ like 10 lines of code!
 
 ***** IPFS
 As simple as writing a function (Chr -> Bp -> Bp -> Aff (ipfs :: IPFS) a)
+
+**** Testing
 
 
 *** Rendering for BD & Glyph(F)
@@ -122,6 +226,28 @@ Problems with BD:
 What we want: to create new BD-compatible glyphs, with as little code per glyph as possible
 Solution: Free monad with Canvas, SVG, Bounding box interpreters
 
+
+**** Section summary
+Renderers are described in greater detail; the function prepareSubtiers() and
+how it's all implicitly modifying the given Tier. The result being a property
+"subtiers" with arrays of Glyphs.
+
+The Glyph is introduced, along with the various functions BD expects one to have.
+
+The problems of the BD glyphs are detailed: the opposite of DRY; difficult if not
+impossible to compose; high risk of introducing bugs.
+
+A free monad as solution to the problem of producing Glyphs that can be used by
+BD while minimizing code repetition.
+
+Free monads are given a brief introduction, along with the data structure that
+defines the glyph DSL. The various interpreters are detailed.
+
+Each interpreter of the DSL is tested separately, and each "command" of the
+DSL data type is tested separately within each interpreter. The various laws
+concerning each interpreter monad help guarantee correctness.
+
+Two (probably) actual renderers are detailed as examples of using the DSL.
 
 
 
@@ -169,6 +295,9 @@ BD expects a glyph to contain
 serving an array of glyphs to BD
 
 
+**** Testing
+Describe the test of each interpreter
+
 **** Renderers
 ***** GWAS
 Using do-notation to describe a one-to-one mapping of features to glyphs,
@@ -186,11 +315,26 @@ a typeclass for that)
 Maybe move to Glyph(F) or Renderer? The Feature and Biodalliance modules are where
 they're used to the greatest effect.
 
+**** Section summary
+The advantage of using newtypes for units is noted, and the definitions of the
+three used in the project are given.
+
+Testing laws with property based testing is introduced (TODO probably fits
+better under GlyphPosition test in Renderer section)
+
+**** Testing
+QuickCheck/Jack
+
 *** Cytoscape.js
 (can grab from GSOC blog)
 
+**** Section summary
+
+
 **** Types/FFI API
 **** Config
+
+**** Testing
 
 *** Events
 **** Notes
@@ -201,11 +345,24 @@ Calling user-defined functions on JSON events that have been parsed into templat
 
 Runtime "type-checking" via comparing events to schemas -- TODO!
 
+
+**** Section summary
+The goal of having user-configurable events flow between different tracks
+is detailed.
+
+The types are introduced: TrackSource and TrackSink, and how they work.
+
+The configuration of them, how the JSON is parsed, and cursors (zippers)
+used.
+
+
 **** Types
 **** TrackSource
 **** TrackSink
 **** Config
 **** Manager
+
+**** Testing
 
 *** UI
 (can grab from GSOC blog)
@@ -217,10 +374,59 @@ the `main` function; parsing configs
 
 Actually running the PS code, and configuring it from JS/HTML
 
+
+**** Section summary
+Halogen is introduced, and the components making up the browser listed.
+
+The threading together of all the pieces is described;
+
+
+Changing the Halogen effect monad to do logging or track stats is noted.
+
 **** Halogen
 **** BD
 **** Cy.js
 
+**** Testing
+**** User stats?
 
 ** Graphics (maybe? probs not)
 *** SVG?
+
+
+** Outro
+Most of the guts of the new browser have been described. We've shown how the
+transformations that characterize the various desired features of the genome
+browser have been implemented and tested in Purescript.
+
+Many of the parts of the application are composed of smaller pieces that
+combine using existing, mathematical and law-abiding combinators.
+
+The UI ties it together, though the Cy.js and BD APIs are used elsewhere as well.
+
+* Results
+
+** Chapter summary
+
+
+** Outro
+
+
+* Discussion
+** Chapter summary
+The benefits of the functional approach are discussed.
+
+The positive and the negative of the approach of combining transformations
+using various combinators and laws are discussed.
+
+Problems include more difficult learning curve, and potentially difficult
+to read code.
+
+Benefits include greater certainty in that the code does what intended,
+some level of proving correctness. Law-abiding concepts such as monoids,
+functors, applicatives, etc. provide a framework of ideas that are
+universal, and don't require understanding of the details; the abstractions
+of FP reduce cognitive overhead of e.g. number of parts to keep in mind,
+unlike OOP.
+
+** Conclusion
