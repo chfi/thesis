@@ -4,6 +4,88 @@ After all, it's more or less superfluous;
 the interesting parts may be connecting BD to other data, that's it.
 
 
+* Technical debt
+"Measure it? Manage it? Ignore it? Software Practitioners and Technical Debt" - 2015
+http://resources.sei.cmu.edu/asset_files/ConferencePaper/2015_021_001_453259.pdf
+
+"Practitioners currently use the term technical debt to mean, broadly, a
+“shortcut for expediency” [23] and, more specifically, bad code or inadequate
+refactoring [15]."
+"shortcuts for expediency" are hobbled by static types...
+
+However the same paper found that architecture is the greatest and only consistent
+source of technical debt. Can FP help with that?
+
+* Legacy code
+"Identifying Classes in Legacy JavaScript Code" - 2017
+http://onlinelibrary.wiley.com/doi/10.1002/smr.1864/full
+
+maybe interesting
+
+
+"Automatically identifying reusable OO legacy code" - 1997
+http://ieeexplore.ieee.org/abstract/document/625311/?reload=true
+
+
+much about code reuse in general, which FP is v. good at
+
+
+"A minimally invasive model data passing interface for integrating legacy environmental system models"
+http://www.sciencedirect.com/science/article/pii/S1364815216300512
+
+The abstract is basically a bunch of nonsense but kind of sounds relevant
+
+
+"Improving Bug Predictions in Multicore Cyber-Physical Systems"
+https://link.springer.com/chapter/10.1007/978-3-319-27896-4_24
+
+Bug prediction in concurrent programs, probably not relevant but interesting
+
+
+"Antipattern and Code Smell False Positives"
+http://ieeexplore.ieee.org/abstract/document/7476682/
+
+Metrics and classifications of antipatterns and code smells, probably relevant
+
+
+"Automatic Detection of GUI Design Smells: The Case of Blob Listener"
+https://arxiv.org/pdf/1703.08803.pdf
+
+Examine the extent to which the number of GUI commands a GUI listener can produce
+has an impact on the change- and fault-proneness of the GUI listener code --
+absolutely relevant (BD is a mess wrt this)
+
+
+"Deductive Verification of Legacy Code"
+https://link.springer.com/chapter/10.1007/978-3-319-47166-2_53
+
+"Our observations are based on software written in imperative/object-oriented
+programming languages (C and Java). The conclusions drawn regarding the
+verification of legacy code are thus mainly relevant for other imperative imple-
+mentations and only partially applicable to other paradigms like declarative or
+functional programming – e.g., while the difficulty to understand legacy systems
+applies to both imperative and functional programs, the need to handle shared,
+mutable state in specification differs between programming paradigms."
+
+Must be relevant
+
+
+"Detecting architecturally-relevant code anomalies"
+https://dl.acm.org/citation.cfm?id=2555036
+
+Useful for defining what an architecturally-relevant code anomaly/smell is;
+with some luck it can be tied into differences between OOP/imperative & FP
+
+
+"How, and Why, Process Metrics are Better"
+http://research.cs.queensu.ca/~ahmed/home/teaching/CISC880/F15/papers/HowAndWhyProcessMetricsAreBetter.pdf
+
+Argues that code metrics are less useful than process metrics for predicting
+defects in code; should be useful
+Process metrics being stuff like commit count, how many lines are added, etc.;
+basically stuff from the git history
+
+
 * Transformations
 ** Bio data
 
