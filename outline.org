@@ -35,6 +35,8 @@ What we want, and how FP/PS may help -- my code is both an interface to
 
 TODO: Hypothesis
 
+Should put a bigger focus on transformations; wrap everything else around that core
+
 ** Chapter summary
 The concept of legacy code is introduced. How much of it there is in the world,
 and how important it is -- how many vital systems run on (are!) legacy code.
@@ -66,10 +68,11 @@ use of and extends Biodalliance. Intend to write an extensible and maintainable
 codebase, touching as little of BD as possible, yet integrating it in a seamless
 a way as possible.
 
-The idea of focusing on transformations, which is made natural in functional programming,
-is introduced. Programming as composition of smaller programs, indeed composition
-of transformations. Math concepts (functor, monoid) provide combinators with
-relevant semantics and laws which generalize reasoning across programs.
+The idea of focusing on transformations, which is naturally expressed using
+functional programming, is introduced. Programming as composition of smaller
+programs, indeed composition of transformations. Math concepts (functor, monoid)
+provide combinators with relevant semantics and laws which generalize reasoning
+across programs.
 
 The thesis report will explain the architecture of the application, what choices
 were made and why.
@@ -86,7 +89,40 @@ were made and why.
 *** How have people tried to solve the problem previously
   (OOP)
 
-*** How FP can help
+
+
+** BD
+*** Section summary
+Describe Biodalliance
+Legacy codebase - 14 years, tens of thousands of lines of JS
+
+Bunch of ad-hoc solutions -> makes composition practically impossible,
+in turn requiring writing new code, a dark spiral to unmaintainable code
+
+** Background
+
+*** Notes
+Tie together the Legacy and BD sections (or move to have as subsections).
+
+*** Section summary
+
+Describes how functional programming can help solve the problems of legacy code.
+
+Static types as reducing number of bugs, especially runtime errors.
+
+The problems of maintenance and extensibility as viewed from a psychological
+point of view -- a coder can only keep so many things in mind at once;
+the farther a piece of code can "reach" (i.e. cause effects), the more
+difficult it is to understand each piece of code, not to mention be
+confident in what modifying it does. (Pure) FP solves these.
+
+Static types as providing "mental scaffolding"; parametric polymorphism,
+HKTs, free theorems as reducing cognitive overhead by either reducing
+number of possible implementations, or automating writing of code.
+
+
+
+*** How FP can help with legacy code
   composability on multiple levels -- functions as well as data structures
 
   Static types
@@ -102,19 +138,6 @@ were made and why.
   Immutability
 
   ADTs
-
-
-
-** BD
-*** Section summary
-Describe Biodalliance
-Legacy codebase - 14 years, tens of thousands of lines of JS
-
-Bunch of ad-hoc solutions -> makes composition practically impossible,
-in turn requiring writing new code, a dark spiral to unmaintainable code
-
-** Background
-*** Section summary
 
 
 ** Outro
@@ -328,8 +351,14 @@ QuickCheck/Jack
 *** Cytoscape.js
 (can grab from GSOC blog)
 
-**** Section summary
+**** Notes
+Maybe combine this section with the BD API section; this is smaller, after all.
 
+**** Section summary
+Cytoscape.js is introduced, and why we use it.
+
+The PS modules and types are briefly detailed;
+the CyCollection type and related functions in particular.
 
 **** Types/FFI API
 **** Config
@@ -350,11 +379,17 @@ Runtime "type-checking" via comparing events to schemas -- TODO!
 The goal of having user-configurable events flow between different tracks
 is detailed.
 
-The types are introduced: TrackSource and TrackSink, and how they work.
+The types are introduced:
+TrackSource, as a list of parsers (List (Json -> Maybe Event)).
+TrackSink, as a map of potential actions (forall a. StrMap (Json -> a)).
 
-The configuration of them, how the JSON is parsed, and cursors (zippers)
-used.
+The configuration of TrackSources and Sinks is given, in particular
+how user-defined JSON is used as a template/schema for events,
+and how Argonaut cursors (zippers) are used to extract and interact with them.
 
+Briefly walk through the tests -- point out that as both TrackSource
+and TrackSink are simple structures containing functions, they can
+easily be tested; being pure by nature.
 
 **** Types
 **** TrackSource
@@ -372,16 +407,19 @@ Quick intro to Halogen
 Describe the various halogen components and how they work
 the `main` function; parsing configs
 
-Actually running the PS code, and configuring it from JS/HTML
+Actually running the PS code, and configuring it from JS/HTML.
+Integrating it with BD.
 
 
 **** Section summary
 Halogen is introduced, and the components making up the browser listed.
 
 The threading together of all the pieces is described;
+in the Eff monad, a transformation from single configuration object
+to a product of track configurations, BD instance, and Cy.js instance;
+forking of event listeners.
 
-
-Changing the Halogen effect monad to do logging or track stats is noted.
+Changing the Halogen effect monad to do logging or track stats.
 
 **** Halogen
 **** BD
@@ -405,8 +443,12 @@ combine using existing, mathematical and law-abiding combinators.
 The UI ties it together, though the Cy.js and BD APIs are used elsewhere as well.
 
 * Results
-
 ** Chapter summary
+The browser as a product is shown.
+
+Some data -- code metrics? -- are presented.
+
+Number of modules, dependencies, tests.
 
 
 ** Outro
@@ -428,5 +470,7 @@ functors, applicatives, etc. provide a framework of ideas that are
 universal, and don't require understanding of the details; the abstractions
 of FP reduce cognitive overhead of e.g. number of parts to keep in mind,
 unlike OOP.
+
+
 
 ** Conclusion
