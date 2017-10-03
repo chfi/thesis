@@ -86,6 +86,280 @@ Process metrics being stuff like commit count, how many lines are added, etc.;
 basically stuff from the git history
 
 
+"Studying the relationship between source code quality and mobile platform dependence"
+https://link.springer.com/article/10.1007/s11219-014-9238-2
+
+"We find that (1) source code files that are defect prone have a higher
+dependence on the platform than defect-free files and (2) increasing the
+platform dependence increases the likelihood of a defect being present in a
+source code file. Thus, platform dependence may be used to prioritize the most
+defect-prone source code files for code reviews and unit testing by the software
+quality assurance team."
+
+e.g. the android API is complicated and changes often and thus is likely to
+introduce bugs/code defects
+
+
+"A Large Scale Study of Programming Languages and Code Quality in Github"
+https://pdfs.semanticscholar.org/30b3/0b2da89e9a287f235cdec1d346de163e50c5.pdf
+
+"Most notably, it does appear that strong typing is modestly better than weak
+typing, and among functional languages, static typing is also somewhat better
+than dynamic typing. We also find that functional languages are somewhat better
+than procedural languages. It is worth noting that these modest effects arising
+from language design are overwhelmingly dominated by the process factors such as
+project size, team size, and commit size. However, we hasten to caution the
+reader that even these modest effects might quite possibly be due to other,
+intangible process factors, e.g., the preference of certain personality types
+for functional, static and strongly typed languages."
+
+"There is a small but significant relationship between language class and
+defects. Functional languages have a smaller relationship to defects than either
+procedural or scripting languages."
+
+"Defect types are strongly associated with languages; Some defect type like
+memory error, concurrency errors also depend on language primitives. Language
+matters more for specific categories than it does for defects overall."
+
+
+"Experience Report: Functional Programming of mHealth Applications"
+https://pdfs.semanticscholar.org/ae05/f02972e3514d1cc311203c7b0c3d4981d7cc.pdf
+
+A team of a programmer, two physicists, and one engineer, develop a Scheme-based
+framework for creating C applications running on medical devices, embedded systems,
+mobile applications, etc.
+
+Very cool! Github: https://github.com/part-cw/lambdanative
+
+
+"Usability of Programming Languages: SIG Meeting at CHI 2016"
+https://dl.acm.org/citation.cfm?id=2886434
+
+Points out that there has been little research done on what makes a PL usable;
+even modern languages have little or no science behind them in this regard.
+
+"studies of inheritance in object-oriented programming have shown both positive
+[3] and negative [5] effects on maintenance"
+
+"Results under a variety of conditions (e.g., with/without a development
+environment, with/without documentation) show that developers are more
+productive with static typing (see, e.g., [7])."
+[7]: "How Do API Documentation and Static Typing Affect API Usability?"
+
+"Programming Language Usability SIG notes", may have more resources:
+https://docs.google.com/document/d/1-GUt5oVPpi7rlObbU1WbA5V1OQBX1iaghryLJ6-ND9o/edit#
+
+
+
+"Refinement through restraint: bringing down the cost of verification"
+https://www.semanticscholar.org/paper/Refinement-through-restraint-bringing-down-the-cos-O-Connor-Chen/b3d60bd3124bc2d485a1d4ffec07a5ca7bc053f1
+
+They've written a "restricted, polymorphic, higher-order, and purely functional
+language with linear types and without the need for a trusted runtime or GC.
+Linear types allow us to assign twe semantics to the language: one imperative,
+suitable for efficient C code generation; and one functional, suitable for
+equational reasoning and verification."
+
+idk maybe relevant. an FP lang that integrates with C, at least.
+
+
+"Would static analysis tools help developers with code reviews?"
+https://www.semanticscholar.org/paper/Would-static-analysis-tools-help-developers-with-c-Panichella-Arnaoudova/cebd0fa6c225d33c300c77c184432e5ac57cb9e6
+
+"However, when looking (quantitatively and qualitatively) at specific categories
+of warnings, we found that during code reviews developers focus on certain kinds
+of problems. For such categories of warnings the removal percentage tend to be
+very high, often above 50% and sometimes up to 100%. Examples of those are
+warnings in the imports, regular expressions, and type resolution categories."
+
+
+"On the 'naturalness' of buggy code"
+https://www.semanticscholar.org/paper/On-the-naturalness-of-buggy-code-Ray-Hellendoorn/180d664eb3e5a5f930b93652dcc02932a0522610
+
+Real world code is (apparently) highly repetitive and predictable;
+they find that code with bugs has higher entropy than code without,
+and that bugfix commits tend to reduce the entropy of the relevant code.
+
+Interesting -- would it apply to FP?
+
+
+"How do API documentation and static typing affect API usability?"
+https://www.semanticscholar.org/paper/How-do-API-documentation-and-static-typing-affect-Endrikat-Hanenberg/03f274623d4714b94206b307bfc5ef2325d265c7
+
+
+"In previous studies, we reported evidence indicating that static type systems
+acted as a form of implicit documentation, benefiting developer productivity."
+
+"Results of our study both confirm previous findings and show that the benefits
+of static typing are strengthened with explicit documentation, but that this was
+not as strongly felt with dynamically typed languages."
+
+Cites Brooks: "The most radical possible solution for constructing software is not
+to construct it at all."
+which ties in quite nicely with FP and staticy types.
+
+
+
+
+"Dynamic witnesses for static type errors (or, ill-typed programs usually go wrong)"
+https://www.semanticscholar.org/paper/Dynamic-witnesses-for-static-type-errors-or-ill-ty-Seidel-Jhala/d34d46baa884e401c75b3bc875945fc48471a759
+
+"Static type errors are a common stumbling block for newcomers to typed
+functional languages. We present a dynamic approach to explaining type errors by
+generating counterexample witness inputs that illustrate how an ill-typed
+program goes wrong."
+
+
+"Integrating typed and untyped code in a scripting language"
+https://www.semanticscholar.org/paper/Integrating-typed-and-untyped-code-in-a-scripting-Wrigstad-Nardelli/4e7c51bc9cdd81655912b0947a628c5d7f8c14ff
+
+"We present an approach for integrating untyped code and typed code in the same
+system to allow an initial prototype to smoothly evolve into an efficient and
+robust program."
+
+hey that's what I'm trying to do
+
+
+"Why don't software developers use static analysis tools to find bugs?"
+https://www.semanticscholar.org/paper/Why-don-t-software-developers-use-static-analysis-Johnson-Song/060cc5c0fa6bed9a39bdb6f9c995586f4709006e
+
+interviews to answer that question. might be useful.
+
+
+"An Empirical Study of Client-Side JavaScript Bugs"
+https://www.semanticscholar.org/paper/An-Empirical-Study-of-Client-Side-JavaScript-Bugs-Ocariza-Bajaj/cf1ff0d171712cc2ed2c40a7bb10e52caf991e78
+
+"Given the prevalence of DOM-related faults, JavaScript programmers need
+development tools that can help them reason about the DOM. Also, testers should
+prioritize detection of DOM-related faults as most high impact faults belong to
+this category. Finally, developers can use the error patterns we found to design
+more powerful static analysis tools for JavaScript."
+
+Highly relevant -- can I fit this in?
+Free monads; separation of concerns/layers (e.g. Halogen takes care of DOM stuff)
+However, that also applies to React etc., I suppose
+
+On the other hand, there are plenty of bugs in the tables that are related to
+undefined variables & methods, incorrect return values, syntax-based faults.
+Also, the DOM-related problems concern "Incorrect Method Parameters" -- "An
+unexpected or invalid value is passed to a native JavaScript method, or
+assigned to a native JavaScript property."
+That is *exactly* what static types can help with.
+
+Stuff like retrieving a DOM element using an incorrect ID can be kept from happening
+via static types etc.
+
+
+"A Large Scale Study of Multiple Programming Languages and Code Quality"
+http://ieeexplore.ieee.org/abstract/document/7476675/
+
+"we find specific languages that are statistically significantly more defect
+prone when they are used in a multi-language setting. These include popular
+languages like C++, Objective-C, and Java. Furthermore, we note that the use of
+more languages significantly increases bug proneness across all bug categories.
+The effect is strongest for memory, concurrency, and algorithm bugs."
+
+
+"Crossing the Gap from Imperative to Functional Programming through Refactoring"
+http://staff.cs.upt.ro/~gyori/pubs/LambdaFicator_FSE13.pdf
+
+They've developed an automated tool for refactoring Java 8 code to use map and filter.
+
+"The results show that LambdaFicator is useful: (i) it is widely applicable,
+(ii) it reduces the code bloat, (iii) it increases programmer productivity, and
+(iv) it is accurate."
+
+
+"Assessing Modular Structure of Legacy Code Based on Mathematical Concept Analysis"
+http://www.eecs.yorku.ca/course_archive/2004-05/F/6431/ResearchPapers/ConceptAnalysis.pdf
+
+Looks theoretically interesting, if not highly applicably to my situation
+
+
+"Random Test Case Generation and Manual Unit Testing: Substitute or Complement in Retrofitting Tests for Legacy Code?"
+http://ieeexplore.ieee.org/abstract/document/6328163/
+
+"With the specific settings, where time and resource restrictions limit the
+performance of manual unit testing, we found that (1) the number of defects
+detected by random test case generation is in the range of manual unit testing
+and, furthermore, (2) the randomly generated test cases detect different defects
+than manual unit testing. Therefore, random test case generation seems a useful
+aid to jump start manual unit testing of legacy code."
+
+maybe interesting
+
+
+"Investigating the impact of code smells debt on quality code evaluation"
+http://ieeexplore.ieee.org/abstract/document/6225993/
+
+"ur principal aim is to give advice on which design debt has to be paid first,
+according to the three smells we have analyzed. Moreover, we discuss if the
+detection of these smells could be tailored to the specific application domain
+of a system."
+
+almost assuredly relevant
+
+
+"AutoProof: auto-active functional verification of object-oriented programs"
+https://www.semanticscholar.org/paper/AutoProof-auto-active-functional-verification-of-o-Tschannen-Furia/08ef4b884414e344ee2565bb4cecfca5312de624
+
+Just a hunch, but may come in handy when discussing perceived complexity of code,
+and understanding code
+
+
+"Testing and debugging functional reactive programming"
+https://dl.acm.org/citation.cfm?id=3110246
+
+"This paper demonstrates that certain variants of Functional Reactive
+Programming (FRP) implemented in pure functional languages can mitigate such
+difficulties [i.e. reproducibility of bugs, generating test data] by offering
+referential transparency at the level of whole programs."
+
+
+"A Comparative Study of Programming Languages in Rosetta Code"
+http://ieeexplore.ieee.org/abstract/document/7194625/
+
+"Our statistical analysis reveals, most notably, that: functional and scripting
+languages are more concise than procedural and object-oriented languages, C is
+hard to beat when it comes to raw speed on large inputs, but performance
+differences over inputs of moderate size are less pronounced and allow even
+interpreted languages to be competitive, compiled strongly-typed languages,
+where more defects can be caught at compile time, are less prone to runtime
+failures than interpreted or weakly-typed languages."
+
+
+"Mutation Testing of Functional Programming Languages"
+http://www.cs.cmu.edu/~agroce/fp_mutation.pdf
+
+
+
+
+* Qs
+What are the problems with legacy code?
+
+What is it that introduces those problems? I.e. what mistakes are made when coding, designing etc.
+
+Are there psychological reasons?
+
+How have we tried to solve those problems? Have those attempts been successful?
+
+Are there connections to code quality/defects in general?
+If so, which?
+
+If FP hasn't answered the specific legacy code questions,
+has it been used to deal with these more general ones?
+
+Can FP help with the psychological reasons for lowered code quality?
+
+Can FP help with maintenance, extensibility in general?
+Define those first; what would it mean to help with them?
+
+Can we compare (parts of) FP/static typing to static analysis tools in general?
+
+Can FP/types help with testing?
+
+
+
 * Transformations
 ** Bio data
 
