@@ -1,17 +1,114 @@
 * Config
-User configuration is about mapping one-time input from the user
-into a set of values that define the initial state of the application.
 
-Clearly, this is something that can fail, and something that must
-provide good error messages to the user.
+The browser has many pieces that can and/or need to be configured by the user.
+There are also functions that need to be provided from the external JS, such as
+the Biodalliance browser constructor, and the wrapper for Purescript-defined
+renderers.
 
-** Foreign
-The Foreign type in Purescript signifies any sort of foreign
-object whose type cannot be known for certain. This can be
-*anything*, including functions.
+A problem that can arise in JS is, if a configuration is given as a regular JS object,
+and each configuration piece is simply assigned to the respective place in the
+application, there is risk of some subpiece being misconfigured, or simply missing.
+The application can then crash.
 
-Decoding Foreign values produces a type in Except, which is
-a value-level way of working with exceptions.
+The solution is to parse the configuration object -- and in Purescript, we're
+practically forced to do so. Fortunately, we also get tools to do this in a
+nice way.
+
+
+** The top - BrowserConfig
+
+The type BrowserConfig represents the highest level of the browser configuration
+hierarchy; it is the parsed version of the JS object provided by the user.
+This is the definition:
+
+#+BEGIN_SRC purescript
+newtype BrowserConfig = BrowserConfig { wrapRenderer :: RenderWrapper
+                                      , bdRenderers :: StrMap RendererInfo
+                                      , browser :: BrowserConstructor
+                                      , tracks :: TracksMap
+                                      }
+#+END_SRC
+
+The types of the values in the record don't matter -- the only important part is
+that they're all Purescript types, and have somehow been parsed or validated.
+
+Let's begin with the type signature of the function that parses the configuration:
+#+BEGIN_SRC purescript
+parseBrowserConfig :: Foreign -> F BrowserConfig
+#+END_SRC
+
+The pattern `Foreign -> F a` is ubiquitous in the modules concerning configuration,
+because we use the library `purescript-foreign`. The type `Foreign` is simply anything
+that comes from outside Purescript, and thus must be parsed before any information
+can be extracted from them. `F` is a type synonym:
+
+#+BEGIN_SRC purescript
+type F = Except (NonEmptyList ForeignErrors)
+
+data ForeignError =
+    JSONError String
+  | ErrorAtProperty String ForeignError
+  | ErrorAtIndex Int ForeignError
+  | TypeMismatch String String
+  | ForeignError String
+#+END_SRC
+
+`Except` is practically `Either`, and lets us represent and handle exceptions within
+the type system. In this case, the error type is a non-empty list of these possible
+error values. If something has gone wrong, there is at least one error message
+connected to it; it is simply impossible to fail a parse without providing an error message!
+
+From the type signature, then, we see that the function name does not lie: it does
+attempt to parse Foreign data into correct BrowserConfigs.
+
+Let's look at one of the lines from the function definition:
+
+#+BEGIN_SRC purescript
+parseBrowserConfig f = do
+  browser <- f ! "browser" >>= readTaggedWithError "Function" "Error on 'browser':"
+#+END_SRC
+
+`F` is a monad, so what is happening here is first an attempt to index into the "browser"
+property of the supplied Foreign value, followed by an attempt to read the Javascript "tag"
+of the value. If the tag says the value is a function, we're happy and cast the value
+into a BrowserConstructor type, otherwise we fail, and tell the user what went wrong.
+
+`readTaggedWithError` looks intimidating, but is in truth simple:
+
+#+BEGIN_SRC purescript
+readTaggedWithError :: forall a. String -> String -> Foreign -> F a
+readTaggedWithError s e f = withExcept (append (pure $ ForeignError e)) $ unsafeReadTagged s f
+#+END_SRC
+
+In words, it tries to read the tag, and if unsuccessful, appends the provided error
+message to the error message from unsafeReadTagged. Let's look at the types:
+
+#+BEGIN_SRC purescript
+unsafeReadTagged :: forall a. String -> Foreign -> F a
+
+withExcept :: forall e1 e2 a.
+              (e1 -> e2)
+           -> Except e1 a
+           -> Except e2 a
+
+append :: forall m. Monoid m => m -> m -> m
+#+END_SRC
+
+
+In this case (of the type F), the use of `withExcept` would specialize to have the type:
+#+BEGIN_SRC purescript
+withExcept :: a.
+              (a -> a)
+           -> F a
+           -> F a
+#+END_SRC
+
+Another way to look at it is that `withExcept` is `map` but for the error type.
+
+
+** Biodalliance
+
+** Browser
 
 ** Json
 Argonaut's Json type only corresponds to actual JSON, i.e.
