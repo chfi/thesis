@@ -105,16 +105,259 @@ withExcept :: a.
 
 Another way to look at it is that `withExcept` is `map` but for the error type.
 
+-- Track Configs [get from blog]
 
 ** Biodalliance
+-- BD
 
-** Browser
+** Cytoscape.js
+-- Cy
 
-** Json
-Argonaut's Json type only corresponds to actual JSON, i.e.
-things that are legal in JSON formatted files. Thus, functions
-and other values that cannot be serialized to JSON, cannot
-be represented in the Json type.
+** Events
+-- Events
 
-On the other hand, Argonaut provides many functions for manipulating
-and parsing JSON.
+Users can describe the structure of events to be produced by tracks, and provide
+functions to run on a track when an event of a particular structure is received.
+The types that these correspond to are TrackSource and TrackSink, respectively.
+
+*** TrackSource Configuration
+
+The configuration needed for a TrackSource is a name, the JSON structure
+for the event to be produced, and the JSON structure of the event produced
+by the underlying track (e.g. Biodalliance).
+
+For this another library will be used, instead of purescript-foreign,
+namely purescript-argonaut.
+
+**** Json decoding with Argonaut
+
+Argonaut is a library for working with JSON in Purescript, including serializing
+and deserializing, as well as working with the JSON trees.
+
+One key difference to purescript-foreign and its Foreign type, Argonaut's Json
+type only corresponds to actual JSON, i.e. things that are legal in JSON
+formatted files. Thus, functions and other values that cannot be serialized to
+JSON, cannot be represented in the Json type.
+
+-- decoding with lenses; into Maybe -- no errors
+Values of type Json can be decoded, or parsed, in several ways. In this case
+we're interested in walking arbitrary JSON trees and transforming lists of
+paths. Before looking at how the parsing works, here is an example of a
+legal SourceConfig:
+
+#+BEGIN_SRC json
+{
+  eventName: "range",
+  eventTemplate: { "chr": "Chr",
+                   "minPos": "Bp",
+                   "maxPos": "Bp"
+  },
+  rawTemplate: { "segment": "chr",
+                 "min": "minPos",
+                 "max": "maxPos"
+  }
+}
+#+END_SRC
+
+This defines a source that parses objects/events like this one, for example
+a subset of a feature clicked on in Biodalliance:
+#+BEGIN_SRC json
+{
+  segment: "chr11",
+  min: 1241230,
+  max: 1270230
+}
+#+END_SRC
+
+Into JSON that looks like
+#+BEGIN_SRC json
+{
+  chr: "chr11",
+  minPos: 1241230,
+  maxPos: 1270230
+}
+#+END_SRC
+
+This is useful if several tracks produce events with the same data but in
+objects that look different; the consumer of the event will only see events of
+this last format. The templates provided can be of arbitrary depth and
+complexity; the only rule is that each leaf is a key, and all properties be
+strings (i.e. no arrays). There is some validation too, detailed later.
+
+-- JCursor
+`eventTemplate` and `rawTemplate` are both whole structures which we're interested in.
+For each leaf in the eventTemplate (including its property name), we create a path
+to where the corresponding value will be placed in the finished event. Similarly,
+we need to grab the path to each leaf in the rawTemplate, so we know how to grab
+the value we need in the finished event, from the provided raw event.
+
+Fortunately, Argonaut provides functions for dealing with exactly this. First, JCursor,
+which describes a pointer in a JSON tree:
+
+#+BEGIN_SRC purescript
+data JCursor =
+    JIndex Int JCursor
+    JField String JCursor
+    JCursorTop
+#+END_SRC
+
+It can be seen as a list of accessors. If we have an object in JS:
+
+#+BEGIN_SRC javascript
+let thing = { x: [{a: 0},
+                  {b: {c: true}}
+                 ]};
+#+END_SRC
+
+We can grab the value at `c` with
+
+#+BEGIN_SRC javascript
+let cIs = thing.x[1].b.c;
+#+END_SRC
+
+With JCursor, this accessor chain `x[1].b.c` would look like:
+#+BEGIN_SRC purescript
+(JField "x"
+   (JIndex 1
+    (JField "b"
+       (JField "c" JCursorTop))))
+#+END_SRC
+
+It's not pretty when printed like this, but fortunately not much direct manipulation
+will be needed. We create these JCursors from a JSON structure like the templates
+above with the function toPrims:
+
+#+BEGIN_SRC purescript
+toPrims :: Json -> List (Tuple JCursor JsonPrim)
+#+END_SRC
+
+The type JsonPrim can be viewed as exactly what it sounds like -- it represents the
+legal JSON primitives: null, booleans, numbers, strings. In this case we only care
+that they are strings. (TODO: just write toPrims :: Json -> List (Tuple JCursor JsonPrim) or similar?)
+
+This function walks through a given JSON object, and produces a list of each leaf paired
+to the JCursor describing how to get to it. That is, it does exactly what we want to do with
+the rawTemplate from earlier.
+
+With the eventTemplate we don't want to pick out the leaf, but the label of the leaf.
+In this case we do need to step into the JCursor structure, but only a single step,
+after reversing it:
+
+#+BEGIN_SRC purescript
+insideOut :: JCursor -> JCursor
+
+eventName <- case insideOut cursor of
+               JField s _ -> Just s
+               _          -> Nothing
+#+END_SRC
+
+The function `insideOut` does what expected and reverses the path through the tree.
+We then match on the now first label, and save it as the name. If it was an array,
+we fail with a Nothing.
+
+In both cases, we use the JCursor as is for the actual indexing. Here is how some
+event value is gotten from a raw event and placed into the finished event:
+
+#+BEGIN_SRC purescript
+rawCursor :: JCursor
+valCursor :: JCursor
+
+getAndSet :: Json -> Json -> JCursor -> JCursor -> Maybe Json
+getAndSet source target get set = do
+  val <- cursorGet get source
+  cursorSet set val target
+#+END_SRC
+
+-- wrapping with Either String & `note`
+Argonaut, especially the functions concerning JCursor, largely uses the Maybe type.
+This is fine for the most part, but as this will be used in configuration,
+and thus needs to tell the user what has gone wrong if the provided configuration
+is faulty, it's not enough.
+
+A more appropriate type would be Either String, which allows for failure to come
+with an error message. To "lift" the functions using Maybe into Either String,
+a function from purescript-errors can be used:
+
+#+BEGIN_SRC purescript
+note :: forall a b.
+        a
+     -> Maybe b
+     -> Either a b
+note err m = case m of
+  Nothing -> Left err
+  Just x  -> Right x
+
+-- or, specialized to String:
+note :: forall b.
+        String
+     -> Maybe b
+     -> Either String b
+#+END_SRC
+
+As the name suggests, it lets us add a "note" to error messages. The implementation
+is simple enough.
+-- TODO `note`ing e.g. parseTemplatePath
+
+
+To provide the user with additional help when configuring, the source configurations
+are validated to make sure the given JSON structures are legal, or "match". Given
+some value that we want to have in the finished event, and all of the values we know
+we can get from the raw event, if we can't find the first value among the latter,
+something's wrong.
+
+The implementation is almost absurdly simple. The Cursors here are grabbed from the
+result of toPrims above; the JCursors themselves are unaltered.
+
+#+BEGIN_SRC purescript
+-- This is just a nicer version of Tuple JCursor String
+type Cursor = { cursor :: JCursor
+              , name :: String
+              }
+
+type RawCursor = Cursor
+type ValueCursor = Cursor
+
+validateTemplate :: Array RawCursor -> ValueCursor -> Either String ValueCursor
+validateTemplate rcs vc =
+  if any (\rc -> vc.name == rc.name) rcs
+  then pure vc
+  else throwError $ "Event property " <> vc.name <> " is not in raw template"
+
+#+END_SRC
+
+In words, if one of the many raw event cursors has the same name as the given
+value cursor, it's good, otherwise throw an error. To increase this to validate
+the array of cursors defining a finished event, we can make use of Either's
+Applicative instance, and traverse:
+
+#+BEGIN_SRC purescript
+-- specialized to Either String and Array
+traverse :: forall a b.
+            (a -> Either String b)
+         -> Array a
+         -> Either String (Array b)
+
+validateTemplates :: Array RawCursor -> Array ValueCursor -> Either String (Array ValueCursor)
+validateTemplates rcs = traverse (validateTemplate rcs)
+#+END_SRC
+
+The function tries to validate all given templates, and returns the first failure if there are any.
+Validation of a set of things for free!
+
+
+-- TODO: gluing all the config functions together to produce TrackSource;
+
+-- lifting Either String into Except ForeignError with a simple composition
+
+
+-- use it alongside Foreign - interface between tracksource and browserconfig
+
+-- result: propagation of error messages from deep in the configuration JSON
+-- to the top of the parse attempt
+
+-- TODO: Using F instead of Either String; use alt(?) to concat error messages
+
+**** Future work
+Typing events -- types are there, just not checked (also only makes sense w/ some kinda DSL/interpreter)
+
+*** TODO TrackSink
