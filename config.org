@@ -10,9 +10,9 @@ and each configuration piece is simply assigned to the respective place in the
 application, there is risk of some subpiece being misconfigured, or simply missing.
 The application can then crash.
 
-The solution is to parse the configuration object -- and in Purescript, we're
-practically forced to do so. Fortunately, we also get tools to do this in a
-nice way.
+The solution is to parse the configuration at the start of the program,
+from a raw Javascript object into a Purescript type, with validation
+and error handling and reporting. Fortunately, Purescript has good tools for this.
 
 
 ** The top - BrowserConfig
@@ -26,13 +26,16 @@ newtype BrowserConfig = BrowserConfig { wrapRenderer :: RenderWrapper
                                       , bdRenderers :: StrMap RendererInfo
                                       , browser :: BrowserConstructor
                                       , tracks :: TracksMap
+                                      , events :: Maybe { bdEventSources :: Array SourceConfig
+                                                        , cyEventSources :: Array SourceConfig
+                                                        }
                                       }
 #+END_SRC
 
-The types of the values in the record don't matter -- the only important part is
-that they're all Purescript types, and have somehow been parsed or validated.
+The specific types of the values in the record are irrelevant; the
+important part is that they're all Purescript types, and have been parsed
+and validated. The parsing is done by the following function:
 
-Let's begin with the type signature of the function that parses the configuration:
 #+BEGIN_SRC purescript
 parseBrowserConfig :: Foreign -> F BrowserConfig
 #+END_SRC
@@ -43,7 +46,7 @@ that comes from outside Purescript, and thus must be parsed before any informati
 can be extracted from them. `F` is a type synonym:
 
 #+BEGIN_SRC purescript
-type F = Except (NonEmptyList ForeignErrors)
+type F = Except (NonEmptyList ForeignError)
 
 data ForeignError =
     JSONError String
@@ -342,22 +345,93 @@ validateTemplates rcs = traverse (validateTemplate rcs)
 #+END_SRC
 
 The function tries to validate all given templates, and returns the first failure if there are any.
-Validation of a set of things for free!
+Validation of a collection of things for free!
 
 
 -- TODO: gluing all the config functions together to produce TrackSource;
 
 -- lifting Either String into Except ForeignError with a simple composition
+**** Parsing the user-provided SourceConfigs
 
+-- TODO: reword "in the type"
+The SourceConfig and TrackSource validation is done in the type Either String,
+while the BrowserConfig parsing is done in the type Except (NonEmptyList ForeignError).
+To actually use these functions when parsing the user-provided configuration,
+we need to do a transformation like this:
 
--- use it alongside Foreign - interface between tracksource and browserconfig
+#+BEGIN_SRC purescript
+toF :: Either String ~> Except (NonEmptyList ForeignError)
+#+END_SRC
 
--- result: propagation of error messages from deep in the configuration JSON
--- to the top of the parse attempt
+Fortunately, Either and Except are isomorphic - the difference between the two is
+only in how they handle errors, not what data they contain. There already exists a function
+that does part of what we need:
 
--- TODO: Using F instead of Either String; use alt(?) to concat error messages
+#+BEGIN_SRC purescript
+except :: forall e m a. Applicative m => Either e a -> Except e a
+#+END_SRC
+
+Now we need a function that brings Either String to Either (NonEmptyList ForeignError).
+We can use the fact that Either is a bifunctor, meaning it has lmap:
+#+BEGIN_SRC purescript
+lmap :: forall f a b c.
+        Bifunctor f
+     => (a -> b)
+     -> f a c -> f b c
+#+END_SRC
+
+It's exactly the same as map on a normal functor, except it's on the left-hand type.
+
+(TODO: idk if this is actually a good comparison) 
+The bifunctor instance on Either can be seen as letting us build up a
+chain of actions to perform on both success and failure, a functional
+alternative to nested if-else statements.
+
+The final piece we need is a way to transforming a String to a
+(NonEmptyList ForeignError). Looking at the definition of the
+ForeignError type, there are several data constructors we could use.
+Easiest is (ForeignError String), as it simply wraps a String and
+doesn't require any more information. To create the NonEmptyList, we
+exploit the fact that there is an Applicative instance, and use
+`pure`:
+
+#+BEGIN_SRC purescript
+f :: String -> NonEmptyList ForeignError
+f = pure <<< ForeignError
+#+END_SRC
+
+Putting it all together, we have this natural transformation:
+
+#+BEGIN_SRC purescript
+eitherToF :: Either String ~> F
+eitherToF = except <<< lmap (pure <<< ForeignError)
+#+END_SRC
+
+Now we can parse the events configuration in the BrowserConfig parser:
+
+#+BEGIN_SRC purescript
+events <- do
+  evs <- f ! "eventSources"
+
+  bd <- evs ! "bd" >>= readArray >>= traverse parseSourceConfig
+  cy <- evs ! "cy" >>= readArray >>= traverse parseSourceConfig
+
+  _ <- eitherToF $ traverse validateSourceConfig bd
+  _ <- eitherToF $ traverse validateSourceConfig cy
+
+  pure $ Just $ { bdEventSources: bd
+                , cyEventSources: cy
+                }
+#+END_SRC
+
+(TODO: should probably just validate in the parseSourceConfig)
+Note how we discard (_ <- ...) the results from the config validation;
+we only care about the validation error, since the configuration
+values have already been parsed.
+
 
 **** Future work
-Typing events -- types are there, just not checked (also only makes sense w/ some kinda DSL/interpreter)
+Typing events -- types are there, just not checked (also only makes
+sense w/ some kinda DSL/interpreter)
 
 *** TODO TrackSink
