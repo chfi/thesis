@@ -108,16 +108,38 @@ withExcept :: a.
 
 Another way to look at it is that `withExcept` is `map` but for the error type.
 
--- Track Configs [get from blog]
+** Tracks
+   Tracks configurations are different for BD tracks and Cy.js graphs,
+   though both are provided as arrays of JSON, under different properties
+   in the `tracks` property of the configuration object.
 
-** Biodalliance
--- BD
+*** Biodalliance
 
-** Cytoscape.js
--- Cy
+Tracks using BD are configured using BD source configurations; they are
+directly compatible with Biodalliance configurations. Because of this, there
+is little validation on these track configurations, as there would be no
+reasonable way of representing the options in Purescript, as they are
+spread out over the entire BD codebase. There are, for example, numerous
+properties which can describe from where the track will fetch data and what
+kind of data it is, which are logically disjoint but nevertheless technically
+allowed by Biodalliance (though likely with undesired results).
+
+So, the browser takes a hands-off approach to BD tracks, and the only validation
+that takes place is that a track must have a name. If it does, the JSON object
+is later sent, unaltered, to the Biodalliance constructor.
+
+The Biodalliance constructor is another parameter that the configuration requires.
+This and the `wrapRenderer :: RenderWrapper` function are required for the BD
+interface to function properly, and are JS functions provided by Biodalliance.
+(TODO note that wrapRenderer is only in a modified repo?)
+
+*** Cytoscape.js
+
+Cytoscape graphs are currently configured by providing a name and a URL from
+which to fetch the elements in JSON format.
+
 
 ** Events
--- Events
 
 Users can describe the structure of events to be produced by tracks, and provide
 functions to run on a track when an event of a particular structure is received.
@@ -142,7 +164,6 @@ type only corresponds to actual JSON, i.e. things that are legal in JSON
 formatted files. Thus, functions and other values that cannot be serialized to
 JSON, cannot be represented in the Json type.
 
--- decoding with lenses; into Maybe -- no errors
 Values of type Json can be decoded, or parsed, in several ways. In this case
 we're interested in walking arbitrary JSON trees and transforming lists of
 paths. Before looking at how the parsing works, here is an example of a
@@ -152,12 +173,12 @@ legal SourceConfig:
 {
   eventName: "range",
   eventTemplate: { "chr": "Chr",
-                   "minPos": "Bp",
-                   "maxPos": "Bp"
+		   "minPos": "Bp",
+		   "maxPos": "Bp"
   },
   rawTemplate: { "segment": "chr",
-                 "min": "minPos",
-                 "max": "maxPos"
+		 "min": "minPos",
+		 "max": "maxPos"
   }
 }
 #+END_SRC
@@ -187,7 +208,6 @@ this last format. The templates provided can be of arbitrary depth and
 complexity; the only rule is that each leaf is a key, and all properties be
 strings (i.e. no arrays). There is some validation too, detailed later.
 
--- JCursor
 `eventTemplate` and `rawTemplate` are both whole structures which we're interested in.
 For each leaf in the eventTemplate (including its property name), we create a path
 to where the corresponding value will be placed in the finished event. Similarly,
@@ -208,8 +228,8 @@ It can be seen as a list of accessors. If we have an object in JS:
 
 #+BEGIN_SRC javascript
 let thing = { x: [{a: 0},
-                  {b: {c: true}}
-                 ]};
+		  {b: {c: true}}
+		 ]};
 #+END_SRC
 
 We can grab the value at `c` with
@@ -250,8 +270,8 @@ after reversing it:
 insideOut :: JCursor -> JCursor
 
 eventName <- case insideOut cursor of
-               JField s _ -> Just s
-               _          -> Nothing
+	       JField s _ -> Just s
+	       _          -> Nothing
 #+END_SRC
 
 The function `insideOut` does what expected and reverses the path through the tree.
@@ -271,7 +291,6 @@ getAndSet source target get set = do
   cursorSet set val target
 #+END_SRC
 
--- wrapping with Either String & `note`
 Argonaut, especially the functions concerning JCursor, largely uses the Maybe type.
 This is fine for the most part, but as this will be used in configuration,
 and thus needs to tell the user what has gone wrong if the provided configuration
@@ -283,7 +302,7 @@ a function from purescript-errors can be used:
 
 #+BEGIN_SRC purescript
 note :: forall a b.
-        a
+	a
      -> Maybe b
      -> Either a b
 note err m = case m of
@@ -292,15 +311,13 @@ note err m = case m of
 
 -- or, specialized to String:
 note :: forall b.
-        String
+	String
      -> Maybe b
      -> Either String b
 #+END_SRC
 
 As the name suggests, it lets us add a "note" to error messages. The implementation
 is simple enough.
--- TODO `note`ing e.g. parseTemplatePath
-
 
 To provide the user with additional help when configuring, the source configurations
 are validated to make sure the given JSON structures are legal, or "match". Given
@@ -314,8 +331,8 @@ result of toPrims above; the JCursors themselves are unaltered.
 #+BEGIN_SRC purescript
 -- This is just a nicer version of Tuple JCursor String
 type Cursor = { cursor :: JCursor
-              , name :: String
-              }
+	      , name :: String
+	      }
 
 type RawCursor = Cursor
 type ValueCursor = Cursor
@@ -336,9 +353,9 @@ Applicative instance, and traverse:
 #+BEGIN_SRC purescript
 -- specialized to Either String and Array
 traverse :: forall a b.
-            (a -> Either String b)
-         -> Array a
-         -> Either String (Array b)
+	    (a -> Either String b)
+	 -> Array a
+	 -> Either String (Array b)
 
 validateTemplates :: Array RawCursor -> Array ValueCursor -> Either String (Array ValueCursor)
 validateTemplates rcs = traverse (validateTemplate rcs)
@@ -347,10 +364,6 @@ validateTemplates rcs = traverse (validateTemplate rcs)
 The function tries to validate all given templates, and returns the first failure if there are any.
 Validation of a collection of things for free!
 
-
--- TODO: gluing all the config functions together to produce TrackSource;
-
--- lifting Either String into Except ForeignError with a simple composition
 **** Parsing the user-provided SourceConfigs
 
 -- TODO: reword "in the type"
@@ -375,14 +388,14 @@ Now we need a function that brings Either String to Either (NonEmptyList Foreign
 We can use the fact that Either is a bifunctor, meaning it has lmap:
 #+BEGIN_SRC purescript
 lmap :: forall f a b c.
-        Bifunctor f
+	Bifunctor f
      => (a -> b)
      -> f a c -> f b c
 #+END_SRC
 
 It's exactly the same as map on a normal functor, except it's on the left-hand type.
 
-(TODO: idk if this is actually a good comparison) 
+(TODO: idk if this is actually a good comparison)
 The bifunctor instance on Either can be seen as letting us build up a
 chain of actions to perform on both success and failure, a functional
 alternative to nested if-else statements.
@@ -420,8 +433,8 @@ events <- do
   _ <- eitherToF $ traverse validateSourceConfig cy
 
   pure $ Just $ { bdEventSources: bd
-                , cyEventSources: cy
-                }
+		, cyEventSources: cy
+		}
 #+END_SRC
 
 (TODO: should probably just validate in the parseSourceConfig)
@@ -434,4 +447,50 @@ values have already been parsed.
 Typing events -- types are there, just not checked (also only makes
 sense w/ some kinda DSL/interpreter)
 
-*** TODO TrackSink
+*** TrackSink
+TrackSinks are configured by providing an event name and a callback. On the PS
+side, these are type-safe, but there is no way to ensure that functions passed
+from Javascript are type-safe. BD and Cy.js TrackSinks, respectively, should
+have the following types:
+
+(TODO: PS 0.12 will be out soon; effect rows won't be used then)
+#+BEGIN_SRC purescript
+newtype TrackSink a = TrackSink (StrMap (Json -> a))
+
+type BDTrackSink = TrackSink (Biodalliance -> Eff Unit)
+type CyTrackSink = TrackSink (Cytoscape -> Eff Unit)
+
+-- for clarity, the "whole" types
+BDTrackSink = TrackSink (StrMap (Json -> Biodalliance -> Eff Unit)
+CyTrackSink = TrackSink (StrMap (Json -> Cytoscape    -> Eff Unit)
+#+END_SRC
+
+The event name is used to place the function in the correct index of the StrMap.
+The callback uses currying to take both the event (as JSON) and the respective
+browser instance, to be used e.g. when scrolling the Biodalliance view to an event.
+
+The following JS code defines a Biodalliance TrackSink (and is correctly typed):
+#+BEGIN_SRC javascript
+var bdConsumeLoc = function(json) {
+    return function(bd) {
+        return function() {
+            bd.setLocation(json.chr,
+                           json.pos - 1000000.0,
+                           json.pos + 1000000.0);
+        };
+    };
+};
+
+var bdTrackSinkConfig = [ { eventName: "location",
+                            eventFun: bdConsumeLoc
+                          }
+                        ];
+#+END_SRC
+
+*** TODO TrackManager
+(code not written yet -- does it even fit here since there's no actual configuration of it?)
+
+The TrackManager combines the provided TrackSources and Sinks, feeding
+the actual events produced by the tracks through the pipes, as well as
+takes care of "type-checking" the events, so that one event name cannot
+refer to multiple structures.

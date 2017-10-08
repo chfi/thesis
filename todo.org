@@ -1,0 +1,15 @@
+* outline TODO:
+** hypothesis
+   no stats... eval how?
+   metrics, which?
+   metrics related to legacy code
+   but: metrics don't really translate between langs that are so different
+   more abstract code smells
+
+   maybe give answer to various code smells w/ abstractions etc.
+   weakness: why these abstractions instead of OOP ones?
+
+
+* code TODO:
+  trackmanager
+  native UI
