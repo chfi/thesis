@@ -30,10 +30,14 @@ sources, communicate with; basically use in any new way
 
 Technical debt and how it relates to BD
 
-What we want, and how FP/PS may help -- my code is both an interface to
-(extending) BD as well as the start of something new
-
-TODO: Hypothesis
+Hypothesis: Using PS/FP to write an extensible & maintainable browser
+that itself interfaces to and extends BD, which is legacy code -- while
+also providing a blank(ish) slate for future work
+evaluate code/project from legacy perspective - architecture, maybe metrics
+-- *is* it more maintainable and extensible?
+-- is the new browser preferable to work with/on?
+-- does a transform-focused view help clarify the code?
+-- does static typing help?
 
 Should put a bigger focus on transformations; wrap everything else around that core
 
