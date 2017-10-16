@@ -12,7 +12,6 @@ Data and UI Transformations
 Pure/Functional Data and UI Transformations
 
 * Abstract
-(needs much more)
 
 Pure functional programming, using Purescript, is explored as a tool
 to work with an existing legacy codebase written in Javascript, by writing
@@ -30,7 +29,7 @@ sources, communicate with; basically use in any new way
 
 Technical debt and how it relates to BD
 
-Hypothesis: Using PS/FP to write an extensible & maintainable browser
+Purpose: Using PS/FP to write an extensible & maintainable browser
 that itself interfaces to and extends BD, which is legacy code -- while
 also providing a blank(ish) slate for future work
 evaluate code/project from legacy perspective - architecture, maybe metrics
@@ -101,7 +100,7 @@ Describe Biodalliance
 Legacy codebase - 14 years, tens of thousands of lines of JS
 
 Bunch of ad-hoc solutions -> makes composition practically impossible,
-in turn requiring writing new code, a dark spiral to unmaintainable code
+in turn requiring writing new code, an evil spiral to unmaintainable code
 
 ** Background
 
@@ -198,6 +197,7 @@ the entire codebase.
 
 *** Biodalliance
 (can grab from GSOC blog)
+https://chfi.se/posts/2017-07-06-gsoc2017-ps-js-interop.html
 
 **** Notes
 Start here since the interface to (extending) BD is the beginning, if not the core,
@@ -354,6 +354,7 @@ QuickCheck/Jack
 
 *** Cytoscape.js
 (can grab from GSOC blog)
+https://chfi.se/posts/2017-07-06-gsoc2017-ps-js-interop.html
 
 **** Notes
 Maybe combine this section with the BD API section; this is smaller, after all.
@@ -365,6 +366,7 @@ The PS modules and types are briefly detailed;
 the CyCollection type and related functions in particular.
 
 **** Types/FFI API
+
 **** Config
 
 **** Testing
@@ -405,6 +407,7 @@ easily be tested; being pure by nature.
 
 *** UI
 (can grab from GSOC blog)
+https://chfi.se/posts/2017-07-27-gsoc2017-bd-halogen.html
 
 **** Notes
 Quick intro to Halogen
