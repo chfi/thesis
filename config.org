@@ -1,16 +1,14 @@
 * Config
 
-
 NOTE: give an intro on the state-of-the-art - we move that to the main
 intro later. Explain *why* you decided for this architecture - late
-type checking.
-????
-
-Note: Rename your 'browser' to 'GGB' genetics graph browser everywhere
-in the text.
+type checking. (late type checking is more Events; much of this chapter
+probably ought to be refactored to that chapter)
 
 Note: configuration is a big topic, so deserves a large chapter. Configuration
 with the type system leaves little necessary code for logic. You can prove that!
+(Pointed out that the type signature of parseBrowserConfig provides a lot
+ of information)
 
 Software needs to be configurable.  The Genetics Graph Browser (GGB)
 has many pieces that can and/or need to be configured by the user or system
@@ -20,11 +18,11 @@ There are also functions that need to be provided from the external JS,
 such as the Biodalliance browser constructor, and the wrapper for
 Purescript-defined renderers.
 
-Configuration in standard JS solutions is not safe.
-A problem that can arise in JS is, if a configuration is given as a regular JS object (String, dictionary, whever),
-and each configuration piece is simply assigned to the respective place in the
-application, there is risk of some subpiece being misconfigured, or simply missing.
-Worst case, the application can then crash.
+Configuration in standard JS solutions is not safe. A problem that can arise in
+JS is, if a configuration is given as a regular JS object (string, dictionary,
+etc.), and each configuration piece is simply assigned to the respective place
+in the application, there is risk of some subpiece being misconfigured, or
+simply missing. Worst case, the application can then crash.
 
 The solution is to parse the configuration at the start of the program,
 from a raw Javascript JSON object into a Purescript type, with validation
@@ -69,11 +67,13 @@ parseBrowserConfig is a function that reads a JS object containing the necessary
 information to start the GGB, for example which tracks are included in the view,
 and functions for interfacing with BD.
 
-The pattern `Foreign -> F a` really says that a function named parseBrowserConfig is applied
-to Foreign type F and returns a BrowserConfig. This type of action is ubiquitous in the modules concerning configuration,
-because we use the library `purescript-foreign`. The type `Foreign` is part of Purescript and is simply anything
-that comes from outside Purescript, and thus must be parsed before any information
-can be extracted from them. `F` is a type synonym:
+The pattern `Foreign -> F a` really says that a function named
+parseBrowserConfig is applied to Foreign type F and returns a BrowserConfig.
+This type of action is ubiquitous in the modules concerning configuration,
+because we use the library `purescript-foreign`. The type `Foreign` is part of
+Purescript and is simply anything that comes from outside Purescript, and thus
+must be parsed before any information can be extracted from them. `F` is a type
+synonym:
 
 #+BEGIN_SRC purescript
 type F = Except (NonEmptyList ForeignError)
@@ -93,7 +93,10 @@ connected to it; it is simply impossible to fail a parse without providing an er
 
 From the type signature, then, we see that the function name does not lie: it does
 attempt to parse Foreign data into BrowserConfigs, and must fail with an error
-otherwise.
+otherwise. We know this, because the function does not have access to anything
+other than the raw configuration data, which means all the pieces of the completed
+BrowserConfig must be extracted from the provided configuration, or there are
+default values provided in the function itself.
 
 Let's look at one of the lines from the function definition (note: if you are new to Purescript
 the syntax may look strange - ignore the details, it will slowly make sense and you
