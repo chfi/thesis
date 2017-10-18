@@ -1,23 +1,41 @@
 * Config
 
-The browser has many pieces that can and/or need to be configured by the user.
-There are also functions that need to be provided from the external JS, such as
-the Biodalliance browser constructor, and the wrapper for Purescript-defined
-renderers.
 
-A problem that can arise in JS is, if a configuration is given as a regular JS object,
+NOTE: give an intro on the state-of-the-art - we move that to the main
+intro later. Explain *why* you decided for this architecture - late
+type checking.
+????
+
+Note: Rename your 'browser' to 'GGB' genetics graph browser everywhere
+in the text.
+
+Note: configuration is a big topic, so deserves a large chapter. Configuration
+with the type system leaves little necessary code for logic. You can prove that!
+
+Software needs to be configurable.  The Genetics Graph Browser (GGB)
+has many pieces that can and/or need to be configured by the user or system
+administrator. For example, what tracks are currently in the view.
+
+There are also functions that need to be provided from the external JS,
+such as the Biodalliance browser constructor, and the wrapper for
+Purescript-defined renderers.
+
+Configuration in standard JS solutions is not safe.
+A problem that can arise in JS is, if a configuration is given as a regular JS object (String, dictionary, whever),
 and each configuration piece is simply assigned to the respective place in the
 application, there is risk of some subpiece being misconfigured, or simply missing.
-The application can then crash.
+Worst case, the application can then crash.
 
 The solution is to parse the configuration at the start of the program,
-from a raw Javascript object into a Purescript type, with validation
-and error handling and reporting. Fortunately, Purescript has good tools for this.
-
+from a raw Javascript JSON object into a Purescript type, with validation
+and error handling and reporting. For this I opted for purescript-foreign
+and purescript-argonaut, annotating all failures with error messages,
+which bubble up to the main configuration parser, which returns an error
+object or a successfully parsed configuration.
 
 ** The top - BrowserConfig
 
-The type BrowserConfig represents the highest level of the browser configuration
+The type BrowserConfig represents the highest level of the GGB configuration
 hierarchy; it is the parsed version of the JS object provided by the user.
 This is the definition:
 
@@ -32,16 +50,28 @@ newtype BrowserConfig = BrowserConfig { wrapRenderer :: RenderWrapper
                                       }
 #+END_SRC
 
-The specific types of the values in the record are irrelevant; the
+At this point, the specific types of the values in the record are irrelevant; the
 important part is that they're all Purescript types, and have been parsed
-and validated. The parsing is done by the following function:
+and validated. The parsing is done by the parseBrowserConfig function, which
+has the following type signature:
 
 #+BEGIN_SRC purescript
 parseBrowserConfig :: Foreign -> F BrowserConfig
 #+END_SRC
 
-The pattern `Foreign -> F a` is ubiquitous in the modules concerning configuration,
-because we use the library `purescript-foreign`. The type `Foreign` is simply anything
+NOTE: add link to source, ideally make parseBrowserConfig and
+BrowserConfig clickable, or add links below the script (you could
+generate them from Emacs tags). Also make sure this code passes the
+current version. Same for all others. Note that this will be your
+documentation too.
+
+parseBrowserConfig is a function that reads a JS object containing the necessary
+information to start the GGB, for example which tracks are included in the view,
+and functions for interfacing with BD.
+
+The pattern `Foreign -> F a` really says that a function named parseBrowserConfig is applied
+to Foreign type F and returns a BrowserConfig. This type of action is ubiquitous in the modules concerning configuration,
+because we use the library `purescript-foreign`. The type `Foreign` is part of Purescript and is simply anything
 that comes from outside Purescript, and thus must be parsed before any information
 can be extracted from them. `F` is a type synonym:
 
@@ -62,24 +92,36 @@ error values. If something has gone wrong, there is at least one error message
 connected to it; it is simply impossible to fail a parse without providing an error message!
 
 From the type signature, then, we see that the function name does not lie: it does
-attempt to parse Foreign data into correct BrowserConfigs.
+attempt to parse Foreign data into BrowserConfigs, and must fail with an error
+otherwise.
 
-Let's look at one of the lines from the function definition:
+Let's look at one of the lines from the function definition (note: if you are new to Purescript
+the syntax may look strange - ignore the details, it will slowly make sense and you
+may appreciate the terseness in time).
 
 #+BEGIN_SRC purescript
 parseBrowserConfig f = do
   browser <- f ! "browser" >>= readTaggedWithError "Function" "Error on 'browser':"
 #+END_SRC
 
-`F` is a monad, so what is happening here is first an attempt to index into the "browser"
-property of the supplied Foreign value, followed by an attempt to read the Javascript "tag"
-of the value. If the tag says the value is a function, we're happy and cast the value
-into a BrowserConstructor type, otherwise we fail, and tell the user what went wrong.
+`F` is a monad, which in this case is simply an object containing state (Either
+a NonEmptyList or an error), so what is happening here is first an attempt to
+index into the "browser" property of the supplied Foreign value, followed by an
+attempt to read the Javascript "tag" of the value. If the tag says the value is
+a function, we're happy and cast the value to the type BrowserConstructor bound
+to the name browser, which is later referred to when putting the eventual
+BrowserConfig together. If the object doesn't have a "browser" property, or said
+property is not a JS function, we fail, and tell the user what went wrong.
 
-`readTaggedWithError` looks intimidating, but is in truth simple:
+NOTE: I would move the rest of the section to a chaptor on error handling
+because it is actually generic:
+
+`readTaggedWithError` is actually simple:
 
 #+BEGIN_SRC purescript
+-- The type is:
 readTaggedWithError :: forall a. String -> String -> Foreign -> F a
+-- The implementation:
 readTaggedWithError s e f = withExcept (append (pure $ ForeignError e)) $ unsafeReadTagged s f
 #+END_SRC
 
@@ -111,7 +153,8 @@ Another way to look at it is that `withExcept` is `map` but for the error type.
 ** Tracks
    Tracks configurations are different for BD tracks and Cy.js graphs,
    though both are provided as arrays of JSON, under different properties
-   in the `tracks` property of the configuration object.
+   in the `tracks` property of the configuration object. So we treat them
+   seperately here:
 
 *** Biodalliance
 
@@ -124,7 +167,7 @@ properties which can describe from where the track will fetch data and what
 kind of data it is, which are logically disjoint but nevertheless technically
 allowed by Biodalliance (though likely with undesired results).
 
-So, the browser takes a hands-off approach to BD tracks, and the only validation
+So, the GGB takes a hands-off approach to BD tracks, and the only validation
 that takes place is that a track must have a name. If it does, the JSON object
 is later sent, unaltered, to the Biodalliance constructor.
 
@@ -141,9 +184,13 @@ which to fetch the elements in JSON format.
 
 ** Events
 
-Users can describe the structure of events to be produced by tracks, and provide
-functions to run on a track when an event of a particular structure is received.
-The types that these correspond to are TrackSource and TrackSink, respectively.
+DONE? the first line should be made clearer for novices:
+
+When a user interacts with a track, e.g. by clicking on a data point, the track
+can communicate the interaction to the rest of the system, including other
+tracks. The user can configure the structure of the events that a track
+produces, and what a track does when receiving an event of some specific
+structure, e.g. scrolling the track on receiving an event containing a position.
 
 *** TrackSource Configuration
 
@@ -171,12 +218,12 @@ legal SourceConfig:
 
 #+BEGIN_SRC json
 {
-  eventName: "range",
-  eventTemplate: { "chr": "Chr",
+  "eventName": "range",
+  "eventTemplate": { "chr": "Chr",
 		   "minPos": "Bp",
 		   "maxPos": "Bp"
   },
-  rawTemplate: { "segment": "chr",
+  "rawTemplate": { "segment": "chr",
 		 "min": "minPos",
 		 "max": "maxPos"
   }
@@ -185,7 +232,7 @@ legal SourceConfig:
 
 This defines a source that parses objects/events like this one, for example
 a subset of a feature clicked on in Biodalliance:
-#+BEGIN_SRC json
+#+BEGIN_SRC javascript
 {
   segment: "chr11",
   min: 1241230,
@@ -193,14 +240,16 @@ a subset of a feature clicked on in Biodalliance:
 }
 #+END_SRC
 
-Into JSON that looks like
-#+BEGIN_SRC json
+Into a JS object that looks like
+#+BEGIN_SRC javascript
 {
   chr: "chr11",
   minPos: 1241230,
   maxPos: 1270230
 }
 #+END_SRC
+
+DONE: was that legal JSON?
 
 This is useful if several tracks produce events with the same data but in
 objects that look different; the consumer of the event will only see events of
@@ -214,8 +263,8 @@ to where the corresponding value will be placed in the finished event. Similarly
 we need to grab the path to each leaf in the rawTemplate, so we know how to grab
 the value we need in the finished event, from the provided raw event.
 
-Fortunately, Argonaut provides functions for dealing with exactly this. First, JCursor,
-which describes a pointer in a JSON tree:
+Fortunately, Argonaut provides functions for dealing with exactly this. First,
+the JCursor type describes a path to a point in a JSON tree:
 
 #+BEGIN_SRC purescript
 data JCursor =
@@ -228,8 +277,8 @@ It can be seen as a list of accessors. If we have an object in JS:
 
 #+BEGIN_SRC javascript
 let thing = { x: [{a: 0},
-		  {b: {c: true}}
-		 ]};
+                  {b: {c: true}}
+		             ]};
 #+END_SRC
 
 We can grab the value at `c` with
@@ -278,46 +327,15 @@ The function `insideOut` does what expected and reverses the path through the tr
 We then match on the now first label, and save it as the name. If it was an array,
 we fail with a Nothing.
 
-In both cases, we use the JCursor as is for the actual indexing. Here is how some
-event value is gotten from a raw event and placed into the finished event:
-
-#+BEGIN_SRC purescript
-rawCursor :: JCursor
-valCursor :: JCursor
-
-getAndSet :: Json -> Json -> JCursor -> JCursor -> Maybe Json
-getAndSet source target get set = do
-  val <- cursorGet get source
-  cursorSet set val target
-#+END_SRC
-
 Argonaut, especially the functions concerning JCursor, largely uses the Maybe type.
 This is fine for the most part, but as this will be used in configuration,
 and thus needs to tell the user what has gone wrong if the provided configuration
 is faulty, it's not enough.
 
 A more appropriate type would be Either String, which allows for failure to come
-with an error message. To "lift" the functions using Maybe into Either String,
-a function from purescript-errors can be used:
+with an error message. To "lift" the functions using Maybe into Either String.
+See [[source code]] for an example.
 
-#+BEGIN_SRC purescript
-note :: forall a b.
-	a
-     -> Maybe b
-     -> Either a b
-note err m = case m of
-  Nothing -> Left err
-  Just x  -> Right x
-
--- or, specialized to String:
-note :: forall b.
-	String
-     -> Maybe b
-     -> Either String b
-#+END_SRC
-
-As the name suggests, it lets us add a "note" to error messages. The implementation
-is simple enough.
 
 To provide the user with additional help when configuring, the source configurations
 are validated to make sure the given JSON structures are legal, or "match". Given
@@ -325,7 +343,7 @@ some value that we want to have in the finished event, and all of the values we 
 we can get from the raw event, if we can't find the first value among the latter,
 something's wrong.
 
-The implementation is almost absurdly simple. The Cursors here are grabbed from the
+The implementation is simple. The Cursors here are grabbed from the
 result of toPrims above; the JCursors themselves are unaltered.
 
 #+BEGIN_SRC purescript
@@ -363,6 +381,9 @@ validateTemplates rcs = traverse (validateTemplate rcs)
 
 The function tries to validate all given templates, and returns the first failure if there are any.
 Validation of a collection of things for free!
+
+TODO: remove below text into the source files for documentation. You can refer to that,
+but I would just continue with TrackSink here.
 
 **** Parsing the user-provided SourceConfigs
 
@@ -448,9 +469,12 @@ Typing events -- types are there, just not checked (also only makes
 sense w/ some kinda DSL/interpreter)
 
 *** TrackSink
+
+
+
 TrackSinks are configured by providing an event name and a callback. On the PS
 side, these are type-safe, but there is no way to ensure that functions passed
-from Javascript are type-safe. BD and Cy.js TrackSinks, respectively, should
+from Javascript to Purescript are type-safe. BD and Cy.js TrackSinks, respectively, should
 have the following types:
 
 (TODO: PS 0.12 will be out soon; effect rows won't be used then)
@@ -487,10 +511,4 @@ var bdTrackSinkConfig = [ { eventName: "location",
                         ];
 #+END_SRC
 
-*** TODO TrackManager
-(code not written yet -- does it even fit here since there's no actual configuration of it?)
-
-The TrackManager combines the provided TrackSources and Sinks, feeding
-the actual events produced by the tracks through the pipes, as well as
-takes care of "type-checking" the events, so that one event name cannot
-refer to multiple structures.
+NOTE: add example of passing this information into PS.
