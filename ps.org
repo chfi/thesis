@@ -1,0 +1,71 @@
+* Purescript
+* Syntax
+Values and functions are defined in the same way, and functions are curried by default.
+Values can be given type signatures, which are mainly used on the top level.
+#+BEGIN_SRC purescript
+val1 :: Int
+val1 = 8
+
+
+-- A value of type String
+val2 :: String
+val2 = "hello"
+
+
+-- An Array of Int values
+-- note how Array is a type constructor applied to a concrete type (Int)
+arr :: Array Int
+arr = [1,2,3]
+
+
+-- defining a List type (either an empty list or a head plus a list)
+data List a = Nil
+            | Cons a (List a)
+
+-- A List containing the integers 1, 2, 3
+list :: List Int
+list = Cons 1 (Cons 2 (Cons 3 Nil))
+
+-- A function from Int to Int
+f :: Int -> Int
+f x = x + 4
+
+f val1 == 12
+
+-- A function from List Int to Int to Int;
+-- using pattern matching to extract the first element,
+-- returning a provided default if the list is empty
+first :: List Int -> Int -> Int
+first Nil        y = y
+first (Cons x _) _ = x
+
+
+-- `first` above can be generalized to any List
+-- the `forall` keyword is used to scope type parameters
+first' :: forall a. List a -> a -> a
+first'  Nil       y = y
+first' (Cons x _) _ = x
+
+
+-- There's another way of trying to get the first element from a list;
+-- we can explicitly return the failure if the list is empty.
+-- This can be done with the `Maybe` type:
+data Maybe a = Nothing
+             | Just a
+
+first'' :: forall a. List a -> Maybe a
+first'' Nil        = Nothing
+first'' (Cons a _) = Just a
+
+-- The pattern `Type1 a -> Type2 a` is called a natural transformation,
+-- and implies that the function does not touch the `contents` of the outer types.
+-- (the `type` keyword defines a type synonym)
+type NaturalTransformation f g = forall a. f a -> g a
+
+-- The infix operator ~> can be used instead
+infixr 4 type NaturalTransformation as ~>
+
+first'' :: List ~> Maybe
+first'' Nil        = Nothing
+first'' (Cons a _) = Just a
+#+END_SRC
