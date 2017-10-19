@@ -1,0 +1,139 @@
+* Units
+  NOTE: not mentioning HCoordinate because I have a feeling it's
+  probably best just to remove that typeclass from the code; it is
+  rarely if ever used, and could be replaced entirely where it is used
+  with a lens
+
+** The problem
+   Often, units are not used in computation.
+While they are displayed in visualizations, graphs, etc.,
+the underlying representation is rarely anything other than a string
+or a number. That is, to the computer, there is no semantic difference
+between e.g. the position of a basepair on some chromosome, the
+volume of a house, or pi -- all of these numbers could be used interchangeably.
+
+Of course, this is rarely desired, as these values do have different semantics
+to the programmer and user. It would be useful to provide the computer with
+this information. We can accomplish this in Purescript, to some extent, using newtypes.
+
+** Newtypes
+
+Newtypes are one of the ways of creating types in Purescript. They
+can only have one single data constructor, and that constructor must
+have one single parameter -- a useful way to think about them is that
+they wrap existing types. In fact, at runtime, they are indentical to
+the wrapped type, which can be exploited when working with the FFI.
+It also means there is no performance hit.
+
+** Positions
+   Biodalliance uses basepairs (Bp) for all position data, and stores this
+data as a regular Javascript Number value. It's not uncommon for data
+to provide its position information in megabasepairs (MBp). Obviously,
+treating a Bp as an MBp, or vice versa, leads to problems, but if it's
+just a Number being thrown around, there's no way to avoid the problem
+other than trusting the programmer and user to do things correctly.
+
+As a programmer and user, I find the idea of doing so reprehensible,
+hence the Bp and MBp newtypes:
+
+TODO add link to lines in Units.purs
+#+BEGIN_SRC purescript
+newtype Bp = Bp Number
+newtype MBp = MBp Number
+#+END_SRC
+
+To work with these, we can use pattern matching:
+
+#+BEGIN_SRC purescript
+toBp :: Number -> Bp
+toBp x = Bp x
+
+fromBp :: Bp -> Number
+fromBp (Bp x) = x
+#+END_SRC
+
+However, Purescript provides a typeclass to minimize this boilerplate,
+namely the `Newtype` typeclass. The compiler derives the instance, and
+we can then use the generic `wrap` and `unwrap` functions:
+
+#+BEGIN_SRC purescript
+derive instance newtypeBp :: Newtype Bp _
+derive instance newtypeMBp :: Newtype MBp _
+
+mbpToBp :: MBp -> Bp
+mbpToBp x = wrap $ (unwrap x) * 1000000.0
+#+END_SRC
+
+Purescript also provides facilities for deriving typeclass instances for newtypes.
+Deriving the typeclasses used in arithmetic lets us use normal operators when
+working with Bp and MBp:
+
+TODO: maybe note that most of this doesn't make very much sense, e.g. multiplying
+two Bp's is in fact pretty silly. Would probably be "better" to use a semigroup
+where <> is addition...
+
+
+#+BEGIN_SRC purescript
+derive newtype instance eqBp :: Eq Bp
+derive newtype instance ordBp :: Ord Bp
+derive newtype instance fieldBp :: Field Bp
+derive newtype instance euclideanRingBp :: EuclideanRing Bp
+derive newtype instance commutativeRingBp :: CommutativeRing Bp
+derive newtype instance semiringBp :: Semiring Bp
+derive newtype instance ringBp :: Ring Bp
+
+-- now we can do
+p1 = Bp 123.0
+p2 = Bp 400.0
+
+p1 + p2 == Bp 523.0
+#+END_SRC
+
+TODO: needs a super basic lens primer somewhere (maybe just a footnote in the
+first use of it), plus readBp might not be correct
+The Newtype instance also gives us access to the _Newtype lens isomorphism:
+#+BEGIN_SRC purescript
+_Bp :: Iso' Bp Number
+_Bp = _Newtype
+
+_MBp :: Iso' Bp Number
+_MBp = _Newtype
+
+readBp :: String -> Maybe Bp
+readBp s = s ^? _Number <<< re _Bp
+#+END_SRC
+
+
+** Chromosomes
+Biodalliance represents chromosome identifiers as strings. Like with Bp,
+a newtype wrapper helps keep track of things:
+
+#+BEGIN_SRC purescript
+newtype Chr = Chr String
+derive instance newtypeChr :: Newtype Chr _
+derive newtype instance eqChr :: Eq Chr
+derive newtype instance ordChr :: Ord Chr
+derive newtype instance showChr :: Show Chr
+#+END_SRC
+
+
+** Scale
+NOTE: This is currently only used in the Native track, however the old
+BD rendering stuff could/should be refactored to use the new
+BpPerPixel
+
+When drawing data to the screen, we need to be able to transform between
+screen coordinates and the coordinates used by data. For simplicity's
+sake, we only care about mapping between basepairs and pixels. We represent
+this with another newtype wrapping Number:
+
+#+BEGIN_SRC purescript
+newtype BpPerPixel = BpPerPixel Number
+derive instance newtypeBpPerPixel :: Newtype BpPerPixel _
+
+bpToPixels :: BpPerPixel -> Bp -> Number
+bpToPixels (BpPerPixel s) (Bp p) = p / s
+
+pixelsToBp :: BpPerPixel -> Number -> Bp
+pixelsToBp (BpPerPixel s) p = Bp $ p * s
+#+END_SRC
