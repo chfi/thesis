@@ -1,0 +1,15 @@
+* Events
+
+** Notes
+   not *really* a problem in BD, however there is no checking that the features
+provided to listeners actually have the data expected by them, leading to a risk
+of runtime errors and decreased reusability
+
+would be horrible when working with events from multiple different sources,
+e.g. BD and Cy.js -- would end up with a bunch of nestled if-else statements,
+searching for non-null properties. and even when you find all the properties
+you want, there's no guarantee that
+
+is the BD API also limited in what can be done? well, not really;
+I certainly won't be able to do any more than featurelisteners can do
+(and only barely in a cleaner/more correct way)
