@@ -13,3 +13,84 @@ you want, there's no guarantee that
 is the BD API also limited in what can be done? well, not really;
 I certainly won't be able to do any more than featurelisteners can do
 (and only barely in a cleaner/more correct way)
+
+
+** Events
+   When working with connected data, we want to be able to interact with the data
+in multiple ways, to explore one data set by examining another. In the architecture
+of GGB, this comes down to sending events between tracks -- when clicking on some
+data point in one track, an event containing information derived from that data point
+is created, and sent to other tracks that have been configured to react to those
+kinds of events.
+
+In short, the system consists of four parts:
+1. The browser, e.g. BD, producing raw events in response to user interaction, in whatever
+format it uses
+2. A track source, mapping the raw event to one used by GGB
+3. A track sink, consuming GGB events into some callback that performs effects on...
+4. Another browser, e.g. Cy.js.
+
+Each part of this system should also be user-configurable, and constructed in such
+a way as to minimize the risk of callbacks receiving events they cannot process
+-- we want event type safety.
+
+We begin by looking at what events are provided by BD and Cy.js.
+
+** Biodalliance
+   BD provides several facilities for the user to add event handlers, functions
+that are called when the user interacts with the browser, or the browser performs
+some action. We are interested in only one, `addFeatureListener`. This function
+adds a handler that is called when the user clicks on a feature, i.e. on a data point
+in a BD track.
+
+It receives several parameters, the DOM MouseEvent that triggered the handler,
+the BD feature clicked on, the track the click occured in, and an array of other
+objects; for simplicity's sake, we only look at the feature clicked on. This
+feature is a JS object, and can contain any information that BD parsed from the raw data,
+meaning two features from two different tracks can look very different, and
+
+** Cytoscape.js
+   Cy.js has a vast array of potential interactions and event handlers. We will
+focus on regular click-events, and thus are interested in the `cy.on("click")`
+function, which adds on-click event handlers to the elements matching the provided
+selector. When no selector is provided, this matches all elements, and the handler
+functions similarly to the one provided to BD's `addFeatureListener`.
+
+Handlers attached with `cy.on()` receive the core Cy.js graph instance, the target
+element (or graph) that caused the event, as well as information of what
+kind of event it was and when it was triggered. We're mainly interested in
+the `target` value, which is similar to the `feature` argument in BD's handler.
+Like with BD, this value contains the entire element clicked on; a big and
+complex JS object which can contain arbitrary data.
+
+
+Both BD and Cy.js, then, produce events with unordered information of arbitrary
+complexity -- unordered in the sense that knowledge of the data is required
+to extract information such as genomic position from it. Even though two pieces
+of data may both contain position information, there is no reason to expect the
+data to be found in the same place in the respective JS objects, or be of the
+same format. Even so, we want a
+
+
+** Type-safe -- but compile-time doesn't make sense
+My first attempt, ambitious as it was, failed, and was in fact misguided from
+the beginning -- however, it serves to illustrate the goal, and illuminate the path there.
+
+row types
+
+variants
+
+the goal -- tagging properties with types;
+-- transforming events to named & typechecked records
+so two handlers, or a source and a sink, both referring to "location"s, must deal
+with the same information (i.e. Chr and Bp in the correct property names)
+
+the problem -- compile-time only!
+worked with hardcoded stuff, but naw
+
+maybe possible with reflection/reification, but overkill
+
+instead:
+
+** JSON zippers and stringy types
+   move config.org tracksource & sink here
