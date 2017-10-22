@@ -75,10 +75,90 @@ same format. Even so, we want a
 ** Type-safe -- but compile-time doesn't make sense
 My first attempt, ambitious as it was, failed, and was in fact misguided from
 the beginning -- however, it serves to illustrate the goal, and illuminate the path there.
+This was to represent the types of events as types in Purescript, via Purescript's
+row types and polymorphic variants from purescript-variant.
 
-row types
+Row types make it possible to express extensible records; they are essentially
+type-level maps from labels to types. For example, a record in Purescript:
+
+#+BEGIN_SRC purescript
+exRec :: Record ( x :: Number, title :: String )
+exRec = { x: 123.0, title: "hello" }
+#+END_SRC
+
+Row types can also be open, making it possible to write functions that work
+with any record containing at least some given fields. Here is a function
+that works on any record with a field named `title` of type String:
+#+BEGIN_SRC
+-- { label :: Type } is sugar for Record ( label :: Type )
+exRec2 :: { title :: String }
+exRec2 = { title: "another record" }
+
+titleLength :: forall r. { title :: String | r } -> Int
+titleLength { title } = length title
+
+titleLength exRec == 5
+titleLength exRec2 == 14
+#+END_SRC
 
 variants
+
+The use of row types is not limited to records. The package purescript-variant provides
+an implementation of polymorphic variants using row types; they are to sum types what
+records are to product types. For example, this function `eitherOr` works with all
+possible Variants, with a default implementation for labels other than "either" and "or".
+A variant with the label "either" must contain a Boolean.
+
+TODO: update to use @ proxy syntax when 0.12 drops
+#+BEGIN_SRC purescript
+_either = SProxy :: SProxy "either"
+_or     = SProxy :: SProxy "or"
+_nope   = SProxy :: SProxy "nope"
+
+eitherOr :: forall r.
+            Variant ( either :: Boolean, or :: Unit | r)
+         -> String
+eitherOr =
+  default "neither!"
+        # on _either (\b -> "either " <> show i)
+        # on _or     (\_ -> "or unit")
+
+vEither :: Variant (either :: Boolean)
+vEither = inj _either true
+
+vOr :: Variant (or :: Unit)
+vOr = inj _or unit
+
+vNope :: Variant (nope :: Maybe Int)
+vNope = inj _nope (Just 543)
+
+eitherOr vEither == "either true"
+eitherOr vOr     == "or unit"
+eitherOr vNope   == "neither!"
+#+END_SRC
+
+The goal of using variants and rows was to provide type-safety of events. An Event
+would simply be a variant, and the different types of events would have different
+labels, and thus also different types. Producers and consumers of events would
+have their own rows to keep track of what they could produce and consume; as a
+corollary, Purescript's type checker would ensure that a consumer only receives
+events that it knows how to consume. In other words, a consumer could be connected
+to a producer if the producer's row is a subset of the consumer's row.
+
+TODO maybe could use a somewhat more in depth description here, e.g. how
+events tended to be records, type Location = { chr :: Chr, pos :: Bp } etc.
+
+This is all well and good, and my early attempts worked well. Problems arose when
+attempting to move from a hardcoded event flow to configuring one -- this is when
+I realized that it doesn't make sense to have the compiler check something that
+needs to be configured by the user, and thus checked at runtime!
+
+(Footnote? It may be possible using type/value-level reflection/reification,
+as done in Functional Pearl: implicit configurations http://www.cs.rutgers.edu/~ccshan/prepose/prepose.pdf)
+
+What I actually desired was a way to express events in an easy to configure way,
+while also guaranteeing correctness as far as possible, with good error reporting
+picking up the slack where necessary.
 
 the goal -- tagging properties with types;
 -- transforming events to named & typechecked records
@@ -93,4 +173,30 @@ maybe possible with reflection/reification, but overkill
 instead:
 
 ** JSON zippers and stringy types
-   move config.org tracksource & sink here
+
+   What was needed was using a single type for all the possible events,
+but also providing enough data to do some kind of validation -- validation
+on data coming from and going to the FFI, meaning it cannot be trusted whatsoever.
+
+Since ease of configuration was another important factor, I decided to start
+there. JSON was the natural format to use for configuration; upon
+reflection, it also turned out to be a good type for events in GGB.
+
+Having decided on JSON as the configuration format still leaves the
+question: what does configuring an event entail? We want the user to
+be able to describe what the events that come from some track look
+like and contain, as well as describe how the raw events are
+transformed into GGB events.
+
+In most cases, this focus on the configuration format, versus the actual
+semantics of what the configuration data will provide, would be a sign
+of something being quite wrong -- the format is an implementation detail.
+
+However, in this case the format and semantics overlap. If an Event is JSON,
+and the configuration is given in JSON, why not use the Event as configuration?
+That was the inspiration that led to the current system. The user configures
+the event system by providing templates, or patterns, that map between
+raw events and the various events a track produces and consumes. It can be
+seen as a kind of pattern matching.
+
+config.org tracksource & sink goes here

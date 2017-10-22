@@ -233,13 +233,16 @@ legal SourceConfig:
 }
 #+END_SRC
 
-This defines a source that parses objects/events like this one, for example
-a subset of a feature clicked on in Biodalliance:
+This defines a source that parses objects/events like this one, the JS object
+passed to the event handler when clicking on a feature in BD:
+
 #+BEGIN_SRC javascript
 {
+  // ...
   segment: "chr11",
   min: 1241230,
   max: 1270230
+  // ..
 }
 #+END_SRC
 
