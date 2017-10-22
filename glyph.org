@@ -54,11 +54,11 @@ this data structure; or, in other words, transforming it into another data struc
 one that *does* something. In fact, an interpreter consists of a natural transformation
 from the GlyphF functor to some other functor.
 
-An example is in order:
+An example is in order; let's look at printing glyphs to console:
 
 ** Logging glyphs
-It can be useful to print glyphs to the console, and the GlyphF.Log interpreter
-lets us do that by turning Glyphs to Strings. To run an interpreter, we use foldFree:
+The GlyphF.Log interpreter transforms Glyphs to Strings, which we can then log
+to the console. To run an interpreter, we use foldFree:
 
 #+BEGIN_SRC purescript
 foldFree :: forall f m. MonadRec m => (f ~> m) -> (Free f) ~> m
@@ -111,11 +111,203 @@ showGlyph = execWriter <<< foldFree glyphLog
 TODO add example input & output
 
 ** Drawing glyphs to canvas and SVG
--- offsetting? or is that just Feature
+When drawing to canvas, we use Eff as the target for our natural transformation,
+and simply perform whatever canvas effects are appropriate:
+
+#+BEGIN_SRC purescript
+glyphEffN :: ∀ eff. Context2D -> GlyphF ~> Eff (canvas :: CANVAS | eff)
+glyphEffN ctx (Stroke c a) = do
+  _ <- C.setStrokeStyle c ctx
+  pure a
+glyphEffN ctx (Circle p r a) = do
+  _ <- C.beginPath ctx
+  _ <- C.arc ctx { x: p.x
+                 , y: p.y
+                 , r: r
+                 , start: 0.0
+                 , end: 2.0 * Math.pi
+                 }
+  _ <- C.stroke ctx
+  _ <- C.fill ctx
+  pure a
+-- and so on
+
+-- | Produce an effect to render the glyph to a canvas
+renderGlyph :: ∀ eff. Context2D -> Glyph ~> Eff (canvas :: CANVAS | eff)
+renderGlyph = foldFree <<< glyphEffN
+#+END_SRC
+
+SVG on the other hand uses the following type as target functor:
+#+BEGIN_SRC purescript
+type SVG a = StateT SVGContext (Writer (Array SVGElement)) a
+#+END_SRC
+
+The result is a series of commands which can be used to produce the desired
+SVG element; this can then be rendered to the DOM:
+
+#+BEGIN_SRC
+interpSVGEff :: GlyphF ~> SVG
+interpSVGEff (Stroke c a)  = do
+  SVG.setStrokeStyle c
+  pure a
+interpSVGEff (Circle p r a) = do
+  SVG.circle p.x p.y r
+  pure a
+-- and so on
+
+runSVGEff :: ∀ a. Glyph a -> Array SVGElement
+runSVGEff = execWriter <<< (flip runStateT SVG.initialSVG) <<< foldFree interpSVGEff
+
+-- | Render a glyph to an SVG element
+renderGlyph :: ∀ a eff. Glyph a -> Eff ( dom :: DOM | eff ) Element
+renderGlyph = SVG.renderSVG <<< runSVGEff
+#+END_SRC
+
 
 ** Generating bounding boxes
--- intro GlyphPosition
--- point out monoid & show definition
--- testing monoid w/ Jack
+BD produces events when clicking on glyphs -- which GGB make use of. To do this, BD
+expects four constant functions on each glyph. In Purescript, the "bounding box" type
+would look like this, and could be used directly by BD:
+
+#+BEGIN_SRC purescript
+type BoundingBox = { min :: Unit -> Number
+                   , max :: Unit -> Number
+                   , minY :: Unit -> Number
+                   , maxY :: Unit -> Number }
+#+END_SRC
+
+When constructing glyphs in BD, each new glyph provides its own explicit bounding box.
+This is clearly insufficient for our purposes; instead, we make use of the fact
+that bounding boxes clearly form a monoid.
+
+*** Monoidal bounding boxes
+TODO: ref to monoids and diagrams functional pearl
+
+The type corresponding to a glyph's position is GlyphPosition:
+#+BEGIN_SRC purescript
+newtype GlyphPosition = GlyphPosition { min :: Number
+                                      , max :: Number
+                                      , minY :: Number
+                                      , maxY :: Number
+                                      }
+#+END_SRC
+
+It is simply a newtype wrapper over a record describing the bounding box. First,
+we observe that a bounding box is a semigroup, where the result of appending
+two bounding boxes is the minimal box containing both of the inputs. That is,
+each of the four sides of the new bounding box is whichever of the two input
+sides are outermost:
+
+#+BEGIN_SRC purescript
+instance semigroupGlyphPosition :: Semigroup GlyphPosition where
+  append (GlyphPosition p1) (GlyphPosition p2) =
+    GlyphPosition $ { min:  Math.min p1.min  p2.min
+                    , max:  Math.max p1.max  p2.max
+                    , minY: Math.min p1.minY p2.minY
+                    , maxY: Math.max p1.maxY p2.maxY
+                    }
+#+END_SRC
+
+Note the use of the the minimum and maximum functions from the Math module,
+and how they're really doing all the heavy lifting.
+
+To transform this into a monoid, we require an identity element. Since what
+`append` does is to take the minimum or maximum of the various components,
+our identity must contain the identities for minimum and maximum, i.e.
+positive respective negative infinity.
+
+#+BEGIN_SRC purescript
+instance monoidGlyphPosition :: Monoid GlyphPosition where
+  mempty = GlyphPosition { min:    infinity
+                         , max:  (-infinity)
+                         , minY:   infinity
+                         , maxY: (-infinity)
+                         }
+#+END_SRC
+
+Now, with our Monoid in hand, we can write another interpreter for Glyph,
+using Writer as our monad in the natural transformation:
+
+#+BEGIN_SRC purescript
+glyphPosN :: GlyphF ~> Writer GlyphPosition
+glyphPosN (Stroke _ a) = pure a
+glyphPosN (Circle p r a) = do
+  tell $ GlyphPosition { min: p.x - (r * 1.5)
+                       , max: p.x + (r * 1.5)
+                       , minY: p.y - (r * 1.5)
+                       , maxY: p.y + (r * 1.5)
+                       }
+  pure a
+-- and so on
+
+glyphToGlyphPosition :: ∀ a. Glyph a -> GlyphPosition
+glyphToGlyphPosition = execWriter <<< foldFree glyphPosN
+#+END_SRC
+
+With that, we get bounding boxes for free when constructing glyphs.
+
+*** Testing our monoid
+Semigroups and monoids have laws; while I'm reasonably confident in
+having created a Real Monoid, I prefer to have my computer make sure.
+To do this, I use purescript-jack, a property-based testing framework,
+like QuickCheck.
+
+First, some utility functions to generate and render GlyphPositions:
+
+TODO this is in Test.Glyph
+#+BEGIN_SRC purescript
+type ThreeGlyphs = {l :: GlyphPosition, c :: GlyphPosition, r :: GlyphPosition}
+
+renderGlyphs :: ThreeGlyphs -> String
+renderGlyphs {l,c,r} = "{ l: " <> show l <> ", c:" <> show c <> ", r:" <> show r <> "}"
+
+genGlyphPosition :: Gen GlyphPosition
+genGlyphPosition = do
+  let cf = toNumber <$> chooseInt (-10000000) (10000000)
+  min <- cf
+  max <- cf
+  minY <- cf
+  maxY <- cf
+  pure $ GlyphPosition { min, max, minY, maxY }
+
+genThreeGlyphs :: Gen ThreeGlyphs
+genThreeGlyphs = do
+  l <- genGlyphPosition
+  c <- genGlyphPosition
+  r <- genGlyphPosition
+  pure $ {l, c, r}
+#+END_SRC
+
+The law all semigroups should abide is associativity. In Jack, we
+describe a Property asserting that parentheses don't matter for equality:
+
+#+BEGIN_SRC purescript
+prop_semigroup :: Property
+prop_semigroup =
+  forAllRender renderGlyphs genThreeGlyphs \pos ->
+    property $ (pos.l <> pos.c) <> pos.r == pos.l <> (pos.c <> pos.r)
+#+END_SRC
+
+In addition to that, monoids require that the identity element in fact
+be left and right identity. The Property:
+
+#+BEGIN_SRC purescript
+prop_monoid :: Property
+prop_monoid =
+  forAll genGlyphPosition \pos ->
+    property $ (pos <> mempty == pos) &&
+               (mempty <> pos == pos)
+#+END_SRC
+
+Jack then takes care of generating GlyphPositions, ensuring that these properties hold.
+
+TODO test output
 
 ** Putting it all together
+
+
+
+** Limitations
+inefficient -- rendering 1000s of glyphs can be slow,
+each glyph setting its own stroke & fill colors, even if all glyphs
+look the same
