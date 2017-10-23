@@ -1,0 +1,223 @@
+* User interface
+The main function of GGB's user interface is to tie the browser tracks --
+BD and Cy.js -- together. It also creates and to some extent manages
+the JS browser track instances, and renders the HTML for the entire
+UI.
+
+To do all this, we use Halogen, from purescript-halogen, a type-safe
+UI library, similar in purpose to React. Event passing between tracks
+is taken care of by purescript-aff-bus and threads from purescript-aff,
+and
+
+
+** Quick Halogen intro
+Halogen is a component-based UI library, using a virtual DOM implementation
+to render HTML to the browser. A component is a value of the (fairly complicated)
+type Component (removed constraints etc. for clarity):
+
+#+BEGIN_SRC purescript
+component :: Component renderer query state message monad
+             (1)       (2)      (3)   (4)   (5)     (6)
+#+END_SRC
+
+The type `Component (1)` takes five type parameters. The first,
+`renderer (2)` is the type used to render the page, we use a HTML
+renderer. Next is `query (3)`, which is filled with our query algebra,
+to be explained later; in short it is the set of commands the component
+can respond to. `state (4)` is the type of the state kept by
+the component. We don't have any, so we set it to `Unit`. `message (5)`
+is the type of messages we can produce, which we can send to other
+parts of the program.  Finally, `monad (6)` is the type in which all
+effects produced by the component will happen. In our case, it's the
+`Aff` monad for asynchronous effects -- it could also be a monad transformer
+stack, or some free monad.
+
+*** Query algebras
+
+The "Query algebra" is the type describing the possible actions we can query
+the component to perform. The type is not complicated; in GGB we have:
+
+#+BEGIN_SRC purescript
+data Query a
+  = CreateBD (∀ eff. HTMLElement -> Eff (bd :: BD | eff) Biodalliance) a
+  | PropagateMessage Message a
+  | BDScroll Bp a
+  | BDJump Chr Bp Bp a
+  | CreateCy String a
+  | ResetCy a
+#+END_SRC
+
+From top to bottom, we can ask it to `CreateBD`, providing a function that
+creates a Biodalliance instance given a HTML element to place it in;
+we can propagate messages from the child components; we can scroll and
+jump the BD instance; and we can create and reset the Cy.js instance.
+That's what the queries look like, but we also need to define an `eval`
+function. This maps Query to Halogen commands, which are also defined
+by a functor type -- the function is a natural transformation from
+our Query DSL to the Halogen DSL (a free monad).
+
+#+BEGIN_SRC purescript
+eval :: Query ~> HalogenM state query childQuery childSlot message monad
+#+END_SRC
+
+The type parameters of `HalogenM` are the same as those of
+`Component`, adding a `childQuery` type, the Query type of values
+which this component can use to communicate with its children, and
+`childSlot`, the type which is used to index into the child
+components. For the main GGB component they are:
+
+#+BEGIN_SRC purescript
+type ChildSlot = Either2 UIBD.Slot UICy.Slot
+
+type ChildQuery = Coproduct2 UIBD.Query UICy.Query
+#+END_SRC
+
+`ChildSlot` is a coproduct of the two child Slot /types/ (Either2) of the
+child components; we can query the BD slot or the Cy.js slot at once,
+not both. `Either2` is a generalization of `Either` to a variable
+number of types, a convenience that makes it easy to change the
+number of slots, without more work than a type synonym. `ChildQuery`
+is a coproduct of the two child Query /functors/ (Coproduct2).
+
+#+BEGIN_SRC purescript
+data Either a b = Left a | Right b
+
+data Coproduct f g a = Coproduct (Either (f a) (g a))
+-- can be viewed as (pseudocode):
+data Coproduct f g a = Coproduct (Left (f a)) | (Right (g a))
+
+type ChildQuery a = Either (UIBD.Query a) (UICy.Query a)
+#+END_SRC
+
+-- TODO: not sure, but it may even be impossible to do this; may not compile
+-- (certainly doesn't compile when applied to Halogen)
+
+We can't use normal `Either` for ChildQuery, as we wouldn't be able to be
+parametric over the `a` type in both child queries. If we were to map a function
+`UICy.Query (a -> b)` on the Right component of the Either ChildQuery, we'd end
+up with the type `Either (UIBD.Query a) (UICy.Query b)`, which obviously is not
+congruent to `ChildQuery a`.
+
+Writing the function is simple enough. We pattern match on the input
+Query, and produce effects in the HalogenM type. Creating BD is done
+by querying the BD child using its respective slot and a ChildPath --
+a type describing a path to the child component, and providing an
+action to tell the child component to perform.
+
+
+#+BEGIN_SRC purescript
+eval = case _ of
+  CreateBD bd next -> do
+    _ <- H.query' CP.cp1 UIBD.Slot $ H.action (UIBD.Initialize bd)
+    pure next
+#+END_SRC
+
+`H.action` is a Halogen
+function mapping ChildQuery constructors to concrete actions, by simply
+applying the `Unit` type to it.
+
+#+BEGIN_SRC purescript
+type Action f = Unit -> f Unit
+action :: forall f. Action f -> f Unit
+action f = f unit
+#+END_SRC
+
+Finally, we return the next command. Next is `PropagateMessage`, which
+receives a Message (sent from the function handling messages from the children):
+
+#+BEGIN_SRC purescript
+data Message
+  = BDInstance Biodalliance
+  | CyInstance Cytoscape
+#+END_SRC
+
+Depending on which message it is, we print a log message, and then use `H.raise`
+to send the message out from Halogen to subscribers elsewhere in the app (more
+on that later).
+
+#+BEGIN_SRC purescript
+  PropagateMessage msg next -> do
+    case msg of
+      BDInstance _ -> liftEff $ log "propagating BD"
+      CyInstance _ -> liftEff $ log "propagating Cy"
+    H.raise msg
+    pure next
+#+END_SRC
+
+The rest are simple queries to the respective child component, practically
+the same as `CreateBD`:
+#+BEGIN_SRC purescript
+  BDScroll dist next -> do
+    _ <- H.query' CP.cp1 UIBD.Slot $ H.action (UIBD.Scroll dist)
+    pure next
+  BDJump chr xl xr next -> do
+    _ <- H.query' CP.cp1 UIBD.Slot $ H.action (UIBD.Jump chr xl xr)
+    pure next
+
+  CreateCy div next -> do
+    _ <- H.query' CP.cp2 UICy.Slot $ H.action (UICy.Initialize div)
+    pure next
+  ResetCy next -> do
+    _ <- H.query' CP.cp2 UICy.Slot $ H.action UICy.Reset
+    pure next
+#+END_SRC
+
+
+** Config parsing
+   Only actual calling of functions
+
+
+Reads config
+  prints error messages if parsing fails
+
+  validates consfigs
+    prints errors per track if there are any; continues with correct configs
+
+  creates a
+
+  waits for & selects element #psgbHolder
+    errors out w/ console log if no element
+
+** Run UI, create instances, plumbing
+
+  runs the UI
+
+  creates buses
+
+  first for BD (if there are BD tracks):
+    creates tracksinks & sources (configs have been validated, but not used)
+
+    subscribes to the BDInstance message with a coroutine consumer and:
+      attaches tracksink with forkTrackSink; prints error on failure
+
+      subscribes to BD events with subscribeBDEvents
+
+      purpose: hooking stuff up to the buses
+
+    creates BD using mkBd
+
+
+  then does the same for cytoscape, more or less.
+
+
+
+
+Subscribes to events
+  half-hard coded; should probably move to resp. halogen containers...
+  describe forkTrackSink?
+
+
+describe query algebra, childslot & childquery
+  messages used to attach handlers to BD and Cy.js
+
+render:
+  contains buttons for scrolling (BD only for now)
+  div with BD    container
+  div with Cy.js container
+
+eval:
+  really just querying the child components...
+
+other:
+  defines & exposes renderers to JS
+  propagates messages? is that even used
