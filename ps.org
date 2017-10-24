@@ -1,4 +1,5 @@
 * Purescript
+
 * Syntax
 Values and functions are defined in the same way, and functions are curried by default.
 Values can be given type signatures, which are mainly used on the top level.
@@ -68,4 +69,67 @@ infixr 4 type NaturalTransformation as ~>
 first'' :: List ~> Maybe
 first'' Nil        = Nothing
 first'' (Cons a _) = Just a
+#+END_SRC
+
+* Polymorphism, typeclasses
+Purescript supports two types of polymorphism; universal, parametric polymorphism,
+and ad-hoc polymorphism via typeclasses.
+
+Parametric polymorphism let's us define functions that work on any type,
+or are polymorphic over the inner type(s) of some type constructor.
+
+
+#+BEGIN_SRC purescript
+-- parametric polymorphism; 'a' can be *any* type
+id :: forall a. a -> a
+id x = x
+
+-- id, concretized to Int
+idInt :: Int -> Int
+idInt = id
+
+
+-- we can compute the length of any list, no matter its contents
+length :: forall a. List a -> Int
+length Nil = 0
+length (Cons a as) = 1 + length as
+#+END_SRC
+
+With typeclasses, we can define functions which work on any type
+that implement the instance of the typeclass. Functors are a
+simple and powerful example:
+
+#+BEGIN_SRC purescript
+-- typeclasses provide methods on types which implement the instance
+class Functor where
+  map :: (a -> b) -> f a -> f b
+
+instance Functor Maybe where
+  map :: (a -> b) -> Maybe a -> Maybe b
+  map f Nothing  = Nothing
+  map f (Just x) = Just (f x)
+
+
+instance Functor List where
+  map :: (a -> b) -> List a -> List b
+  map f Nil         = Nil
+  map f (Cons a as) = Cons (f a) (map f as)
+#+END_SRC
+
+Adding a constraint to a type parameter in a function's type
+signature, we can make use of the functions from that typeclass.
+Here we add a Functor constraint to be able to map over the provided functor:
+
+#+BEGIN_SRC purescript
+fillWithOnes :: forall f a.
+                Functor f
+             => f a
+             -> f Int
+fillWithOnes = map (const 1)
+
+fillWithOnes (Just "hello") == Just 1
+
+fillWithOnes Nothing == Nothing
+
+fillWithOnes (Cons true (Cons false (Cons false Nil))) == (Cons 1 (Cons 1 (Cons 1 Nil)))
 #+END_SRC
