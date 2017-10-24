@@ -162,62 +162,172 @@ the same as `CreateBD`:
     pure next
 #+END_SRC
 
+*** Rendering
+Next is rendering the component. This is done by providing a function from
+the component `state` to a description of the DSL used by the `renderer`
+type. In our case, we render to `HTML`, and so use the type `ParentHTML`,
+which contains all the types required to interact with the children.
 
-** Config parsing
-   Only actual calling of functions
+#+BEGIN_SRC purescript
+render :: State -> ParentHTML query childQuery childSlot m
+#+END_SRC
+
+The function itself is simple, we use Arrays and some functions to describe
+the HTML tree, a simplified version follows:
+
+#+BEGIN_SRC purescript
+render _ =
+  HH.div_
+    [ HH.button
+      [  HE.onClick (HE.input_ (BDScroll (Bp (-1000000.0)))) ]
+      [ HH.text "Scroll left 1MBp" ]
+
+    , HH.div
+      [] [HH.slot' CP.cp1 UIBD.Slot UIBD.component unit handleBDMessage]
+    ]
+#+END_SRC
+
+This produces a button with the text "Scroll left 1MBp", and clicking on it
+sends a query to `eval` to scroll the BD view 1 MBp to the left; as well as a
+div with the BD child component. Adding the child component here is how we
+create the component, so we must also provide a handler in the parent for
+messages from the child, namely `handleBDMessage`.
+
+*** Messages
+A component can send messages to its parent, or the rest of the application
+in the case of the top-level component. These are the messages the BD and Cy.js
+components can produce, respectively:
+
+#+BEGIN_SRC purescript
+data UIBD.Message
+  = SendBD Biodalliance
+
+data UICy.Output
+  = SendCy Cytoscape
+#+END_SRC
+
+The main component can produce these:
+#+BEGIN_SRC purescript
+data Message
+  = BDInstance Biodalliance
+  | CyInstance Cytoscape
+#+END_SRC
+
+Note that the main container uses its own messages to propagate the children
+components; message passing is limited by Halogen, and anything more complex
+than this should be done on another channel (which is what GGB does with events).
+
+The messages from the BD and Cy.js components are handled by the functions
+`handleBDMessage` and `handleCyMessage`:
+
+#+BEGIN_SRC purescript
+handleBDMessage :: UIBD.Message -> Maybe (Query Unit)
+handleBDMessage (UIBD.SendBD bd) = Just $ H.action $ PropagateMessage (BDInstance bd)
+
+handleCyMessage :: UICy.Output -> Maybe (Query Unit)
+handleCyMessage (UICy.SendCy cy) = Just $ H.action $ PropagateMessage (CyInstance cy)
+#+END_SRC
+
+Note that these produce Queries on the main component. We want to send the
+messages containing the references to the instances out from the component to
+the outside application, hence creating a PropagateMessage query wrapping the
+reference. As seen in `eval` above, this in turn callse `H.raise` on the
+message, sending it to the outside world.
+
+*** Creating the component
+These functions, including one to produce the initial state (simply `const unit`)
+are all put together and provided to the `parentComponent` function,
+producing the Component itself. This can then be provided to Halogen's `runUI`
+function, along with the initial state and an HTML element to be placed in,
+to create and run the Halogen component.
+
+First, however, we need a `main` function application to run.
+
+** The main application
+
+`main` is the function which will be called by the user to run the browser.
+It takes a `Foreign` object -- the one to parse into a browser configuration --
+and then does some stuff with Eff (e.g. be a genetics browser):
+
+-- TODO: remove row blank when compiling with 0.12
+-- TODO: explain runHalogenAff
+#+BEGIN_SRC purescript
+main :: Foreign -> Eff _ Unit
+main fConfig = HA.runHalogenAff do
+#+END_SRC
+
+First we attempt to parse the provided configuration, logging all errors to
+config on failure, otherwise continuing:
+
+#+BEGIN_SRC purescript
+  case runExcept $ parseBrowserConfig fConfig of
+    Left e -> liftEff $ do
+      log "Invalid browser configuration:"
+      sequence_ $ log <<< renderForeignError <$> e
+
+    Right (BrowserConfig config) -> do
+#+END_SRC
+
+With a validated config, we can create the track/graph configs, and create
+the function which will later be used to create Biodalliance:
+
+#+BEGIN_SRC purescript
+      let {bdTracks, cyGraphs} = validateConfigs config.tracks
+
+          opts' = sources := bdTracks.results <>
+                  renderers := config.bdRenderers
+
+      liftEff $ log $ "BDTrack errors: " <> foldMap ((<>) ", ") bdTracks.errors
+      liftEff $ log $ "CyGraph errors: " <> foldMap ((<>) ", ") cyGraphs.errors
+
+      let mkBd :: (∀ eff. HTMLElement -> Eff (bd :: BD | eff) Biodalliance)
+          mkBd = initBD opts' config.wrapRenderer config.browser
+#+END_SRC
+
+After picking the element to run in, we create the Halogen component, and
+create the Buses to be used by the events system. Note that we bind the
+value of `runUI` to `io`:
+
+#+BEGIN_SRC purescript
+          io <- runUI component unit el'
+
+          busFromBD <- Bus.make
+          busFromCy <- Bus.make
+#+END_SRC
+
+`io` can be used to subscribe to messages sent from the main component,
+as well as send queries to it. In this case, we attach a callback
+to listen for the reference to the BD instance, sent by the BD component
+upon creation. We then use the TrackSink and TrackSource configurations
+to hook BD up to the event system. Finally, we ask the main component
+to create the BD instance:
+
+#+BEGIN_SRC purescript
+            io.subscribe $ CR.consumer $ case _ of
+              BDInstance bd -> do
+
+                case bdTrackSink of
+                  Left err -> liftEff $ log "No BD TrackSink!"
+                  Right ts -> forkTrackSink ts bd busFromCy *> pure unit
+
+                liftEff $ case bdTrackSource of
+                  Left err -> log err
+                  Right ts -> subscribeBDEvents ts bd busFromBD
+
+                  --TODO remove BDRef? debug stuff...
+                liftEff $ setBDRef bd
+                pure Nothing
+
+              _ -> pure $ Just unit
+
+            io.query $ H.action (CreateBD mkBd)
+#+END_SRC
+
+The Cytoscape.js code is analogous.
 
 
-Reads config
-  prints error messages if parsing fails
-
-  validates consfigs
-    prints errors per track if there are any; continues with correct configs
-
-  creates a
-
-  waits for & selects element #psgbHolder
-    errors out w/ console log if no element
-
-** Run UI, create instances, plumbing
-
-  runs the UI
-
-  creates buses
-
-  first for BD (if there are BD tracks):
-    creates tracksinks & sources (configs have been validated, but not used)
-
-    subscribes to the BDInstance message with a coroutine consumer and:
-      attaches tracksink with forkTrackSink; prints error on failure
-
-      subscribes to BD events with subscribeBDEvents
-
-      purpose: hooking stuff up to the buses
-
-    creates BD using mkBd
-
-
-  then does the same for cytoscape, more or less.
-
-
-
+* TODO
 
 Subscribes to events
   half-hard coded; should probably move to resp. halogen containers...
   describe forkTrackSink?
-
-
-describe query algebra, childslot & childquery
-  messages used to attach handlers to BD and Cy.js
-
-render:
-  contains buttons for scrolling (BD only for now)
-  div with BD    container
-  div with Cy.js container
-
-eval:
-  really just querying the child components...
-
-other:
-  defines & exposes renderers to JS
-  propagates messages? is that even used
