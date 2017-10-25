@@ -1,0 +1,186 @@
+* Code smells
+
+One major indicator of potential legacy code problems is code smells,
+anti-patterns, or architecture problems
+
+** Examples of bad smells
+
+Chapter 3: Bad Smells in Code
+http://www-public.tem-tsp.eu/~gibson/Teaching/Teaching-ReadingMaterial/BeckFowler99.pdf
+Lists:
+
+- Duplicated Code
+  I think there's a fair bit of this in BD...
+
+Examples:
+  + glyphs!!
+  +
+
+
+- Long Method
+  This practically *is* BD.
+
+- Large Class
+  Oh yes.
+
+- Long Parameter List
+  You know it, *also* with global state/incredibly large objects!
+
+  (suggested solution actually increases use of global data...)
+
+- Divergent Change
+  when a class changes in different ways for different reasons
+    seen often in misnamed methods in BD
+
+- Shotgun Surgery
+  opposite of divergent change;
+  when you have to make a change in code, you have to make it in a lot of places
+
+  also a problem in BD; rendering calls were made at 3-5 different places etc.
+
+- Feature Envy
+  When a class/object gets a bunch of data/methods from another class/object?
+  Book suggests Strategy and Visitor patterns from Gang of Four...
+  TODO: compare those to pure FP patterns
+
+  certainly BD is guilty tho
+
+- Data Clumps
+  When you notice several variables/fields that are often used together
+  in parameters, methods, etc.
+  Argues that these should be combined into a value, which makes some sense.
+  Would probably just use records in PS, or maybe typeclasses.
+  Either way the problem is mitigated simply by FP
+
+  yeah BD does this
+
+- Primitive Obsession
+  this is a good one for both OOP and FP! But especially langs like PS.
+  "Most programming environments have two kinds of data. Record types
+allow you to structure data into meaningful groups. Primitive types are your
+building blocks. Records always carry a certain amount of overhead. They may
+mean tables in a database, or they may be awkward to create when you want them
+for only one or two things."
+
+Except PS has newtypes and 1st class records, and it's easy to create new ADTs.
+Big problem in BD, as much of the internal data is basically stringly typed.
+foreign data imports are also helpful
+
+could be argued that this is one of the cooler things you get with a type system
+like Purescript's.
+
+
+
+- Switch Statements
+  Argues that OOP provides polymorphism to take care of this;
+  typed FP and pattern matching is not the same as imperative switches
+
+  BD does misuse switches; or rather loooong if-else-if's, since JS doesn't
+have switch statements. Terrible; esp. drawing glyphs/"parsing" styles etc.
+
+the whole prepareSubtiers etc. bit could be a chapter on its own
+
+
+
+- Parallel Inheritance Hierarchies
+  "in this case, every time you make a subclass of one class, you also have
+   to make a subclass of another."
+
+Kind of a problem with glyphs; or its dual. Each "interface" the glyph support
+is duplicated over all the glyphs, changing the SVG export would require
+changing some 20-30 classes.
+
+Also probably an issue with the different tiers and stuff.
+
+- Lazy Class
+  A class that's been reduced in size and importance due to refactoring;
+  would be better off without it
+
+Probably somewhere, but I can't remember a specific instance in BD.
+
+- Speculative Generality
+  Abstracting too early -- certainly a potential problem in FP, though
+  you're more likely to crash and burn and waste time, rather than
+  introduce problems (won't compile anyway)
+
+Does BD do this? You can see some signs of it in the various DAS* classes,
+which are now generalized to all tiers. wait -- that's the opposite...
+
+- Temporary Field
+  When an object's field is only set in certain circumstances;
+  makes it more difficult to reason about the class.
+  (One-up that with immutability and purity)
+
+Also yes, all over the place.
+
+- Message Chains
+  "You may see this as a long line of getThis methods, or as a sequence of temps."
+  E.g. all of BD (sending drawing callback 10 functions deep etc.)
+
+- Middle Man
+  When encapsulation goes to the point of one class mainly delegating to some other class.
+
+- Inappropriate Intimacy
+  When classes know too much about other instances of other classes (esp. fields/methods
+that should be private).
+  Solution is to extract common code to a new class.
+  Strictly typed FP doesn't have this problem at all.
+
+- Alternative Classes with Different Interfaces
+  "Use /Rename Method/ on any methods that do the same thing but
+   have different signatures for what they do."
+  Parametric polymorphism and typeclasses deal with this;
+  powerful types makes refactoring this problem away nearly trivial (depending
+  on the complexity of the functions)
+
+- Incomplete Library Class
+  Basically when a library doesn't implement what we want.
+  Less of a problem with the abstractions from category theory;
+  their scope is obvious and parametrically polymorphic.
+  We can tell *exactly* what such a library provides, and what it cannot provide.
+  Otherwise typeclasses and newtypes help, plus equational reasoning
+  and composability of functions.
+  Last of all, the book states "The trouble is that it is often bad form,
+  and usually impossible, to modify a library class to do something you'd
+  like it to do."
+  Except it's not, just make a PR!
+
+- Data Class
+  Classes that have only fields and getters and setters.
+  Complains that the main purpose of these classes are to be manipulated by
+  other classes; I disagree that that is a problem...
+  Obviously superceded by 1st class record types. (Plus immutability and purity...)
+
+"Data classes are like children. They are okay as a starting point, but to
+participate as a grownup object, they need to take some responsibility."
+    lol, just lol
+
+- Refused Bequest
+  When a subclass doesn't make use of all of its inherited method and data.
+  Doesn't apply to FP, obviously.
+
+- Comments
+  Not using comments as a "deodorant"
+  FP is as guilty of this; though static types come in as docs
+
+
+Other potential issues:
+- Mutable state
+- Doing all kinds of stuff all over -- impossible to refactor reasonably;
+  lack of not only equational reasoning/purity, but even any approximation of it
+
+
+
+"Why functional programming matters"
+
+"A Taxonomy and an Initial Empirical Study of Bad Smells in Code"
+http://ai2-s2-pdfs.s3.amazonaws.com/c8eb/4de02f0614969f9e1681b8125deeb0060fd4.pdf
+
+
+Some examples of code smells/architecture problems
+
+
+** Purpose
+Identifying code smells in a legacy code base;
+identifying their problems -- why do they inhibit maintainability/extensibility;
+how can PS be used to reduce the problem, or keep it from appearing in the first place
