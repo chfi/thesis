@@ -197,3 +197,30 @@ min = snd
 # NOTE: just defined a 1-dimensional hitbox, like we want in GlyphPosition. Neat.
 
 Which could be used anywhere we want an ordered pair.
+
+
+This is a gem:
+#+BEGIN_SRC javascript
+if (opts.viewStart !== undefined && typeof(opts.viewStart) !== 'number') {
+    throw Error('viewStart must be an integer');
+}
+#+END_SRC
+
+
+This could cause problems:
+
+#+BEGIN_SRC javascript
+function Browser(opts) {
+    if (!opts) {
+        opts = {};
+    }
+
+    // 140 lines of setting default options
+
+    for (var k in opts) {
+        this[k] = opts[k];
+    }
+
+    // 40 lines of more configuration
+}
+#+END_SRC
