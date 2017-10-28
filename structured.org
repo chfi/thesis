@@ -1,0 +1,265 @@
+
+
+* Introduction - Present legacy code
+** What is it and why do we care
+Wikipedia defines "legacy system":
+"In computing, a legacy system is an old method, technology, computer system, or
+application program, 'of, relating to, or being a previous or outdated computer
+system.' [..] This can also imply that the system is out of date or in need of
+replacement."
+
+TODO statistics on legacy systems; how pervasive are they, how old do they
+     tend to be, how expensive is their maintenance and where do most of
+     the costs fall
+
+TODO sum up why it's a problem
+
+TODO point out source code as one problem; not language or OS, since
+     that's basically stable these days (i.e. they're unlikely to
+     be replaced soon, compared to how fast things moved up until
+     the 90s)
+
+Following this, we define a "legacy codebase" to be the codebase of a
+system which is "old" and "difficult" to work with. The technology itself
+does not matter, only the size and complexity of the codebase itself.
+Likewise we do not look at dependencies, a problem solved by pure functional
+package managers such as Nix and Guix.
+
+TODO
+What remains is "legacy code".
+Why is it a problem, i.e. what causes it (when the system is being
+designed/built) and why does it come up (when someone wants to make
+changes to the system)?
+How have people attempted to solve this problem?
+
+"The maintenance of legacy code is a hard task since developers do not have
+access to details of its implementation."
+http://ieeexplore.ieee.org/abstract/document/7479256/?reload=true
+
+** Why is legacy code a problem
+When someone wants to change the system. Otherwise, if it's running
+smoothly and does everything everyone wants of it, there is no problem.
+
+TODO
+- security fixes
+- bug fixes
+- changes to external dependencies
+- changed features
+- new features (e.g. electronic healthcare records)
+
+
+TODO Why is it difficult to do these things, to change legacy code?
+
+TODO Nobody understands the code => the set of changes that are safe
+     to make are unknown
+
+TODO There is no clear specification of the design or the system
+
+TODO The system is only partly known; there is no way to test
+     that a change made actually is safe (could lead to a crash much later, mem
+     leak, etc.)
+
+TODO The existing data structures etc. can be arbitrarily complex,
+     have old/unused data/fields, be mutated at various places;
+     thus it is difficult to know where to start when inserting
+     new code
+
+TODO Some new feature/solution to a new problem may involve
+     ""stuff (architecture etc.)"" that the existing code
+     is difficult to fit into, or vice versa
+
+TODO In short, lack of certainty in what the system does, and how
+     the code relates to the system and its parts.
+
+
+** How have people tried to solve it
+Reverse engineering of legacy code exposed
+https://doi.org/10.1145/225014.225045
+
+"Reverse engineering of large legacy software systems generally cannot meet its
+objectives because it cannot be cost-effective. [..] it is very costly to
+“understand” legacy code sufficiently well to permit changes to be made safely,
+because reverse engineering of legacy code is intractable in the usual
+computational complexity sense."
+
+TODO Reverse engineering the system -- understand what the system does
+  TODO Can be done manually -- expensive, costs weeks, months of time
+  TODO Can be done automatically (kind of) (probably flawed)
+    TODO Common to extract OOP objects
+
+    TODO Can also do more general modularization:
+          Assessing Modular Structure of Legacy Code Based on Mathematical
+          Concept Analysis
+          https://doi.org/10.1145/253228.253354
+          Automatic modularization by analysing the relation between procedures and
+          global vars; constructs a lattice! Deconstructing (folding?) the lattice in
+          various ways can automatically generate modularization proposals.
+
+
+TODO The most common (citation needed): Do it by hand.
+TODO Not only then, applies to automatic solutions too: we need heuristics
+
+TODO Enter code smells/antipatterns -- heuristics for "bad" code
+TODO define "bad"
+
+*** Code smells
+Quote beck & fowler. List some of the code smells.
+Point out their definitions & "solutions" -- extremely
+focused on class-based OOP.
+
+TODO Detail some general code smells
+TODO Detail some OOP-specific (symptom or solution) code smells
+TODO Detail some code smells that are not applicable to FP
+
+TODO Summarize: what makes a code smell?
+
+TODO something like:
+     Code whose implementation is in the neighborhood of the implementation
+     space of semantically relevant extensions to the program.
+
+     "What we want is to increase the possible implementation space without
+     changing the existing implementation. By transitivity, we're not doing
+     anything in PS that cannot be done in BD. What we *are* doing, is doing
+     this in a way such that the new implementation is closer to the intended
+     program semantics -- for some definition of "closer"."
+
+TODO Quick analysis of what that code looks like (naive, but not really):
+     Immutable
+     Easy to reason about (ref. transparency)
+     Clear data flow
+
+
+*** Does OOP solve this?
+[Maybe skip this section]
+
+**** Why OOP?
+Cite some general references on why OOP became a thing.
+It being the "solution" to legacy code is due to the same reason.
+(how many OOP legacy codebases are there? hm...)
+
+OOP has failed to solve the problem of legacy code (citation needed).
+Why has it failed?
+What could be done differently?
+
+*** Could FP solve this?
+TODO Nobody has tried!
+
+TODO Reasons why it would work well (earlier "good code")
+
+TODO Argue that FP is easier to comprehend, reason about
+
+TODO Argue that it (often) decreases complexity vs. OOP code
+
+TODO Immutability!
+
+TODO referential transparency!!
+
+TODO Static types are good and why they can help
+     ADTs, type classes, parametricity, HKTs,
+     Free theorems, laws...
+
+
+TODO put it together: compile-checked transformations;
+     reusable code/programs that compose to fill implementation gaps
+
+** Transformations to and from a legacy system
+
+TODO We extend an existing system + create a new platform blah bla
+
+TODO By identifying the key data structures and how sys. creates them & from what
+
+TODO Provide data that sys. uses to produce desired output; kinda rev. engineering
+
+TODO Add small hooks for new data input/transformations
+
+TODO Goal: A system that feeds data to/from the legacy system,
+           including producing modules for the legacy API,
+           and will later subsume the legacy system
+
+TODO Goal: A structured application that is both robust and easy to update and
+           change
+
+** Biodalliance - A Legacy JavaScript Application
+TODO describe BD
+
+TODO describe GN2
+
+TODO describe my earlier work on BD: adding modular renderers
+
+TODO describe our general goal with GGB
+
+TODO why we want BD (file format support, ease of adoption)
+
+TODO why we don't want BD (horrible legacy code)
+
+TODO what we do instead:
+  TODO generating renderer modules with glyphs,
+  TODO generating fetching modules
+  TODO wrapping BD and controlling it from external UI
+
+** Pure web development with Purescript
+TODO Purescript is a pure blah blah haskell, compiles to JS
+
+TODO Statically typed
+
+TODO Differences from Haskell
+
+TODO Category theory??? maybe
+
+TODO Good FFI - easy to wrap JS
+
+TODO Property based testing?
+
+
+** Hypothesis and evaluation
+TODO Hypothesis
+FROM
+   Given that code smells are a cause for concern wrt. maintainability and
+   extensibility of legacy code, find code smells -- ones relevant
+   to the Genetics Browser work we want to do -- in the BD codebase,
+   identify the problems they imply if one were to naively try to extend
+   the BD codebase, then identify and present a functional solution
+   using Purescript.
+
+
+
+* Method
+** TODO Our code smells
+TODO list the ones we're looking at, and why (and why not others)
+TODO (process metrics? if there are easy ones to get from github)
+TODO Where our solutions will come from (CT etc.)
+TODO How we'll go about things (piece by piece)
+
+** Graph Genetics Browser
+
+*** TODO Specification
+TODO BD
+TODO Cy.js
+TODO Legacy stuff
+TODO New stuff
+
+
+# Each of these are from their own files
+*** TODO Biodalliance
+
+*** TODO Cytoscape.js
+
+*** TODO Units
+
+*** TODO Rendering
+
+*** TODO Events
+
+*** TODO UI
+
+
+
+* Results
+
+
+
+* Discussion
+
+
+
+* Appendix? SVG
