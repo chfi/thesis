@@ -3,10 +3,6 @@
 Just look at cbrowser.js, quick references outside if appropriate.
 
 ** Problems
-Duplicated code?
-
-Long Method.
-
 Large Class.
 Browser() is nearly 200 lines, but calls:
 realInit() is nearly 150 lines, but calls:
@@ -14,27 +10,17 @@ realInit2() is nearly 500 lines
 
 This indirection seems to be due to async stuff. Could be solved nices.
 
-Long Parameter List.
+Divergent Change -- I mean yeah
 
-Divergent Change?
+Shotgun Surgery  -- complex state, so kind of.
+  -- certainly the case for UI changes
 
-Shotgun Surgery.
-
-Feature Envy?
-
-Data Clumps?
-
-Primitive Obsession.
-  - type checking
-
-Switch Statements?
-
-Parallel Inheritance Hierarchies?
-  Maybe something with tiers etc.?
-
-Temporary Field?
-
+these are the same
+Feature Envy     -- digs deep and far
 Message Chains - rendering? (or should that be elsewhere)
+
+Primitive Obsession -- Yes, everything is string or number, sometimes bool.
+
 
 
 ** Run thru code
@@ -44,6 +30,9 @@ be more modular... (my fault)
 
 ** Examples
 
+*** Entangled types
+Sources and styles are both tightly coupled and separate -- problematic...
+
 Neat solutions in PS include mapping `Source` -> `SourceSansStyle`,
 Modelling type as (Source, Style), etc. (Isomorphic)
 #+BEGIN_SRC javascript
@@ -52,6 +41,7 @@ var sourcesAreEqualModuloStyle = sourcecompare.sourcesAreEqualModuloStyle;
 #+END_SRC
 
 
+*** Defaults and browser state
 Browser constructor begins with 100 lines of setting local Browser values.
 
 Lack of commenting on what each field does; problematic when there is no
@@ -61,6 +51,9 @@ There is also no way to figure out what values are legal, and what they mean;
 static types solve that by providing proper abstraction over the configuration,
 here one must find all places the configuration value is used. Easy when it's
 a boolean; not so much when it's some stringly typed "enumeration".
+
+
+*** Indirection
 
 
 This is just ridiculous
@@ -82,6 +75,8 @@ Basically, the entire constructor, and its "subroutines" realInit and realInit2
 (those names are themselves code smells), create ad-hoc browser elements,
 set a bunch of default state, some of which are just values, others are
 derived from other configuration or data, until the whole thing is "ready".
+
+*** Event handlers
 
 There's no control that each part of the configuration/construction
 works as it should, nor is there any structure to it. These functions:
@@ -110,6 +105,8 @@ BUT, a nice way to do this would be to map raw events to a command ADT, or free 
 Just a big pattern match on that would clean things up nicely.
 
 
+*** Validation and transformations
+
 A *lot* of the code is ad-hoc transformations, stuff like
 
 #+BEGIN_SRC javascript
@@ -126,24 +123,7 @@ Which in a reasonable language would be a catamorphism using some function
 of type `Subtier -> f Number -> f Number` where we catch errors in the
 functor `f`. In another chunk of code:
 
-#+BEGIN_SRC purescript
-if (hit && hit.length > 0 && !thisB.isDragging) {
-    if (doubleClickTimeout) {
-        clearTimeout(doubleClickTimeout);
-        doubleClickTimeout = null;
-        thisB.featureDoubleClick(hit, rx, ry);
-    } else {
-        doubleClickTimeout = setTimeout(function() {
-            doubleClickTimeout = null;
-            thisB.notifyFeature(ev, hit[hit.length-1], hit, tier);
-        }, 500);
-    }
-}
-#+END_SRC
 
-All of that to handle double clicks. Using purescript-behaviors, we could
-define an Event on double clicks by composition (I think). Compare
-to debouncing a switch with electronics vs assembly (maybe).
 
 Stuff like this:
 
@@ -224,3 +204,25 @@ function Browser(opts) {
     // 40 lines of more configuration
 }
 #+END_SRC
+
+*** Global state for local action
+Also just clumsy and difficult to read
+
+#+BEGIN_SRC purescript
+if (hit && hit.length > 0 && !thisB.isDragging) {
+    if (doubleClickTimeout) {
+        clearTimeout(doubleClickTimeout);
+        doubleClickTimeout = null;
+        thisB.featureDoubleClick(hit, rx, ry);
+    } else {
+        doubleClickTimeout = setTimeout(function() {
+            doubleClickTimeout = null;
+            thisB.notifyFeature(ev, hit[hit.length-1], hit, tier);
+        }, 500);
+    }
+}
+#+END_SRC
+
+All of that to handle double clicks. Using purescript-behaviors, we could
+define an Event on double clicks by composition (I think). Compare
+to debouncing a switch with electronics vs assembly (maybe).
