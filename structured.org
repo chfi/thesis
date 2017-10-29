@@ -226,6 +226,85 @@ FROM
 * Method
 ** TODO Our code smells
 TODO list the ones we're looking at, and why (and why not others)
+
+*** TODO Long complicated functions -- but only unnecessarily so.
+maybe remove this. doesn't really apply
+
+*** TODO Duplicated code
+Duplicated code can be a sign of many potential changes and ways
+to refactor the code; especially an unextracted abstraction.
+
+It's problematic because if you find you need to make a change
+to the "abstraction" or how it works, you need to make changes
+in every single piece of related dupe'd code.
+
+It also is difficult to reason about an "abstraction" that hasn't
+actually been abstracted out -- it is likely that each instance
+differs slightly, and the code provides no assistance in reasoning
+on a higher level; you must think the lower-level data flow,
+even if it's not actually semantically relevant to what the
+abstraction should be doing. E.g. why should a function that
+scrolls the view care about how the view is rendered (DOM etc.)
+(there are probably better examples)
+
+FP helps deduplicate code; there are plenty of abstractions to
+let us compose functions and data structures to maximize reuse.
+
+
+*** TODO Primitive obsession
+Primitive obsession is when primitive types are used to represent
+parts of the system that would be better represented as types
+of their own. In JS, we don't really have types, so this is
+rampant. However, even in typed languages such as Java, it is
+common to e.g. represent positions as Integers or Doubles, rather
+than create a type that actually represents the unit corresponding
+to measurements of the value.
+
+Purescript has many tools to create new types; the `newtype`
+keyword is especially useful for this.
+
+
+*** TODO Use of mutable state
+TODO rewrite this paragraph
+
+Mutable state is inherently difficult to reason about (citation needed).
+Functions and objects that refer to implicit mutable state, be it global
+or fields on an object, can behave differently depending on the
+state of the object in question; it becomes extremely difficult
+to reason about what a piece of code does, as it may depend,
+in the middle of the snippet, on some obscure field; worse, it may
+change some field.
+
+
+*** TODO Side effects
+More generally, code that performs side effects is difficult, if not
+impossible, to reason about. Depending on the nature and magnitude
+of the side effects, the effect and output of the code may change
+immensely, even though the code itself, and even the calling code,
+is the same. In short: there is no way to be certain what calling
+a function with side effects does -- there is no way to be confident
+that changing it, or calling it again, is safe.
+
+Purity solves this problem.
+
+
+*** TODO Difficult to make changes
+code that is tightly coupled to other parts, for no apparent reason
+actually this is covered by side effects, basically
+
+
+
+*** Transformations
+We want code that is free from side effects, doesn't use mutable
+state unless appropriate, uses types that are appropriate for
+the values they contain.
+
+We also want code that is easy to reuse etc.
+
+Transformations: From raw data to visualizations; from user input
+to actions; from user configuration to functions.
+
+
 TODO (process metrics? if there are easy ones to get from github)
 TODO Where our solutions will come from (CT etc.)
 TODO How we'll go about things (piece by piece)
