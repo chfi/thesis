@@ -8,11 +8,12 @@ application program, 'of, relating to, or being a previous or outdated computer
 system.' [..] This can also imply that the system is out of date or in need of
 replacement."
 
+
 TODO statistics on legacy systems; how pervasive are they, how old do they
      tend to be, how expensive is their maintenance and where do most of
      the costs fall
 
-TODO sum up why it's a problem
+TODO sum up why it's a problem - new features, new data, security issues
 
 TODO point out source code as one problem; not language or OS, since
      that's basically stable these days (i.e. they're unlikely to
@@ -48,28 +49,53 @@ TODO
 - new features (e.g. electronic healthcare records)
 
 
-TODO Why is it difficult to do these things, to change legacy code?
+WIP Why is it difficult to do these things, to change legacy code?
+WIP Nobody understands the code => the set of changes that are safe
+    to make are unknown
+The main reason it is difficult to work with legacy code is lack
+of knowledge of the system and codebase. A lot of work is required
+to discover what changes can be done without compromising the
+system's current function; one must then come up with a way to
+fit in the desired changes (new features, bug fixes, etc.) in
+that possible implementation space.
+TODO REF
 
-TODO Nobody understands the code => the set of changes that are safe
-     to make are unknown
+WIP There is no clear specification of the design or the system
+This lack of knowledge can be caused by not having a system specification,
+but even if there is one, it is possible (likely?) that the system
+has grown past it -- that the specification does not actually
+describe the current system. A system specification does
+not necessarily help understand the codebase, either.
+TODO REF
 
-TODO There is no clear specification of the design or the system
 
-TODO The system is only partly known; there is no way to test
-     that a change made actually is safe (could lead to a crash much later, mem
-     leak, etc.)
+WIP The system is only partly known; there is no way to test changes
+Often there are few or no tests, making it difficult, if not impossible,
+to be sure that a change has not caused some kind of regression.
+TODO REF
 
-TODO The existing data structures etc. can be arbitrarily complex,
+WIP The existing data structures etc. can be arbitrarily complex,
      have old/unused data/fields, be mutated at various places;
      thus it is difficult to know where to start when inserting
      new code
+If the system has grown organically over a longer period of time,
+the data structures and procedures that manipulate them have likely
+also grown to fit new features etc., leading to large pieces of
+state that are difficult to reason about. Objects may be doing
+something much different from their original purpose. WIP
+TODO REF
 
-TODO Some new feature/solution to a new problem may involve
+WIP Some new feature/solution to a new problem may involve
      ""stuff (architecture etc.)"" that the existing code
      is difficult to fit into, or vice versa
+The changes that need to be made may fundamentally be "out of phase"
+with the existing system. For example, it may require data that
+does exist in some part of the system, but the data is tangled
+up with other state and so on.
 
-TODO In short, lack of certainty in what the system does, and how
-     the code relates to the system and its parts.
+In short, the problem is lack of knowledge in what the system does, and how the
+code relates to the system and its parts. It may also be extremely difficult to
+know if a change made is safe.
 
 
 ** How have people tried to solve it
@@ -82,36 +108,121 @@ objectives because it cannot be cost-effective. [..] it is very costly to
 because reverse engineering of legacy code is intractable in the usual
 computational complexity sense."
 
-TODO Reverse engineering the system -- understand what the system does
-  TODO Can be done manually -- expensive, costs weeks, months of time
-  TODO Can be done automatically (kind of) (probably flawed)
-    TODO Common to extract OOP objects
+As one of the main problems of legacy code is lack of knowledge, one
+of the main ways to attempt to solve it is to reverse engineer
+the existing system. This is usually done manually [TODO REF], but
+can also be done using automatic analysis of the code.
 
-    TODO Can also do more general modularization:
-          Assessing Modular Structure of Legacy Code Based on Mathematical
-          Concept Analysis
-          https://doi.org/10.1145/253228.253354
-          Automatic modularization by analysing the relation between procedures and
-          global vars; constructs a lattice! Deconstructing (folding?) the lattice in
-          various ways can automatically generate modularization proposals.
+*** Code analysis
+One common way is to analyze the code to find ways to modularize
+it, to decouple the pieces from one another. This can be done
+by OOP stuff
+
+Another interesting route is finding a modularization by constructing
+a concept lattice based on where different global variables are used.
+This lattice can then be used to create descriptions on how to
+modularize the codebase.
+REF: Assessing Modular Structure of Legacy Code Based on Mathematical
+     Concept Analysis
+     https://doi.org/10.1145/253228.253354
+
+TODO Problems with these approaches, and to automation of this in general
+TODO probably something about machine learning
 
 
-TODO The most common (citation needed): Do it by hand.
-TODO Not only then, applies to automatic solutions too: we need heuristics
+*** Manual reverse engineering
+The most common (TODO REF) solution is simply to do it by hand. This
+requires that programmers look at, and comprehend, the codebase, and
+how the codebase relates to the semantics of the system. Writing tests
+should also be done to give greater confidence when changes are made.
 
-TODO Enter code smells/antipatterns -- heuristics for "bad" code
-TODO define "bad"
+REF The most common way - Do it by hand.
+
+It's also desirable to know what makes code more or less difficult to
+work with -- both to give a clearer picture of what code to focus on
+when refactoring old systems, as well as give programmers guidelines
+when developing new code. In a word, we want heuristics for good vs.
+bad code. These are called code smells, or antipatterns.
+
+TODO this probably needs... more
+First, however, we need to define what is meant by "good" or "bad" code.
+Simply, a good piece of code makes it clear what it does, how it relates
+to the system at large, and how it can be changed or reused without
+compromising its behavior or the behavior of the system.
+
+TODO get Armstrong quote in here
 
 *** Code smells
-Quote beck & fowler. List some of the code smells.
-Point out their definitions & "solutions" -- extremely
-focused on class-based OOP.
+Beck & Fowler [TODO REF] provides a list of 22 code smells that have been
+used (extensively?) since publication.
+(TODO REFs
+http://ieeexplore.ieee.org/abstract/document/1235447/
+https://link.springer.com/article/10.1007/s10664-006-9002-8
+https://dl.acm.org/citation.cfm?id=2629648
+http://www.sciencedirect.com/science/article/pii/S0164121215000631
+)
 
-TODO Detail some general code smells
-TODO Detail some OOP-specific (symptom or solution) code smells
-TODO Detail some code smells that are not applicable to FP
+Many of the code smells they list, as well as the solutions to them, are
+concerned about class-based object-oriented programming (OOP). OOP has
+been the primary programming paradigm for decades (TODO REF),
+WIP more here (but what?)
 
-TODO Summarize: what makes a code smell?
+Some of the code smells:
+
+**** General
+- Duplicated code - when a piece of code appears multiple times
+  in the codebase, it's a sign of a potential abstraction.
+  It also makes it difficult to change things, as the change needs
+  to be duplicated several times -- which also leads to more opportunities for mistakes to be made.
+
+
+- primitive obsession - Using primitive types to represent values that could
+  be better represented by composite types or wrapped types. This can
+  lead to values being used where they shouldn't be (e.g. providing a
+  Number representing a pixel to a function expecting a Number actually
+  representing the number of objects in an array). This also makes it
+  more difficult to understand what a variable or value is to the program.
+
+- shotgun surgery -
+
+data clumps - eh
+
+div change (maybe?)
+
+speculative generality - kind of interesting
+
+**** OOP-specific
+
+temp field - immutability, purity
+lazy class - boring
+parallel inheritance hierarchies - boring, shotgun surgery
+middle man - boring
+data class - records!!
+refused bequest - boring
+feature envy (getting a bunch of stuff from some other class) - boring
+
+
+**** Procedural-specific
+- long method -
+
+- long parameter list
+
+- switch statements
+
+- msg chains
+
+- inappropriate intimacy
+
+
+
+**** Summary
+What makes a code smell? Our definition of "good" from above
+seems to fit in well with the more general of these code smells.
+These code smells are generally concerned with limiting the reach
+of a piece of code (fewer, more organized method parameters, shorter
+methods, not touching other classes), as well as minimize
+
+TODO something with SOLID maybe
 
 TODO something like:
      Code whose implementation is in the neighborhood of the implementation
@@ -123,26 +234,29 @@ TODO something like:
      this in a way such that the new implementation is closer to the intended
      program semantics -- for some definition of "closer"."
 
-TODO Quick analysis of what that code looks like (naive, but not really):
-     Immutable
-     Easy to reason about (ref. transparency)
-     Clear data flow
-
-
-*** Does OOP solve this?
-[Maybe skip this section]
-
-**** Why OOP?
-Cite some general references on why OOP became a thing.
-It being the "solution" to legacy code is due to the same reason.
-(how many OOP legacy codebases are there? hm...)
-
-OOP has failed to solve the problem of legacy code (citation needed).
-Why has it failed?
-What could be done differently?
+WIP
+Generally, the code smells are largely concerned with procedural
+code. Mutability and side-effects are taken for granted; however,
+pure functional programming (FP) has been growing in popularity, which
+disallows or at least discourages functions with side-effects,
+and immutable data is the norm.
 
 *** Could FP solve this?
-TODO Nobody has tried!
+TODO As noted, OOP has been used both to fix as well as prevent legacy code issues,
+     but has it really worked? If it has, is it the best, or even the only, way?
+
+
+TODO Functional programming as (a -> b) w/o implicit state
+
+TODO Immutability (and how it's getting more and more common outside FP)
+
+TODO Static types -- w/ inference and powerful features
+
+TODO Pure FP as leveraging type system to ensure purity
+
+TODO Category theory as 70 years of documentation in pure FP languages. (Abstractions, good ones!)
+
+TODO Result: referential transparency, program composition, more useful abstractions
 
 TODO Reasons why it would work well (earlier "good code")
 
@@ -150,17 +264,14 @@ TODO Argue that FP is easier to comprehend, reason about
 
 TODO Argue that it (often) decreases complexity vs. OOP code
 
-TODO Immutability!
 
-TODO referential transparency!!
-
-TODO Static types are good and why they can help
-     ADTs, type classes, parametricity, HKTs,
-     Free theorems, laws...
-
-
-TODO put it together: compile-checked transformations;
-     reusable code/programs that compose to fill implementation gaps
+While writing a program in a pure functional language, the programmer
+is encouraged by the language and environment to write code that is
+reusable and easy to reason about [REF Why functional programming matters].
+You also get some level of program correctness, by writing code
+using types that correspond to the program semantics. You're able
+to construct transformations between data structures and compose
+them together -- all type-checked by the compiler.
 
 ** Transformations to and from a legacy system
 
