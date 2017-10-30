@@ -24,53 +24,59 @@ etc.), and each configuration piece is simply assigned to the respective place
 in the application, there is risk of some subpiece being misconfigured, or
 simply missing. Worst case, the application can then crash.
 
-The solution is to parse the configuration at the start of the program,
-from a raw Javascript JSON object into a Purescript type, with validation
-and error handling and reporting. For this I opted for purescript-foreign
-and purescript-argonaut, annotating all failures with error messages,
-which bubble up to the main configuration parser, which returns an error
-object or a successfully parsed configuration.
-
 
 ** Configuring Biodalliance
 
 To give an idea of how configuration can take place in a legacy JS codebase,
-we look at BD.
+we look at BD. Many parts of BD can be configured, not just the tracks
+to display. All of this is provided by the user as a single JS object,
+and passed to the browser constructor which takes care of configuring
+the browser.
 
 TODO example config
 
-TODO Dive deep: follows
+We'll have a brief look at some code smells in the configuration process,
+before moving on to the configuration of GGB, and how it is implemented.
 
+*** Code Examples
 
-*** Problems
-Large Class.
-Browser() is nearly 200 lines, but calls:
-realInit() is nearly 150 lines, but calls:
-realInit2() is nearly 500 lines
+**** Defaults and browser state
+BD has many features, and makes use of a lot state in its main Browser object
+to function. Due to this, much of the browser construction sets various
+pieces of state to default values, and sets others to values from the
+configuration, or uses some configuration data to create an initial value.
 
-This indirection seems to be due to async stuff. Could be solved nices.
+As a prime example of primitive obsession, nearly all of the fields set
+by the browser constructor are numbers or strings, with only a few
+objects. Since this is JavaScript, there is no real type checking,
+though some of the code makes use of basic validation. However, it is
+wordy, and does not provide much:
 
-Divergent Change -- I mean yeah
+#+BEGIN_SRC javascript
+if (opts.viewStart !== undefined && typeof(opts.viewStart) !== 'number') {
+    throw Error('viewStart must be an integer');
+}
 
-Shotgun Surgery  -- complex state, so kind of.
-  -- certainly the case for UI changes
+this.viewStart = opts.viewStart;
+#+END_SRC
 
-these are the same
-Feature Envy     -- digs deep and far
-Message Chains - rendering? (or should that be elsewhere)
+Verbosity alone makes it is understandable that only a few of the many values
+set are checked like this. After various defaults are set, all other
+options from the configuration object are set on the browser object:
+#+BEGIN_SRC javascript
+// 140 lines of setting default options
+for (var k in opts) {
+    this[k] = opts[k];
+}
+#+END_SRC
 
-Primitive Obsession -- Yes, everything is string or number, sometimes bool.
+Meaning if the user has somehow set an option with the same name as one
+of the fields used by BD, the browser will silently use the provided
+value, even though it may be entirely incorrect. E.g. providing a number
+to a function expecting a HTML DOM element.
 
+**** Entangled types (probably remove this)
 
-
-*** Run thru code
-Bunch of imports, including imports from stuff like renderers, which "should"
-be more modular... (my fault)
-
-
-*** Examples
-
-**** Entangled types
 Sources and styles are both tightly coupled and separate -- problematic...
 
 Neat solutions in PS include mapping `Source` -> `SourceSansStyle`,
@@ -81,53 +87,21 @@ var sourcesAreEqualModuloStyle = sourcecompare.sourcesAreEqualModuloStyle;
 #+END_SRC
 
 
-**** Defaults and browser state
-Browser constructor begins with 100 lines of setting local Browser values.
-
-Lack of commenting on what each field does; problematic when there is no
-easy way to see where it is used (could be in another file, or several other files).
-
-There is also no way to figure out what values are legal, and what they mean;
-static types solve that by providing proper abstraction over the configuration,
-here one must find all places the configuration value is used. Easy when it's
-a boolean; not so much when it's some stringly typed "enumeration".
-
-
 **** Indirection
+The constructor itself calls a method `browser.realInit()` as it finishes.
+This function continues much like the constructor, preparing the browser.
+Finally, the method `browser.realInit2()` is called.
 
-
-This is just ridiculous
-https://github.com/chfi/dalliance/blob/master/js/cbrowser.js#L386
-#+BEGIN_SRC javascript
-var pollInterval = setInterval(function() {
-    if (window.getComputedStyle(thisB.browserHolderHolder).display != 'none' &&
-        thisB.tierHolder.getBoundingClientRect().width > 0)
-    {
-        clearInterval(pollInterval);
-        thisB.realInit2();
-    }
-}, 300);
-#+END_SRC
-
-All of that just to keep trying something until it succeeds.
-
+TODO rewrite:
 Basically, the entire constructor, and its "subroutines" realInit and realInit2
 (those names are themselves code smells), create ad-hoc browser elements,
 set a bunch of default state, some of which are just values, others are
 derived from other configuration or data, until the whole thing is "ready".
 
 **** Event handlers
-
-There's no control that each part of the configuration/construction
-works as it should, nor is there any structure to it. These functions:
-- Create and work with HTML elements
-- set default options, configuration
-- setting a whole lot of UI state, including that which is used in submenus etc.
-- Sets event handlers, which are filled with code duplication, low level handling
-  of events, low level responses to events. Scrolling up and down with the keys is a good example:
-    The *same* code, 80 lines long, duplicated, right after another.
-
-wouldn't even need much FP to deal with that. Just do
+WIP
+The browser constructor also sets the various DOM event handlers used
+by the browser's UI.
 
 #+BEGIN_SRC javascript
 if (ev.keyCode == 38 || ev.keyCode == 87 || // up arrow   | w
@@ -141,13 +115,10 @@ passed to some other function. Why not map the keyCodes to those arguments
 and leave the rest the same?
 
 
-BUT, a nice way to do this would be to map raw events to a command ADT, or free functor/monad.
-Just a big pattern match on that would clean things up nicely.
-
-
 **** Validation and transformations
-
-A *lot* of the code is ad-hoc transformations, stuff like
+WIP
+This style of code is commonly seen in code throughout BD, including
+configuration:
 
 #+BEGIN_SRC javascript
 while (sti < st.length && ry > st[sti].height && sti < (st.length - 1)) {
@@ -159,10 +130,8 @@ if (sti >= st.length) {
 }
 #+END_SRC
 
-Which in a reasonable language would be a catamorphism using some function
-of type `Subtier -> f Number -> f Number` where we catch errors in the
-functor `f`. In another chunk of code:
-
+This code removes the sum of the height in pixels of the tracks from a value.
+It does this with external effects and state.
 
 
 Stuff like this:
@@ -183,70 +152,6 @@ if (thisB.isDragging && rx != dragOrigin && tier.sequenceSource) {
 }
 #+END_SRC
 
-Compare to:
-
-#+BEGIN_SRC javascript
-if (thisB.isDragging && rx != dragOrigin && tier.sequenceSource) {
-    let f = x => thisB.viewStart (x / thisB.scale);
-
-    let [min,max] = [rx, dragOrigin].map(f).sort();
-
-    thisB.notifyRegionSelect(thisB.chr, min, max);
-}
-#+END_SRC
-
-In a typed language like PS, we could use foldMap over a Tuple:
-
-#+BEGIN_SRC purescript
-type Interval a = Tuple (Min a) (Max a)
-
-mkInterval :: forall f a.
-              Foldable f
-           => Ord a
-           => f a
-           -> Interval a
-mkInterval = foldMap f
-  where f :: f a -> Interval a
-        f a = Tuple (Min a) (Max a)
-
-min, max :: forall a. Interval a -> a
-min = fst
-min = snd
-#+END_SRC
-
-# NOTE: just defined a 1-dimensional hitbox, like we want in GlyphPosition. Neat.
-
-Which could be used anywhere we want an ordered pair.
-
-
-This is a gem:
-#+BEGIN_SRC javascript
-if (opts.viewStart !== undefined && typeof(opts.viewStart) !== 'number') {
-    throw Error('viewStart must be an integer');
-}
-#+END_SRC
-
-
-This could cause problems:
-
-#+BEGIN_SRC javascript
-function Browser(opts) {
-    if (!opts) {
-        opts = {};
-    }
-
-    // 140 lines of setting default options
-
-    for (var k in opts) {
-        this[k] = opts[k];
-    }
-
-    // 40 lines of more configuration
-}
-#+END_SRC
-
-**** Global state for local action
-Also just clumsy and difficult to read
 
 #+BEGIN_SRC purescript
 if (hit && hit.length > 0 && !thisB.isDragging) {
@@ -267,7 +172,33 @@ All of that to handle double clicks. Using purescript-behaviors, we could
 define an Event on double clicks by composition (I think). Compare
 to debouncing a switch with electronics vs assembly (maybe).
 
-** The top - BrowserConfig
+
+**** Code smell summary
+REWRITE
+There's no control that each part of the configuration/construction
+works as it should, nor is there any structure to it. These functions:
+
+- Create and work with HTML elements
+
+- set default options, configuration
+
+- setting a whole lot of UI state, including that which is used in submenus etc.
+
+- Sets event handlers, which are filled with code duplication, low level handling
+  of events, low level responses to events. Scrolling up and down with the keys
+  is a good example: The *same* code, 80 lines long, duplicated, right after
+  another.
+
+*** Another approach
+
+The solution used in GGB is to parse the configuration at the start of the
+program, from a raw Javascript JSON object into a Purescript type, with
+validation and error handling and reporting. For this I opted for
+purescript-foreign and purescript-argonaut, annotating all failures with error
+messages, which bubble up to the main configuration parser, which returns an
+error object or a successfully parsed configuration.
+
+** BrowserConfig
 
 The type BrowserConfig represents the highest level of the GGB configuration
 hierarchy; it is the parsed version of the JS object provided by the user.
@@ -624,13 +555,11 @@ validateTemplates rcs = traverse (validateTemplate rcs)
 The function tries to validate all given templates, and returns the first failure if there are any.
 Validation of a collection of things for free!
 
-TODO: remove below text into the source files for documentation. You can refer to that,
-but I would just continue with TrackSink here.
+TODO: remove below text into the source files for documentation. You can refer to that, but I would just continue with TrackSink here.
 
 **** Parsing the user-provided SourceConfigs
 
--- TODO: reword "in the type"
-The SourceConfig and TrackSource validation is done in the type Either String,
+The SourceConfig and TrackSource validation is done in Either String,
 while the BrowserConfig parsing is done in the type Except (NonEmptyList ForeignError).
 To actually use these functions when parsing the user-provided configuration,
 we need to do a transformation like this:
