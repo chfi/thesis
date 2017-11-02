@@ -4,26 +4,49 @@
   rarely if ever used, and could be replaced entirely where it is used
   with a lens
 
-** The problem
-   Often, units are not used in computation.
+** Biodalliance/The problem
+It is often the case that values in programs are represented using
+primitive types, rather than using the fact that different units
+in fact can be viewed as different types. When all values are regular
+JS numbers, there is nothing to stop the programmer from accidentally
+adding a length to a weight, which is likely to lead to problems.
+It also becomes more difficult to comprehend what a piece of code does.
+TODO argue for/justify last sentence?
+
 While they are displayed in visualizations, graphs, etc.,
 the underlying representation is rarely anything other than a string
 or a number. That is, to the computer, there is no semantic difference
 between e.g. the position of a basepair on some chromosome, the
 volume of a house, or pi -- all of these numbers could be used interchangeably.
 
-Of course, this is rarely desired, as these values do have different semantics
-to the programmer and user. It would be useful to provide the computer with
-this information. We can accomplish this in Purescript, to some extent, using newtypes.
+WIP this is the case in Biodalliance
+BD uses mainly raw JS numbers and strings for representing its state and data,
+with a few JS objects used mainly for more complex information.
+
+TODO examples
+
+WIP "solutions" in JS -- tagged objects
+One way to solve this problem in JS would be to use something like the `daggy`
+library [TODO footnote: https://github.com/fantasyland/daggy], which adds
+tagged sum "types" to JS. The developer still needs to make sure they are
+used correctly, but at least the program will fail with an error if a value
+representing a pixel length is supplied to a function expecting a length
+in basepairs.
+
+Since Purescript actually has a type checker and built-in sum types, we
+expect it to be easier to represent these kinds of units. In fact, Purescript
+lets us create new types wrapping existing types, without any runtime cost.
+This is done using newtypes.
+
 
 ** Newtypes
 
 Newtypes are one of the ways of creating types in Purescript. They
 can only have one single data constructor, and that constructor must
-have one single parameter -- a useful way to think about them is that
-they wrap existing types. In fact, at runtime, they are indentical to
-the wrapped type, which can be exploited when working with the FFI.
-It also means there is no performance hit.
+have one single parameter, hence the intuition that they wrap an
+existing type. At runtime, values in a newtype are identical to
+values of the underlying type, which can be exploited when working with the FFI,
+plus there is no performance hit when using newtypes.
 
 ** Positions
    Biodalliance uses basepairs (Bp) for all position data, and stores this
