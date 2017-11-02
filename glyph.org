@@ -16,9 +16,11 @@ The Glyphs range from basic geometric shapes such as boxes and
 triangles, to more complex "higher order" ones, which take
 other glyphs and e.g. translates them.
 
-TODO constructor
-Glyphs are created using the appropriate constructor. For
-example, a Box Glyph:
+WIP constructor
+Glyphs are created using the appropriate constructor, which takes data such
+as position on screen, color, and so on. For example, the Glyph to create
+a box (rectangle) requires position, size, color, transparency, and
+radius (for rounding corners):
 
 #+BEGIN_SRC javascript
 function BoxGlyph(x, y, width, height, fill, stroke, alpha, radius) {
@@ -35,14 +37,15 @@ function BoxGlyph(x, y, width, height, fill, stroke, alpha, radius) {
 
 These fields are then used in the other methods, such as `draw()`,
 which draws the Glyph to a provided canvas context. All of the
-`draw()` methods use basic HTML5 canvas commands:
+`draw()` methods use basic HTML5 canvas commands. A snippet of `BoxGlyph.draw()`
+follows; the function argument is a HTML5 canvas context to perform the
+drawing actions on:
 
-TODO fix indentation etc.
 #+BEGIN_SRC javascript
   BoxGlyph.prototype.draw = function(g) {
       var r = this._radius;
     // ...
-            if (this._alpha != null) {
+      if (this._alpha != null) {
             g.save();
             g.globalAlpha = this._alpha;
         }
@@ -64,7 +67,15 @@ TODO fix indentation etc.
     }
 #+END_SRC
 
-TODO .toSVG() using thin wrapper around DOM API
+Note that the HTML5 canvas context is stateful, and commands such
+as "fillRect" and "strokeRect" draw shapes using the current state,
+which is set with e.g. the `fillStyle` and `strokeStyle` fields.
+
+
+WIP .toSVG() using thin wrapper around DOM API
+BD supports exporting the browser view to SVG, which is accomplished by
+each Glyph having a `toSVG` method. `toSVG()` returns an SVG element
+representing the glyph in question.
 
 #+BEGIN_SRC javascript
   BoxGlyph.prototype.toSVG = function() {
@@ -85,9 +96,10 @@ TODO .toSVG() using thin wrapper around DOM API
   }
 #+END_SRC
 
-TODO .min(), .max(), .height(), minY(), maxY()
+WIP .min(), .max(), .height(), minY(), maxY()
 Constant functions `min()`, `max()`, and so on, are used to calculate
-the bounding boxes of glyphs:
+the bounding boxes of glyphs, to detect whether a user has clicked
+on a glyph:
 
 #+BEGIN_SRC javascript
 BoxGlyph.prototype.min = function() {
@@ -103,7 +115,6 @@ BoxGlyph.prototype.height = function() {
 }
 #+END_SRC
 
-TODO where these are called from
 
 
 WIP problems: difficult to create new glyphs,
@@ -141,28 +152,68 @@ data GlyphF a =
 #+END_SRC
 
 The type parameter `a` in `GlyphF` is there so we can create a Functor
-instance.
-
-TODO why is functor instance important; why do we care?
+instance. This is important, because the Free monad wraps a Functor.
+To reduce boilerplate, we let the compiler derive the Functor instance
+for GlyphF -- if a type can be made into a Functor, there is only one
+implementation, and it is mechanical.
 
 #+BEGIN_SRC purescript
 derive instance functorGlyph :: Functor GlyphF
+#+END_SRC
 
+The Free monad is named so because it is the
+
+In Haskell, the definition is very simple, thanks to non-strict evaluation:
+
+#+BEGIN_SRC haskell
 data Free f a = Pure a
               | Bind f (Free f a)
+#+END_SRC
+
+NOTE: this is probably overkill; especially the stuff with ((,) a)
+Here, `f` is the underlying functor, and `a` is whatever value we want to return.
+`Free` provides two value constructors; one containing only a single value (equivalent
+to the `pure` function in the Applicative typeclass), the other containing a value
+in our underlying functor, which in turn contains the next "step" in the computation
+in the Free monad. The Free monad can be seen as a list of commands in a DSL,
+where said DSL is defined entirely in the underlying functor. Another way of
+looking at it is as a list of functors. In fact, if the underlying functor
+is `(,) a`, that is, the type of two-element pairs where the first element is
+of some type `a`, we have a type that is isomorphic to a regular list:
+
+
+#+BEGIN_SRC haskell
+  type List a = Free ((,) a) ()
+
+  [1,2,3] ~ Bind (1,
+               Bind (2,
+                  Bind (3, (Pure ()))))
+#+END_SRC
+
+The Purescript definition of Free is more complicated, so as to be stack-safe in
+a strict language. However, the rest of the code is in Purescript.
+
+The free monad constructs a list of commands, and these commands can then be
+interpreted into some other functor, including effectful ones. Examples will
+come; there is some work left before we get there. First we wrap our `GlyphF`
+functor in `Free`, with a type synonym to make things cleaner:
+
+#+BEGIN_SRC purescript
 
 type Glyph = Free GlyphF
 #+END_SRC
 
-TODO Free monad intro -- super basic
-
-(TODO: this is poorly worded -- it's not really "putting" GlyphF in "the" free monad...)
-GlyphF is the type of the primitives, and putting it in the Free monad defines a
-type that is a list of glyph primitives. Since it's a monad, we also can use
-do-notation to create glyphs, after creating some helper functions:
+Next we want to lift our `GlyphF` data constructors into functions. This is
+done using the `liftF` function, which has the following signature:
 
 #+BEGIN_SRC purescript
-liftF :: forall f. f ~> (Free f)
+liftF :: forall f a. f a ~> Free f a
+#+END_SRC
+
+Here we use `liftF` to lift two of the commands in `GlyphF` to `Free GlyphF`,
+the rest are exactly analogous and elided:
+
+#+BEGIN_SRC purescript
 
 circle :: Point -> Number -> Glyph Unit
 circle p r = liftF $ Circle p r unit
@@ -173,8 +224,13 @@ stroke c = liftF $ Stroke c unit
 -- and so on
 #+END_SRC
 
-`liftF` simply lifts a functor into the Free monad. Now, we can create arbitrarily
-complex glyphs with an embedded DSL:
+Since it's a monad, we also can use
+do-notation to create glyphs, after creating some helper functions:
+
+Now we have a number of functions which produce values in the type `Free GlyphF`.
+With them, we can use Purescript's do-notation, and all the other tools that
+come with the Monad typeclass. Here we create a simple glyph that consists of
+three primitives:
 
 #+BEGIN_SRC purescript
 crossedOut :: Point -> Number -> Glyph Unit
@@ -184,12 +240,14 @@ crossedOut p@{x,y} r = do
   line {x:x-r, y:y+r} {x:x+r, y:y-r}
 #+END_SRC
 
-A Glyph, then, is simply a data structure. The interesting part lies in interpreting
-this data structure; or, in other words, transforming it into another data structure,
-one that *does* something. In fact, an interpreter consists of a natural transformation
-from the GlyphF functor to some other functor.
+A Glyph, then, is simply a data structure. The interesting part lies in
+interpreting this data structure; or, in other words, transforming it into
+another data structure, especially one that performs effects. In fact, an
+interpreter consists of a natural transformation from the `GlyphF` functor to some
+other functor.
 
-An example is in order; let's look at printing glyphs to console:
+We continue with a simple interpreter, one which transforms a `Glyph` into
+a `String`, which can then be printed to console, or otherwise logged.
 
 ** Logging glyphs
 The GlyphF.Log interpreter transforms Glyphs to Strings, which we can then log
@@ -443,7 +501,7 @@ TODO test output
 
 
 ** Limitations/Performance
-TODO inefficient -- rendering 1000s of glyphs can be slow,
+TODO inefficient -- rendering tens of thousands of glyphs can be slow,
      each glyph setting its own stroke & fill colors, even if all glyphs
      look the same
      NOTE: still pretty fast! 100k in 8 seconds, and (probably?) O(n).
