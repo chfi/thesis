@@ -371,7 +371,29 @@ type BoundingBox = { min :: Unit -> Number
 
 When constructing glyphs in BD, each new glyph provides its own explicit bounding box.
 This is clearly insufficient for our purposes; instead, we make use of the fact
-that bounding boxes clearly form a monoid.
+that bounding boxes form a semigroup, and in fact also a monoid.
+
+*** Semigroups and monoids
+TODO: <> can be rendered nice in latex, look that up
+Semigroups and monoids are concepts from abstract algebra and category theory,
+however they are immensely useful in pure FP, as they appear in many different
+areas.
+
+A semigroup is an algebraic structure consisting of a set together with an
+associative binary operation. Let `S` be the set in question and `x`, `y`, `z`
+any three elements from `S`, with the binary operation `<>`. If this following
+law is true, we have a semigroup:
+
+Associativity: (x <> y) <> z == x <> (y <> z)
+
+A monoid is a semigroup with one special element, an identity. The example from
+above is a monoid if there is an element `e` in `S` such that these laws apply
+for all elements `x` in `S`:
+
+Left identity:   x <> e == x
+Right identity:  e <> x == x
+
+Now we can explore how bounding boxes form a monoid.
 
 *** Monoidal bounding boxes
 TODO: ref to monoids and diagrams functional pearl
@@ -385,11 +407,10 @@ newtype GlyphPosition = GlyphPosition { min :: Number
                                       }
 #+END_SRC
 
-It is simply a newtype wrapper over a record describing the bounding box. First,
-we observe that a bounding box is a semigroup, where the result of appending
-two bounding boxes is the minimal box containing both of the inputs. That is,
-each of the four sides of the new bounding box is whichever of the two input
-sides are outermost:
+It is a newtype wrapper over a record describing each of the four edges of the bounding box.
+This is a semigroup, where the binary operation produces the minimal bounding box
+that covers both inputs. That is, we take the minimum or maximum of the respective
+values, to get whichever maximizes the area covered:
 
 #+BEGIN_SRC purescript
 instance semigroupGlyphPosition :: Semigroup GlyphPosition where
@@ -401,13 +422,22 @@ instance semigroupGlyphPosition :: Semigroup GlyphPosition where
                     }
 #+END_SRC
 
-Note the use of the the minimum and maximum functions from the Math module,
-and how they're really doing all the heavy lifting.
+Note the use of the the minimum and maximum functions from the Math module, and
+how they're really doing all the heavy lifting. For `GlyphPosition` to be a
+monoid, we require an identity element. We can use the fact that the semigroup
+instance uses `min` and `max` as a hint. While there is no minimum or maximum
+real number,
+(TODO: add footnote about floating point inaccuracies... would also be better off using Maybe)
+we can cheat and use positive and negative infinity, which exist in JS. Then
+we have:
 
-To transform this into a monoid, we require an identity element. Since what
-`append` does is to take the minimum or maximum of the various components,
-our identity must contain the identities for minimum and maximum, i.e.
-positive respective negative infinity.
+#+BEGIN_SRC purescript
+forall x. Math.min x  infinity == x
+forall x. Math.max x -infinity == x
+#+END_SRC
+
+Now the identity `GlyphPosition` is obvious -- the minimum sides are set to
+positive infinity, and the maximum sides are set to negative infinity:
 
 #+BEGIN_SRC purescript
 instance monoidGlyphPosition :: Monoid GlyphPosition where
