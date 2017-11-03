@@ -4,10 +4,59 @@ BD and Cy.js -- together. It also creates and to some extent manages
 the JS browser track instances, and renders the HTML for the entire
 UI.
 
-To do all this, we use Halogen, from purescript-halogen, a type-safe
-UI library, similar in purpose to React. Event passing between tracks
-is taken care of by purescript-aff-bus and threads from purescript-aff,
-and
+
+** Biodalliance
+WIP BD intro
+Biodalliance has a full-featured UI for exploring genomic data chromosome-wise,
+adding and removing currently displayed tracks, configuring browser options, and
+exporting the current browser view to various formats. BD accomplishes this by
+creating and working with DOM elements and the HTML5 canvas API, and setting
+handlers on DOM events such as clicking and dragging the browser view, or
+pressing the arrow keys to scroll.
+
+WIP DOM actions
+Because BD does not use any abstracting library for dealing with the DOM, and
+likely because BD has grown features organically over time, the code for
+updating the UI is interleaved with other code, including event handlers,
+fetching data for a track, and more. BD also programmatically sets various CSS
+properties on UI elements, and uses the web browser's computed stylesheet to
+figure what manipulations are necessary.
+
+TODO example
+
+TODO Events
+  NOTE: mainly covered in events.org
+
+TODO example
+
+WIP Problems
+In short, BD's UI uses plenty of global state, and is highly complex and
+spread out over the codebase. Adding a UI element would require finding
+a place in the DOM where it would fit -- both in screen estate as well
+as in styling --  and somehow suture it into the code while making sure
+that the existing UI elements are not negatively affected by this sudden
+new element, plus that the other UI elements and functionality do not
+interact with the element in some undesired manner.
+
+Another problem, that could arise when adding some feature, not necessarily
+modifying the UI itself, is the risk of the interface ending up in an
+inconsistent state. With all the global state that is used, both in the
+DOM and in the BD browser itself, it is difficult to know what changes
+can be made. One cannot even call a function which performs some action
+when a button is clicked, without risking that the function itself
+toggles some state.
+
+WIP How we do it in PS
+In Purescript, we do not juggle DOM elements and events. Instead, we use
+Halogen, from purescript-halogen, a type-safe UI library, similar in purpose to
+React. Event passing between tracks is taken care of by purescript-aff-bus and
+threads from purescript-aff, while DOM events are handled by Halogen.
+
+Using these tools, we can construct a potentially complex UI, with some,
+albeit not absolute, confidence that the UI will not move to an inconsistent
+state. Halogen also provides a DSL for declaratively constructing the
+DOM of our application. Naturally, there is no implicit global state to
+be concerned about.
 
 
 ** Quick Halogen intro
