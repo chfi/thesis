@@ -717,4 +717,134 @@ var bdTrackSinkConfig = [ { eventName: "location",
                         ];
 #+END_SRC
 
-NOTE: add example of passing this information into PS.
+# NOTE: add example of passing this information into PS.
+
+*** Running TrackSources and TrackSinks
+
+For TrackSource and TrackSink to be usable we need to be able to create them
+from the provided configurations, and provide functions for applying them to
+events as appropriate.
+
+**** TrackSource
+
+To create a TrackSource, the provided templates are parsed and validated.
+Since a TrackSource is a list of parsers, if the SourceConfig is correct,
+a function from raw events to parsed events is returned, wrapped in a singleton
+list and the TrackSource type:
+#+BEGIN_SRC purescript
+makeTrackSource :: SourceConfig -> Either String (TrackSource Event)
+makeTrackSource sc = do
+  rawTemplates <- parseRawTemplateConfig sc.rawTemplate
+  eventTemplates <- validateTemplates rawTemplates
+                    =<< parseTemplateConfig sc.eventTemplate
+
+  pure $ TrackSource $ singleton $ \rawEvent -> do
+    vals <- parseRawEvent rawTemplates rawEvent
+    evData <- fillTemplate eventTemplates vals
+    pure $ { name: sc.eventName, evData }
+#+END_SRC
+
+To extend the above function to work on a collection of configuration objects,
+we use function composition to first attempt to use each provided configuration
+to create a TrackSource, followed by combining the list of parsers into a single
+one:
+
+#+BEGIN_SRC purescript
+makeTrackSources :: Array SourceConfig -> Either String (TrackSource Event)
+makeTrackSources = map fold <<< traverse makeTrackSource
+#+END_SRC
+
+First `traverse` is used to try to create the TrackSources, which
+returns an array of `TrackSource Event` if all were legal, or an error if
+something went wrong. Next, `map` is used to apply a function to the `Right`
+side of the `Either` from the use of `traverse`, and the applied function
+is `fold`, which concatenates a collection of values of some monoid into
+a single value -- the monoid in question is TrackSource.
+
+This is not the only reasonable way of defining this function -- one may very
+well want to collect the error messages while returning the successes. As
+`makeTrackSources` demonstrates, not much code is needed to compose functions
+to provide the validation logic that is desired, and there is nothing unique
+about this function; all that is required is swapping out some of the functions.
+
+# TODO an example of this! e.g. collecting both successes and failures.
+# it's a fold and a tuple, basically
+
+Finally, a way to use a TrackSource is required. The following function uses
+a TrackSource to parse a provided JSON value:
+
+#+BEGIN_SRC purescript
+runTrackSource :: TrackSource Event -> Json -> Array Event
+runTrackSource (TrackSource ts) raw = filterMap (_ $ raw) ts
+#+END_SRC
+
+It works by applying each function in the array wrapped by TrackSource to the
+provided value, filtering out the `Nothing`s and returning an array of
+successfully parsed `Events`.
+
+**** TrackSink
+
+A TrackSink is a map from event names to a function that handles the event,
+so to make one we create a singleton map from the provided event name to
+the provided function, and wrap it in the TrackSink type:
+
+#+BEGIN_SRC purescript
+makeTrackSink :: SinkConfig ~> TrackSink
+makeTrackSink sc = TrackSink $ StrMap.singleton sc.eventName sc.eventFun
+#+END_SRC
+
+
+Using a collection of `SinkConfigs` to produce a single `TrackSink` is not
+in itself complicated, but we do some validation, namely ensuring that
+there are not multiple handlers for a given event:
+# NOTE/TODO there is no real reason for there to only be one handler...
+
+#+BEGIN_SRC purescript
+makeTrackSinks :: ∀ a.
+                  Array (SinkConfig a)
+               -> Either String (TrackSink a)
+makeTrackSinks scs = do
+  let count = StrMap.fromFoldableWith (+) $ map (\c -> Tuple c.eventName 1) scs
+      overlapping = StrMap.filter (_ > 1) count
+
+  when (not StrMap.isEmpty overlapping)
+    let error = foldMap (append "\n" <<< show) $ StrMap.keys overlapping
+    in throwError $ "Overlapping tracksinks!\n" <> error
+
+  pure $ foldMap makeTrackSink scs
+  #+END_SRC
+
+In this case, we use `foldMap` to map the `makeTrackSink` function over the
+provided configurations, and then use the `TrackSink` monoid instance to
+combine them -- similar to `fold <<< traverse` in the case of `TrackSource`.
+
+To use a `TrackSink`, we see if a handler for the provided event exists.
+If it does, we apply it to the contents of the event:
+
+#+BEGIN_SRC purescript
+runTrackSink :: ∀ a. TrackSink a -> Event -> Maybe a
+runTrackSink (TrackSink sink) event = do
+  f <- StrMap.lookup event.name sink
+  pure $ f event.evData
+#+END_SRC
+
+However, since `TrackSinks` are intended to perform effects, a helper function
+for that is useful. In particular, the following function creates a "thread"
+(TODO footnote on JS singlethreaded) that reads events from a provided `BusRW`
+(TODO define/refer to `BusRW` intro), running effectful functions from the
+provided `TrackSink` if the received event has a handler:
+
+# TODO make sure that `forkTrackSink` is correct w/o effect rows
+#+BEGIN_SRC purescript
+forkTrackSink :: ∀ env.
+                 TrackSink (env -> Eff Unit)
+              -> env
+              -> BusRW Event
+              -> Aff Canceler
+forkTrackSink sink env bus = forkAff $ forever do
+  event <- Bus.read bus
+
+  case runTrackSink sink event of
+    Nothing -> pure unit
+    Just f  -> liftEff $ f env
+#+END_SRC
