@@ -1,14 +1,14 @@
 * Config
 
-NOTE: give an intro on the state-of-the-art - we move that to the main
-intro later. Explain *why* you decided for this architecture - late
-type checking. (late type checking is more Events; much of this chapter
-probably ought to be refactored to that chapter)
+# NOTE: give an intro on the state-of-the-art - we move that to the main
+# intro later. Explain *why* you decided for this architecture - late
+# type checking. (late type checking is more Events; much of this chapter
+# probably ought to be refactored to that chapter)
 
-Note: configuration is a big topic, so deserves a large chapter. Configuration
-with the type system leaves little necessary code for logic. You can prove that!
-(Pointed out that the type signature of parseBrowserConfig provides a lot
- of information)
+# Note: configuration is a big topic, so deserves a large chapter. Configuration
+# with the type system leaves little necessary code for logic. You can prove that!
+# (Pointed out that the type signature of parseBrowserConfig provides a lot
+#  of information)
 
 Software needs to be configurable.  The Genetics Graph Browser (GGB)
 has many pieces that can and/or need to be configured by the user or system
@@ -33,7 +33,44 @@ to display. All of this is provided by the user as a single JS object,
 and passed to the browser constructor which takes care of configuring
 the browser.
 
-TODO example config
+WIP example config
+A very basic browser configuration could look like this:
+
+#+BEGIN_SRC javascript
+  var biodalliance = new Browser({
+
+        prefix: '../',
+        fullScreen: true
+
+        chr:        '19',
+        viewStart:  30000000,
+        viewEnd:    40000000,
+
+        sources:      [{name: 'Genome',
+                        twoBitURI:  'http://www.biodalliance.org/datasets/GRCm38/mm10.2bit',
+                        desc: 'Mouse reference genome build GRCm38',
+                        tier_type: 'sequence'
+                       }]
+
+  });
+#+END_SRC
+
+This object contains configuration of basic browser functionality (the
+properties `prefix`, which is the relative URL for icons and such data, and
+`fullScreen` which controls how the browser itself is rendered); initial browser
+state (`chr`, `viewStart`, `viewEnd`, which together define the chromosome and
+range of basepairs the browser displays at start); and an array of track source
+definitions (`sources`), which define what data to show, and how. In this case a
+mouse genome sequence is the only track.
+
+There are many more options and ways to customize the browser itself, likewise
+there are many different kinds of sources, and ways to configure them. All
+configuration is provided as JS objects, and the configuration data is used
+in various functions to initialize objects, from the browser itself to the
+tracks it displays. Since these functions are the place where the configuration
+options are defined, it is easy to add new configuration options; for the
+same reason, there is no easy way to know what a configuration option does,
+nor what values are legal.
 
 We'll have a brief look at some code smells in the configuration process,
 before moving on to the configuration of GGB, and how it is implemented.
@@ -99,21 +136,13 @@ set a bunch of default state, some of which are just values, others are
 derived from other configuration or data, until the whole thing is "ready".
 
 **** Event handlers
-WIP
+WIP last sentence probably needs rewording
 The browser constructor also sets the various DOM event handlers used
-by the browser's UI.
-
-#+BEGIN_SRC javascript
-if (ev.keyCode == 38 || ev.keyCode == 87 || // up arrow   | w
-    ev.keyCode == 40 || ev.keyCode == 83) { // down arrow | s
-let dY = ev.keyCode == 38 || ev.keyCode == 87 ? -1 : 1;
-etc.
-#+END_SRC
-
-There are only a few lines that differ, and those only differ in the arguments
-passed to some other function. Why not map the keyCodes to those arguments
-and leave the rest the same?
-
+by the browser's UI. A handler can be any function that takes an event
+as argument, meaning it is easy to write a handler that directly takes
+care of e.g. updating a UI element. That is also a problem, as every
+handler that modifies some UI state is another possibility for interference
+when working with the UI.
 
 **** Validation and transformations
 WIP
@@ -205,14 +234,16 @@ hierarchy; it is the parsed version of the JS object provided by the user.
 This is the definition:
 
 #+BEGIN_SRC purescript
-newtype BrowserConfig = BrowserConfig { wrapRenderer :: RenderWrapper
-                                      , bdRenderers :: StrMap RendererInfo
-                                      , browser :: BrowserConstructor
-                                      , tracks :: TracksMap
-                                      , events :: Maybe { bdEventSources :: Array SourceConfig
-                                                        , cyEventSources :: Array SourceConfig
-                                                        }
-                                      }
+newtype BrowserConfig =
+  BrowserConfig { wrapRenderer :: RenderWrapper
+                , bdRenderers :: StrMap RendererInfo
+                , browser :: BrowserConstructor
+                , tracks :: TracksMap
+                , events :: Maybe
+                    { bdEventSources :: Array SourceConfig
+                    , cyEventSources :: Array SourceConfig
+                    }
+                }
 #+END_SRC
 
 At this point, the specific types of the values in the record are irrelevant; the
@@ -313,18 +344,17 @@ append :: forall m. Monoid m => m -> m -> m
 In this case (of the type F), the use of `withExcept` would specialize to have the type:
 #+BEGIN_SRC purescript
 withExcept :: a.
-              (a -> a)
-           -> F a
-           -> F a
+             (a -> a)
+           -> F a -> F a
 #+END_SRC
 
 Another way to look at it is that `withExcept` is `map` but for the error type.
 
 ** Tracks
-   Tracks configurations are different for BD tracks and Cy.js graphs,
-   though both are provided as arrays of JSON, under different properties
-   in the `tracks` property of the configuration object. So we treat them
-   seperately here:
+Tracks configurations are different for BD tracks and Cy.js graphs, though both
+are provided as arrays of JSON, under different properties in the `tracks`
+property of the configuration object, they are treated in their respective
+sections.
 
 *** Biodalliance
 
@@ -353,9 +383,7 @@ which to fetch the elements in JSON format.
 
 
 ** Events
-
-DONE? the first line should be made clearer for novices:
-
+# DONE? the first line should be made clearer for novices:
 When a user interacts with a track, e.g. by clicking on a data point, the track
 can communicate the interaction to the rest of the system, including other
 tracks. The user can configure the structure of the events that a track
@@ -422,7 +450,7 @@ Into a JS object that looks like
 }
 #+END_SRC
 
-DONE: was that legal JSON?
+# DONE: was that legal JSON?
 
 This is useful if several tracks produce events with the same data but in
 objects that look different; the consumer of the event will only see events of
@@ -441,9 +469,9 @@ the JCursor type describes a path to a point in a JSON tree:
 
 #+BEGIN_SRC purescript
 data JCursor =
-    JIndex Int JCursor
-    JField String JCursor
-    JCursorTop
+  JIndex Int JCursor
+  JField String JCursor
+  JCursorTop
 #+END_SRC
 
 It can be seen as a list of accessors. If we have an object in JS:
@@ -478,7 +506,7 @@ toPrims :: Json -> List (Tuple JCursor JsonPrim)
 
 The type JsonPrim can be viewed as exactly what it sounds like -- it represents the
 legal JSON primitives: null, booleans, numbers, strings. In this case we only care
-that they are strings. (TODO: just write toPrims :: Json -> List (Tuple JCursor JsonPrim) or similar?)
+that they are strings.
 
 This function walks through a given JSON object, and produces a list of each leaf paired
 to the JCursor describing how to get to it. That is, it does exactly what we want to do with
@@ -522,18 +550,20 @@ result of toPrims above; the JCursors themselves are unaltered.
 #+BEGIN_SRC purescript
 -- This is just a nicer version of Tuple JCursor String
 type Cursor = { cursor :: JCursor
-	      , name :: String
-	      }
+              , name :: String
+              }
 
 type RawCursor = Cursor
 type ValueCursor = Cursor
 
-validateTemplate :: Array RawCursor -> ValueCursor -> Either String ValueCursor
+
+validateTemplate :: Array RawCursor
+                 -> Array ValueCursor
+                 -> Either String ValueCursor
 validateTemplate rcs vc =
   if any (\rc -> vc.name == rc.name) rcs
   then pure vc
   else throwError $ "Event property " <> vc.name <> " is not in raw template"
-
 #+END_SRC
 
 In words, if one of the many raw event cursors has the same name as the given
@@ -544,18 +574,21 @@ Applicative instance, and traverse:
 #+BEGIN_SRC purescript
 -- specialized to Either String and Array
 traverse :: forall a b.
-	    (a -> Either String b)
-	 -> Array a
-	 -> Either String (Array b)
+	          (a -> Either String b)
+	       -> Array a
+	       -> Either String (Array b)
 
-validateTemplates :: Array RawCursor -> Array ValueCursor -> Either String (Array ValueCursor)
+validateTemplates :: Array RawCursor
+                  -> Array ValueCursor
+                  -> Either String (Array ValueCursor)
 validateTemplates rcs = traverse (validateTemplate rcs)
 #+END_SRC
 
 The function tries to validate all given templates, and returns the first failure if there are any.
 Validation of a collection of things for free!
 
-TODO: remove below text into the source files for documentation. You can refer to that, but I would just continue with TrackSink here.
+TODO: remove below text into the source files for documentation. You can refer
+to that, but I would just continue with TrackSink here.
 
 **** Parsing the user-provided SourceConfigs
 
@@ -641,8 +674,6 @@ sense w/ some kinda DSL/interpreter)
 
 *** TrackSink
 
-
-
 TrackSinks are configured by providing an event name and a callback. On the PS
 side, these are type-safe, but there is no way to ensure that functions passed
 from Javascript to Purescript are type-safe. BD and Cy.js TrackSinks, respectively, should
@@ -654,8 +685,12 @@ newtype TrackSink a = TrackSink (StrMap (Json -> a))
 
 type BDTrackSink = TrackSink (Biodalliance -> Eff Unit)
 type CyTrackSink = TrackSink (Cytoscape -> Eff Unit)
+#+END_SRC
 
--- for clarity, the "whole" types
+These are the "expanded" types, for clarity. Note that they are extremely
+similar; the only difference is what type of browser they work on:
+
+#+BEGIN_SRC purescript
 BDTrackSink = TrackSink (StrMap (Json -> Biodalliance -> Eff Unit)
 CyTrackSink = TrackSink (StrMap (Json -> Cytoscape    -> Eff Unit)
 #+END_SRC
