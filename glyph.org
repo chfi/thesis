@@ -300,8 +300,14 @@ showGlyph :: ∀ a. Glyph a -> String
 showGlyph = execWriter <<< foldFree glyphLog
 #+END_SRC
 
+For example, logging the process of drawing the previously defined `crossedOut` glyph
+at the point `{ x: 40.0, y: 10.0 }` with radius `3.0` would produce the following output:
 
-TODO add example input & output
+#+BEGIN_SRC
+Drawing circle at (40.0, 10.0) with radius 3.0
+Drawing line from (37.0, 7.0) to (43.0, 13.0)
+Drawing line from (37.0, 13.0) to (43.0, 7.0)
+#+END_SRC
 
 ** Drawing glyphs to canvas and SVG
 When drawing to canvas, we use Eff as the target for our natural transformation,
@@ -528,6 +534,56 @@ TODO test output
 
 ** Putting it all together
 
+With these interpreters, we can create a function that produces a JS object
+that is compatible with BD. BD expects a glyph to have:
+- a function to draw the glyph to a provided canvas
+- a function to export the glyph to SVG
+- functions that provide the bounding box
+- optionally the relevant feature, or data point, that was used to produce the glyph
+
+
+
+To do this, we exploit the fact that Purescript records are JS objects,
+by constructing a record with the appropriate properties, and transform
+it to a Foreign value. The main function in its entirety:
+
+# TODO actually this code is garbage code and should be rewritten (that's how I transformed a feature to a record?!)
+
+#+BEGIN_SRC purescript
+writeGlyph' :: ∀ a c r. Maybe (Feature c r) -> Glyph a -> Foreign
+writeGlyph' f g = toForeign { "draw": unsafePerformEff <<< \ctx -> Canvas.renderGlyph ctx g
+                            , "min": const p.min
+                            , "max": const p.max
+                            , "minY": const p.minY
+                            , "maxY": const p.maxY
+                            , "feature": f'
+                            , "toSVG": unsafePerformEff <<< \_ -> SVG.renderGlyph g
+                            }
+    where p = unwrap $ glyphToGlyphPosition g
+          f' = toNullable $
+                 (\(Feature chr min max _) -> {chr, min, max}) <$> f
+#+END_SRC
+
+Note the use of `const` to produce the constant functions that describe the
+bounding box, after converting the `Glyph` to a `GlyphPosition`, and `unsafePerformEff` to create functions that use the canvas
+and SVG interpreters to produce the output expected by BD. Since the `feature`
+field is optional, `toNullable` is used to transform an eventual `Nothing` to an
+actual JS null, before being placed in the record.
+
+A helper function exists for working with `Glyphs` in the `F` functor,
+which is useful when the `Glyphs` were constructed in the process of
+parsing externally provided data. In case of failure, we produce a
+`String` containing the errors, which is the format expected by BD:
+
+#+BEGIN_SRC purescript
+writeGlyph :: ∀ a c r. Maybe (Feature c r) -> F (Glyph a) -> Foreign
+writeGlyph f fG = case runExcept fG of
+  Left errors -> toForeign $ fold $ renderForeignError <$> errors
+  Right glyph -> writeGlyph' f glyph
+#+END_SRC
+
+In short, `writeGlyph` produces data, including possible errors, in exactly
+the format expected by BD, while staying type safe.
 
 
 ** Limitations/Performance
