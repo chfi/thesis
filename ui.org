@@ -309,28 +309,28 @@ First we attempt to parse the provided configuration, logging all errors to
 config on failure, otherwise continuing:
 
 #+BEGIN_SRC purescript
-  case runExcept $ parseBrowserConfig fConfig of
-    Left e -> liftEff $ do
-      log "Invalid browser configuration:"
-      sequence_ $ log <<< renderForeignError <$> e
+case runExcept $ parseBrowserConfig fConfig of
+  Left e -> liftEff $ do
+    log "Invalid browser configuration:"
+    sequence_ $ log <<< renderForeignError <$> e
 
-    Right (BrowserConfig config) -> do
+  Right (BrowserConfig config) -> do
 #+END_SRC
 
 With a validated config, we can create the track/graph configs, and create
 the function which will later be used to create Biodalliance:
 
 #+BEGIN_SRC purescript
-      let {bdTracks, cyGraphs} = validateConfigs config.tracks
+let {bdTracks, cyGraphs} = validateConfigs config.tracks
 
-          opts' = sources := bdTracks.results <>
-                  renderers := config.bdRenderers
+    opts' = sources := bdTracks.results <>
+            renderers := config.bdRenderers
 
-      liftEff $ log $ "BDTrack errors: " <> foldMap ((<>) ", ") bdTracks.errors
-      liftEff $ log $ "CyGraph errors: " <> foldMap ((<>) ", ") cyGraphs.errors
+liftEff $ log $ "BDTrack errors: " <> foldMap ((<>) ", ") bdTracks.errors
+liftEff $ log $ "CyGraph errors: " <> foldMap ((<>) ", ") cyGraphs.errors
 
-      let mkBd :: (∀ eff. HTMLElement -> Eff (bd :: BD | eff) Biodalliance)
-          mkBd = initBD opts' config.wrapRenderer config.browser
+let mkBd :: (∀ eff. HTMLElement -> Eff (bd :: BD | eff) Biodalliance)
+    mkBd = initBD opts' config.wrapRenderer config.browser
 #+END_SRC
 
 After picking the element to run in, we create the Halogen component, and
@@ -338,39 +338,76 @@ create the Buses to be used by the events system. Note that we bind the
 value of `runUI` to `io`:
 
 #+BEGIN_SRC purescript
-          io <- runUI component unit el'
+io <- runUI component unit el'
 
-          busFromBD <- Bus.make
-          busFromCy <- Bus.make
+busFromBD <- Bus.make
+busFromCy <- Bus.make
 #+END_SRC
 
+
 `io` can be used to subscribe to messages sent from the main component,
-as well as send queries to it. In this case, we attach a callback
+as well as send queries to it, which we do momentarily. First, we use
+the provided TrackSink and TrackSource configurations to create the
+BD TrackSink and TrackSource:
+
+#+BEGIN_SRC purescript
+let bdTrackSink =   makeTrackSinks <<< _.bdEventSinks =<<
+                      note "No BD event sinks configured" (config.events)
+    bdTrackSource = makeTrackSources <<< _.bdEventSources =<<
+                      note "No BD event sources configured" (config.events)
+#+END_SRC
+
+We create the respective values, adding an error message if something
+went wrong.
+
+Finally, we attach a callback to the Halogen component
 to listen for the reference to the BD instance, sent by the BD component
 upon creation. We then use the TrackSink and TrackSource configurations
 to hook BD up to the event system. Finally, we ask the main component
 to create the BD instance:
 
 #+BEGIN_SRC purescript
-            io.subscribe $ CR.consumer $ case _ of
-              BDInstance bd -> do
+io.subscribe $ CR.consumer $ case _ of
+  BDInstance bd -> do
 
-                case bdTrackSink of
-                  Left err -> liftEff $ log "No BD TrackSink!"
-                  Right ts -> forkTrackSink ts bd busFromCy *> pure unit
+    case bdTrackSink of
+      Left err -> liftEff $ log "No BD TrackSink!"
+      Right ts -> forkTrackSink ts bd busFromCy *> pure unit
 
-                liftEff $ case bdTrackSource of
-                  Left err -> log err
-                  Right ts -> subscribeBDEvents ts bd busFromBD
+    liftEff $ case bdTrackSource of
+      Left err -> log err
+      Right ts -> subscribeBDEvents ts bd busFromBD
 
-                  --TODO remove BDRef? debug stuff...
-                liftEff $ setBDRef bd
-                pure Nothing
+      --TODO remove BDRef? debug stuff...
+    liftEff $ setBDRef bd
+    pure Nothing
 
-              _ -> pure $ Just unit
+  _ -> pure $ Just unit
 
-            io.query $ H.action (CreateBD mkBd)
+io.query $ H.action (CreateBD mkBd)
 #+END_SRC
+
+If the `TrackSink` was correctly configured, `forkTrackSink` is used
+to pipe events from the Cytoscape.js instance to the handler defined
+by said `TrackSink`. We don't care about being able to kill the
+"thread" using the `Canceler`, so we throw away the result with `*>
+pure unit`. Similarly, the `TrackSource` is used with the helper
+function `subscribeBDEvents`, defined thusly:
+
+#+BEGIN_SRC purescript
+subscribeBDEvents :: ∀ r.
+                     (TrackSource Event)
+                  -> Biodalliance
+                  -> BusRW Event
+                  -> Eff _ Unit
+subscribeBDEvents h bd bus =
+  Biodalliance.addFeatureListener bd $ \obj -> do
+    let evs = runTrackSource h (unwrap obj)
+    traverse_ (\x -> Aff.launchAff $ Bus.write x bus) evs
+#+END_SRC
+
+It adds an event listener to the provided BD browser instance and writes
+the successful parses to the provided Bus.
 
 The Cytoscape.js code is analogous.
 
