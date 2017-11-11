@@ -160,3 +160,39 @@ bpToPixels (BpPerPixel s) (Bp p) = p / s
 pixelsToBp :: BpPerPixel -> Number -> Bp
 pixelsToBp (BpPerPixel s) p = Bp $ p * s
 #+END_SRC
+
+
+** Features
+In BD, a `feature` is basically any data point. While the feature objects in
+BD can become arbitrarily complex as various data parsers construct them
+in different ways, there are only three minimal pieces of information required:
+what chromosome the feature is on, and what range of basepairs on the chromosome
+it covers.
+
+In Purescript, we represent this type as an algebraic data type (ADT).
+#+BEGIN_SRC purescript
+data Feature c r = Feature Chr c c r
+#+END_SRC
+
+For convenience, we let the compiler derive how to compare two `Features`
+for equality and order:
+#+BEGIN_SRC purescript
+derive instance eqFeature :: (Eq c, Eq r) => Eq (Feature c r)
+derive instance ordFeature :: (Ord c, Ord r) => Ord (Feature c r)
+#+END_SRC
+
+There is also a smart constructor for creating `Features` only with
+coordinates that can be transformed to basepairs.
+
+#+BEGIN_SRC purescript
+feature :: ∀ c r. HCoordinate c => Chr -> c -> c -> r -> Feature c r
+feature = Feature
+#+END_SRC
+
+Since `Feature` has two type parameters, one for the coordinates and one for the
+data, and is covariant in both, we have a bifunctor instance:
+
+#+BEGIN_SRC purescript
+instance bifunctorFeature :: Bifunctor Feature where
+  bimap f g (Feature chr xl xr r) = Feature chr (f xl) (f xr) (g r)
+#+END_SRC
