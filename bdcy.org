@@ -143,8 +143,135 @@ cytoscape htmlEl els = runEffFn2 cytoscapeImpl (toNullable htmlEl) (toNullable e
 
 # TODO graph functions
 
+The Cytoscape.js instance can be worked with in multiple ways. Data can be
+added to the graph, retrieved from it, and deleted:
+
+#+BEGIN_SRC purescript
+-- | Add a Collection of elements to the graph
+foreign import graphAddCollectionImpl :: ∀ eff.
+                                         EffFn2 (cy :: CY | eff)
+                                         Cytoscape
+                                         (CyCollection Element)
+                                         Unit
+
+graphAddCollection :: ∀ eff.
+                      Cytoscape
+                   -> CyCollection Element
+                   -> Eff (cy :: CY | eff) Unit
+graphAddCollection = runEffFn2 graphAddCollectionImpl
+
+-- | Get all elements in the graph
+foreign import graphGetCollectionImpl :: ∀ eff.
+                                         EffFn1 (cy :: CY | eff)
+                                         Cytoscape
+                                         (CyCollection Element)
+
+graphGetCollection :: ∀eff.
+                      Cytoscape
+                   -> Eff (cy :: CY | eff) (CyCollection Element)
+graphGetCollection = runEffFn1 graphGetCollectionImpl
+
+
+foreign import graphRemoveCollectionImpl :: ∀ eff.
+                                            EffFn1 (cy :: CY | eff)
+                                            (CyCollection Element)
+                                            (CyCollection Element)
+
+graphRemoveCollection :: forall eff.
+                         CyCollection Element
+                      -> Eff ( cy :: CY | eff) (CyCollection Element)
+graphRemoveCollection = runEffFn1 graphRemoveCollectionImpl
+#+END_SRC
+
+The graph layout can be controlled with the `runLayout` function, which
+takes a `Layout` value to update the Cy.js browser's current layout:
+
+#+BEGIN_SRC purescript
+-- | Apply a layout to the graph
+foreign import runLayoutImpl :: forall eff.
+                                EffFn2 (cy :: CY | eff)
+                                Cytoscape
+                                Layout
+                                Unit
+
+runLayout :: forall eff.
+             Cytoscape
+          -> Layout
+          -> Eff (cy :: CY | eff) Unit
+runLayout = runEffFn2 runLayoutImpl
+#+END_SRC
+
+`Layout` is simply a newtype wrapper over `String`. The native Cy.js
+layout function takes a `String` as an argument, and with this newtype wrapper
+we can both easily support all the layouts supported by Cy.js -- easily
+adding more if appropriate -- while staying type-safe.
+
+#+BEGIN_SRC purescript
+newtype Layout = Layout String
+
+circle :: Layout
+circle = Layout "circle"
+#+END_SRC
+
+# TODO Events
+
+
 *** CyCollection
 
-# TODO selectors, filters
+The `CyCollection` type is used to work with collections of elements in the
+Cytoscape.js browser. As it is implemented in Purescript as a `foreign data import`,
+there is no way to create values of this type without using the FFI, e.g.
+with `graphGetCollection`. Likewise all functions that manipulate `CyCollection` values
+must be implemented in terms of the FFI.
+
+# WIP Semigroup etc.
+
+
+# WIP selectors, filters
+A common interaction with a collection is extracting a subcollection. With `CyCollection`,
+we can use the `filter` function for this:
+
+#+BEGIN_SRC purescript
+-- | Filter a collection with a predicate
+filter :: forall e.
+          Predicate e
+       -> CyCollection e
+       -> CyCollection e
+#+END_SRC
+
+The FFI definition of `filter` uses the Cy.js API:
+
+#+BEGIN_SRC javascript
+exports.filterImpl = function(pred, coll) {
+    return coll.filter(pred);
+};
+#+END_SRC
+
+The `Predicate` type is another newtype wrapper, this time of functions from the
+given type to Boolean.
+
+#+BEGIN_SRC purescript
+newtype Predicate e = Predicate (e -> Boolean)
+#+END_SRC
+
+# TODO Predicate contravariant
+
+# TODO Predicate cmapping Element -> JSON etc.
+
+# TODO Predicate combining with HeytingAlgebra
+
+The Cytoscape.js API provides some basic predicates on elements, nodes, and edges.
+For example:
+
+#+BEGIN_SRC purescript
+foreign import isNode :: Predicate Element
+foreign import isEdge :: Predicate Element
+#+END_SRC
+
+WIP
+Since there is also a function for transforming Cy.js elements into JSON, we can
+construct predicates using functions for parsing JSON.
+
+
 
 # TODO tests
