@@ -137,6 +137,7 @@ eitherOr vOr     == "or unit"
 eitherOr vNope   == "neither!"
 #+END_SRC
 
+TODO rewrite the rest of this section
 The goal of using variants and rows was to provide type-safety of events. An Event
 would simply be a variant, and the different types of events would have different
 labels, and thus also different types. Producers and consumers of events would
@@ -160,17 +161,7 @@ What I actually desired was a way to express events in an easy to configure way,
 while also guaranteeing correctness as far as possible, with good error reporting
 picking up the slack where necessary.
 
-the goal -- tagging properties with types;
--- transforming events to named & typechecked records
-so two handlers, or a source and a sink, both referring to "location"s, must deal
-with the same information (i.e. Chr and Bp in the correct property names)
-
-the problem -- compile-time only!
-worked with hardcoded stuff, but naw
-
-maybe possible with reflection/reification, but overkill
-
-instead:
+TODO Footnote: maybe possible with reflection/reification?
 
 ** JSON zippers and stringy types
 
@@ -199,4 +190,384 @@ the event system by providing templates, or patterns, that map between
 raw events and the various events a track produces and consumes. It can be
 seen as a kind of pattern matching.
 
-config.org tracksource & sink goes here
+
+** TrackSource and TrackSink
+
+TODO garbage paragraph
+The solution consists of two types, `TrackSource` and `TrackSink`. The former
+transforms events from browsers to GGB events, the latter handles received
+events on browser tracks.
+
+*** TrackSource
+
+The configuration needed for a TrackSource is a name, the JSON structure
+for the event to be produced, and the JSON structure of the event produced
+by the underlying track (e.g. Biodalliance).
+
+For this another library will be used, instead of purescript-foreign,
+namely purescript-argonaut.
+
+**** Json decoding with Argonaut
+
+Argonaut is a library for working with JSON in Purescript, including serializing
+and deserializing, as well as working with the JSON trees.
+
+One key difference to purescript-foreign and its Foreign type, Argonaut's Json
+type only corresponds to actual JSON, i.e. things that are legal in JSON
+formatted files. Thus, functions and other values that cannot be serialized to
+JSON, cannot be represented in the Json type.
+
+Values of type Json can be decoded, or parsed, in several ways. In this case
+we're interested in walking arbitrary JSON trees and transforming lists of
+paths. Before looking at how the parsing works, here is an example of a
+legal SourceConfig:
+
+#+BEGIN_SRC json
+{
+  "eventName": "range",
+  "eventTemplate": { "chr": "Chr",
+		   "minPos": "Bp",
+		   "maxPos": "Bp"
+  },
+  "rawTemplate": { "segment": "chr",
+		 "min": "minPos",
+		 "max": "maxPos"
+  }
+}
+#+END_SRC
+
+This defines a source that parses objects/events like this one, the JS object
+passed to the event handler when clicking on a feature in BD:
+
+#+BEGIN_SRC javascript
+{
+  // ...
+  segment: "chr11",
+  min: 1241230,
+  max: 1270230
+  // ..
+}
+#+END_SRC
+
+Into a JS object that looks like
+#+BEGIN_SRC javascript
+{
+  chr: "chr11",
+  minPos: 1241230,
+  maxPos: 1270230
+}
+#+END_SRC
+
+# DONE: was that legal JSON?
+
+This is useful if several tracks produce events with the same data but in
+objects that look different; the consumer of the event will only see events of
+this last format. The templates provided can be of arbitrary depth and
+complexity; the only rule is that each leaf is a key, and all properties be
+strings (i.e. no arrays). There is some validation too, detailed later.
+
+`eventTemplate` and `rawTemplate` are both whole structures which we're interested in.
+For each leaf in the eventTemplate (including its property name), we create a path
+to where the corresponding value will be placed in the finished event. Similarly,
+we need to grab the path to each leaf in the rawTemplate, so we know how to grab
+the value we need in the finished event, from the provided raw event.
+
+Fortunately, Argonaut provides functions for dealing with exactly this. First,
+the JCursor type describes a path to a point in a JSON tree:
+
+#+BEGIN_SRC purescript
+data JCursor =
+  JIndex Int JCursor
+  JField String JCursor
+  JCursorTop
+#+END_SRC
+
+It can be seen as a list of accessors. If we have an object in JS:
+
+#+BEGIN_SRC javascript
+let thing = { x: [{a: 0},
+                  {b: {c: true}}
+		             ]};
+#+END_SRC
+
+We can grab the value at `c` with
+
+#+BEGIN_SRC javascript
+let cIs = thing.x[1].b.c;
+#+END_SRC
+
+With JCursor, this accessor chain `x[1].b.c` would look like:
+#+BEGIN_SRC purescript
+(JField "x"
+   (JIndex 1
+    (JField "b"
+       (JField "c" JCursorTop))))
+#+END_SRC
+
+It's not pretty when printed like this, but fortunately not much direct manipulation
+will be needed. We create these JCursors from a JSON structure like the templates
+above with the function toPrims:
+
+#+BEGIN_SRC purescript
+toPrims :: Json -> List (Tuple JCursor JsonPrim)
+#+END_SRC
+
+The type JsonPrim can be viewed as exactly what it sounds like -- it represents the
+legal JSON primitives: null, booleans, numbers, strings. In this case we only care
+that they are strings.
+
+This function walks through a given JSON object, and produces a list of each leaf paired
+to the JCursor describing how to get to it. That is, it does exactly what we want to do with
+the rawTemplate from earlier.
+
+With the eventTemplate we don't want to pick out the leaf, but the label of the leaf.
+In this case we do need to step into the JCursor structure, but only a single step,
+after reversing it:
+
+#+BEGIN_SRC purescript
+insideOut :: JCursor -> JCursor
+
+eventName <- case insideOut cursor of
+	       JField s _ -> Just s
+	       _          -> Nothing
+#+END_SRC
+
+The function `insideOut` does what expected and reverses the path through the tree.
+We then match on the now first label, and save it as the name. If it was an array,
+we fail with a Nothing.
+
+Argonaut, especially the functions concerning JCursor, largely uses the Maybe type.
+This is fine for the most part, but as this will be used in configuration,
+and thus needs to tell the user what has gone wrong if the provided configuration
+is faulty, it's not enough.
+
+A more appropriate type would be Either String, which allows for failure to come
+with an error message. To "lift" the functions using Maybe into Either String.
+See [[source code]] for an example.
+
+
+To provide the user with additional help when configuring, the source configurations
+are validated to make sure the given JSON structures are legal, or "match". Given
+some value that we want to have in the finished event, and all of the values we know
+we can get from the raw event, if we can't find the first value among the latter,
+something's wrong.
+
+The implementation is simple. The Cursors here are grabbed from the
+result of toPrims above; the JCursors themselves are unaltered.
+
+#+BEGIN_SRC purescript
+-- This is just a nicer version of Tuple JCursor String
+type Cursor = { cursor :: JCursor
+              , name :: String
+              }
+
+type RawCursor = Cursor
+type ValueCursor = Cursor
+
+
+validateTemplate :: Array RawCursor
+                 -> Array ValueCursor
+                 -> Either String ValueCursor
+validateTemplate rcs vc =
+  if any (\rc -> vc.name == rc.name) rcs
+  then pure vc
+  else throwError $ "Event property " <> vc.name <> " is not in raw template"
+#+END_SRC
+
+In words, if one of the many raw event cursors has the same name as the given
+value cursor, it's good, otherwise throw an error. To increase this to validate
+the array of cursors defining a finished event, we can make use of Either's
+Applicative instance, and traverse:
+
+#+BEGIN_SRC purescript
+-- specialized to Either String and Array
+traverse :: forall a b.
+	          (a -> Either String b)
+	       -> Array a
+	       -> Either String (Array b)
+
+validateTemplates :: Array RawCursor
+                  -> Array ValueCursor
+                  -> Either String (Array ValueCursor)
+validateTemplates rcs = traverse (validateTemplate rcs)
+#+END_SRC
+
+The function tries to validate all given templates, and returns the first failure if there are any.
+Validation of a collection of things for free!
+
+*** TrackSink
+
+TrackSinks are configured by providing an event name and a callback. On the PS
+side, these are type-safe, but there is no way to ensure that functions passed
+from Javascript to Purescript are type-safe. BD and Cy.js TrackSinks, respectively, should
+have the following types:
+
+(TODO: PS 0.12 will be out soon; effect rows won't be used then)
+#+BEGIN_SRC purescript
+newtype TrackSink a = TrackSink (StrMap (Json -> a))
+
+type BDTrackSink = TrackSink (Biodalliance -> Eff Unit)
+type CyTrackSink = TrackSink (Cytoscape -> Eff Unit)
+#+END_SRC
+
+These are the "expanded" types, for clarity. Note that they are extremely
+similar; the only difference is what type of browser they work on:
+
+#+BEGIN_SRC purescript
+BDTrackSink = TrackSink (StrMap (Json -> Biodalliance -> Eff Unit)
+CyTrackSink = TrackSink (StrMap (Json -> Cytoscape    -> Eff Unit)
+#+END_SRC
+
+The event name is used to place the function in the correct index of the StrMap.
+The callback uses currying to take both the event (as JSON) and the respective
+browser instance, to be used e.g. when scrolling the Biodalliance view to an event.
+
+The following JS code defines a Biodalliance TrackSink (and is correctly typed):
+#+BEGIN_SRC javascript
+var bdConsumeLoc = function(json) {
+    return function(bd) {
+        return function() {
+            bd.setLocation(json.chr,
+                           json.pos - 1000000.0,
+                           json.pos + 1000000.0);
+        };
+    };
+};
+
+var bdTrackSinkConfig = [ { eventName: "location",
+                            eventFun: bdConsumeLoc
+                          }
+                        ];
+#+END_SRC
+
+# NOTE: add example of passing this information into PS.
+
+*** Running TrackSources and TrackSinks
+
+For TrackSource and TrackSink to be usable we need to be able to create them
+from the provided configurations, and provide functions for applying them to
+events as appropriate.
+
+**** TrackSource
+
+To create a TrackSource, the provided templates are parsed and validated.
+Since a TrackSource is a list of parsers, if the SourceConfig is correct,
+a function from raw events to parsed events is returned, wrapped in a singleton
+list and the TrackSource type:
+#+BEGIN_SRC purescript
+makeTrackSource :: SourceConfig -> Either String (TrackSource Event)
+makeTrackSource sc = do
+  rawTemplates <- parseRawTemplateConfig sc.rawTemplate
+  eventTemplates <- validateTemplates rawTemplates
+                    =<< parseTemplateConfig sc.eventTemplate
+
+  pure $ TrackSource $ singleton $ \rawEvent -> do
+    vals <- parseRawEvent rawTemplates rawEvent
+    evData <- fillTemplate eventTemplates vals
+    pure $ { name: sc.eventName, evData }
+#+END_SRC
+
+To extend the above function to work on a collection of configuration objects,
+we use function composition to first attempt to use each provided configuration
+to create a TrackSource, followed by combining the list of parsers into a single
+one:
+
+#+BEGIN_SRC purescript
+makeTrackSources :: Array SourceConfig -> Either String (TrackSource Event)
+makeTrackSources = map fold <<< traverse makeTrackSource
+#+END_SRC
+
+First `traverse` is used to try to create the TrackSources, which
+returns an array of `TrackSource Event` if all were legal, or an error if
+something went wrong. Next, `map` is used to apply a function to the `Right`
+side of the `Either` from the use of `traverse`, and the applied function
+is `fold`, which concatenates a collection of values of some monoid into
+a single value -- the monoid in question is TrackSource.
+
+This is not the only reasonable way of defining this function -- one may very
+well want to collect the error messages while returning the successes. As
+`makeTrackSources` demonstrates, not much code is needed to compose functions
+to provide the validation logic that is desired, and there is nothing unique
+about this function; all that is required is swapping out some of the functions.
+
+# TODO an example of this! e.g. collecting both successes and failures.
+# it's a fold and a tuple, basically
+
+Finally, a way to use a TrackSource is required. The following function uses
+a TrackSource to parse a provided JSON value:
+
+#+BEGIN_SRC purescript
+runTrackSource :: TrackSource Event -> Json -> Array Event
+runTrackSource (TrackSource ts) raw = filterMap (_ $ raw) ts
+#+END_SRC
+
+It works by applying each function in the array wrapped by TrackSource to the
+provided value, filtering out the `Nothing`s and returning an array of
+successfully parsed `Events`.
+
+**** TrackSink
+
+A TrackSink is a map from event names to a function that handles the event,
+so to make one we create a singleton map from the provided event name to
+the provided function, and wrap it in the TrackSink type:
+
+#+BEGIN_SRC purescript
+makeTrackSink :: SinkConfig ~> TrackSink
+makeTrackSink sc = TrackSink $ StrMap.singleton sc.eventName sc.eventFun
+#+END_SRC
+
+
+Using a collection of `SinkConfigs` to produce a single `TrackSink` is not
+in itself complicated, but we do some validation, namely ensuring that
+there are not multiple handlers for a given event:
+# NOTE/TODO there is no real reason for there to only be one handler...
+
+#+BEGIN_SRC purescript
+makeTrackSinks :: ∀ a.
+                  Array (SinkConfig a)
+               -> Either String (TrackSink a)
+makeTrackSinks scs = do
+  let count = StrMap.fromFoldableWith (+) $ map (\c -> Tuple c.eventName 1) scs
+      overlapping = StrMap.filter (_ > 1) count
+
+  when (not StrMap.isEmpty overlapping)
+    let error = foldMap (append "\n" <<< show) $ StrMap.keys overlapping
+    in throwError $ "Overlapping tracksinks!\n" <> error
+
+  pure $ foldMap makeTrackSink scs
+  #+END_SRC
+
+In this case, we use `foldMap` to map the `makeTrackSink` function over the
+provided configurations, and then use the `TrackSink` monoid instance to
+combine them -- similar to `fold <<< traverse` in the case of `TrackSource`.
+
+To use a `TrackSink`, we see if a handler for the provided event exists.
+If it does, we apply it to the contents of the event:
+
+#+BEGIN_SRC purescript
+runTrackSink :: ∀ a. TrackSink a -> Event -> Maybe a
+runTrackSink (TrackSink sink) event = do
+  f <- StrMap.lookup event.name sink
+  pure $ f event.evData
+#+END_SRC
+
+However, since `TrackSinks` are intended to perform effects, a helper function
+for that is useful. In particular, the following function creates a "thread"
+(TODO footnote on JS singlethreaded) that reads events from a provided `BusRW`
+(TODO define/refer to `BusRW` intro), running effectful functions from the
+provided `TrackSink` if the received event has a handler:
+
+# TODO make sure that `forkTrackSink` is correct w/o effect rows
+#+BEGIN_SRC purescript
+forkTrackSink :: ∀ env.
+                 TrackSink (env -> Eff Unit)
+              -> env
+              -> BusRW Event
+              -> Aff Canceler
+forkTrackSink sink env bus = forkAff $ forever do
+  event <- Bus.read bus
+
+  case runTrackSink sink event of
+    Nothing -> pure unit
+    Just f  -> liftEff $ f env
+#+END_SRC
