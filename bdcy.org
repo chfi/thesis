@@ -141,8 +141,6 @@ cytoscape :: forall eff.
 cytoscape htmlEl els = runEffFn2 cytoscapeImpl (toNullable htmlEl) (toNullable els)
 #+END_SRC
 
-# TODO graph functions
-
 The Cytoscape.js instance can be worked with in multiple ways. Data can be
 added to the graph, retrieved from it, and deleted:
 
@@ -213,7 +211,37 @@ circle :: Layout
 circle = Layout "circle"
 #+END_SRC
 
-# TODO Events
+*** Events
+# WIP Events
+
+Cy.js produces events in JSON format, a newtype wrapper is used to keep things safe
+(and improve readability of type signatures):
+
+#+BEGIN_SRC purescript
+newtype CyEvent = CyEvent Json
+#+END_SRC
+
+# TODO actually should be CyEvent -> Eff Unit? problem in GGB code
+The `onEvent` FFI function takes an event handler of type `CyEvent -> Eff a`,
+and a `String` representing the type of event, e.g. "click" for adding a
+handler on click events. The function returns an effect that attaches
+the handler to the provided Cytoscape instance:
+
+#+BEGIN_SRC purescript
+onEvent :: forall a.
+           Cytoscape
+        -> String
+        -> (CyEvent -> Eff a)
+        -> Eff Unit
+#+END_SRC
+
+#+BEGIN_SRC javascript
+exports.onEventImpl = function(cy, evs, callback) {
+    cy.on(evs, function(e) {
+        callback(e)();
+    });
+};
+#+END_SRC
 
 
 *** CyCollection
@@ -225,10 +253,27 @@ with `graphGetCollection`. Likewise all functions that manipulate `CyCollection`
 must be implemented in terms of the FFI.
 
 # WIP Semigroup etc.
+`CyCollection` is a semigroup where the binary operation is taking the union of
+the two `CyCollections`:
 
+#+BEGIN_SRC javascript
+exports.union = function(a, b) {
+    return a.union(b);
+};
+#+END_SRC
 
-# WIP selectors, filters
-A common interaction with a collection is extracting a subcollection. With `CyCollection`,
+#+BEGIN_SRC purescript
+foreign import union :: forall e.
+                        Fn2
+                        (CyCollection e)
+                        (CyCollection e)
+                        (CyCollection e)
+
+instance semigroupCyCollection :: Semigroup (CyCollection e) where
+  append = runFn2 union
+#+END_SRC
+
+Another common interaction with a collection is extracting a subcollection. With `CyCollection`,
 we can use the `filter` function for this:
 
 #+BEGIN_SRC purescript
@@ -248,17 +293,12 @@ exports.filterImpl = function(pred, coll) {
 #+END_SRC
 
 The `Predicate` type is another newtype wrapper, this time of functions from the
-given type to Boolean.
+given type to Boolean. Since it's a newtype, it can be provided to the FFI functions
+without unwrapping it.
 
 #+BEGIN_SRC purescript
 newtype Predicate e = Predicate (e -> Boolean)
 #+END_SRC
-
-# TODO Predicate contravariant
-
-# TODO Predicate cmapping Element -> JSON etc.
-
-# TODO Predicate combining with HeytingAlgebra
 
 The Cytoscape.js API provides some basic predicates on elements, nodes, and edges.
 For example:
@@ -268,10 +308,53 @@ foreign import isNode :: Predicate Element
 foreign import isEdge :: Predicate Element
 #+END_SRC
 
-WIP
-Since there is also a function for transforming Cy.js elements into JSON, we can
-construct predicates using functions for parsing JSON.
+`Predicates` are `contravariant` in their argument, meaning they can be `contramapped`
+over, which can be seen as the opposite of normal, `covariant` functors. This is
+done by precomposing the `Predicate` with a function `(a -> e)`. For example,
+if we have some `Predicate Json`, i.e. a function from JSON values to Boolean,
+we can contramap the `elementJson` function over it, ending up with a `Predicate Element`.
+This lets us filter the Cytoscape graph with all the powerful JSON parsing tools
+at our disposal.
+
+# TODO better example
+#+BEGIN_SRC purescript
+hasName :: Predicate Json
+hasName = Predicate f
+  where f json = maybe false (const true) $ json ^? _Object <<< ix "name"
+
+elemHasName :: Predicate Element
+elemHasName = elementJson >$< hasName
+#+END_SRC
+
+`Predicate` is also an instance of the `HeytingAlgebra` typeclass. This lets
+us combine `Predicates` using the normal Boolean logic combinators such as
+`&&` and `||`:
+
+#+BEGIN_SRC purescript
+namedNodeOrEdge :: Predicate Element
+namedNodeOrEdge = (elemHasName && isNode) || isEdge
+#+END_SRC
 
 
+**** Tests
 
-# TODO tests
+# WIP
+`CyCollection` is unit tested to help ensure that the graph operations work
+as expected. For example, the edges and nodes from a graph should both
+be subsets of the graph:
+
+#+BEGIN_SRC purescript
+let edges = filter isEdge eles
+    nodes = filter isNode eles
+when (not $ eles `contains` edges) (fail "Graph doesn't contain its edges")
+when (not $ eles `contains` nodes) (fail "Graph doesn't contain its nodes")
+#+END_SRC
+
+Conversely, the union of the edges and nodes should be equal to the
+original graph, and this should be commutative:
+
+#+BEGIN_SRC purescript
+(edges <> nodes) `shouldEqual` eles
+(nodes <> edges) `shouldEqual` eles
+(edges <> nodes) `shouldEqual` (nodes <> edges)
+#+END_SRC
