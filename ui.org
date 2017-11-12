@@ -410,10 +410,3 @@ It adds an event listener to the provided BD browser instance and writes
 the successful parses to the provided Bus.
 
 The Cytoscape.js code is analogous.
-
-
-* TODO
-
-Subscribes to events
-  half-hard coded; should probably move to resp. halogen containers...
-  describe forkTrackSink?

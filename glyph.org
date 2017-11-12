@@ -586,6 +586,8 @@ In short, `writeGlyph` produces data, including possible errors, in exactly
 the format expected by BD, while staying type safe.
 
 
+
+NOTE these should be in discussion or something
 ** Limitations/Performance
 TODO inefficient -- rendering tens of thousands of glyphs can be slow,
      each glyph setting its own stroke & fill colors, even if all glyphs

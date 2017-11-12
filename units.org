@@ -1,9 +1,4 @@
 * Units
-  NOTE: not mentioning HCoordinate because I have a feeling it's
-  probably best just to remove that typeclass from the code; it is
-  rarely if ever used, and could be replaced entirely where it is used
-  with a lens
-
 ** Biodalliance/The problem
 It is often the case that values in programs are represented using
 primitive types, rather than using the fact that different units
