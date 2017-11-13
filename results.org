@@ -1,0 +1,49 @@
+* Results
+
+** Chapter summary
+The browser as a product is shown.
+
+The modules from the method are analyzed for code smells.
+
+The general extensibility etc. of the new browser is compared to BD.
+
+Number of modules, dependencies, tests.
+
+*** The Genetics Graph Browser
+Present the finished browser!
+
+What it looks like
+
+How it's used
+
+*** Code smells
+How were various code smells handled (transformed?) when (re)implementing
+code in GGB?
+
+Look at process (git history) too? Any code smells that have come and gone?
+  (probably many)
+
+**** TODO Long functions
+    # MAYBE
+
+**** TODO Duplicated code
+Any examples of duplicated code that were difficult to deduplicate
+
+**** TODO Primitive obsession
+What was gained with all the newtypes, what was lost
+
+**** TODO Use of mutable state
+More interesting to write about when mutability may be desired (ST etc.)
+
+**** TODO Side effects
+More interesting to write about when effects are desired but not (easily) expressible in the types
+
+**** TODO Difficulty of making changes
+Are there any parts of the codebase that are unnecessarily entangled?
+
+
+*** Transformations
+Visualize transformations that are composed to create the final browser?
+  could look cool
+
+** Outro
