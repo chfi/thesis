@@ -167,6 +167,8 @@ concerned about class-based object-oriented programming (OOP). OOP has
 been the primary programming paradigm for decades (TODO REF),
 WIP more here (but what?)
 
+TODO is it even worth pointing out the OOP specific ones? Doesn't really apply to project
+
 Some of the code smells:
 
 **** General
@@ -183,36 +185,22 @@ Some of the code smells:
   representing the number of objects in an array). This also makes it
   more difficult to understand what a variable or value is to the program.
 
-- shotgun surgery -
-
-data clumps - eh
-
-div change (maybe?)
-
-speculative generality - kind of interesting
-
-**** OOP-specific
-
-temp field - immutability, purity
-lazy class - boring
-parallel inheritance hierarchies - boring, shotgun surgery
-middle man - boring
-data class - records!!
-refused bequest - boring
-feature envy (getting a bunch of stuff from some other class) - boring
+- shotgun surgery - When functionality is spread out in the codebase in such a way that
+  making a change at one place requires making a change at many other places.
+  Reduces code comprehension, as distant pieces of code are somehow interacting,
+  and makes it more difficult to modify the codebase successfully.
 
 
+TODO this section is probably superfluous
 **** Procedural-specific
-- long method -
+- long method - If a function or method is long, it can be difficult to understand,
+  especially if the function interacts with implicit or global state, or performs side-effects.
 
 - long parameter list
 
 - switch statements
 
 - msg chains
-
-- inappropriate intimacy
-
 
 
 **** Summary
@@ -420,18 +408,24 @@ TODO what we do instead:
   TODO wrapping BD and controlling it from external UI
 
 ** Pure web development with Purescript
-TODO Purescript is a pure blah blah haskell, compiles to JS
+WIP What Purescript is
+WIP Statically typed
+Purescript (PS) is a purely functional programming language, inspired
+by and in many ways similar to Haskell, sharing much of its syntax,
+and a powerful type system [Footnote not the *same* type system
+exactly] that can represent many high level abstractions. Unlike
+Haskell, PS compiles to JS, and can be used in the browser.
 
-TODO Statically typed
-
-TODO Differences from Haskell
-
-TODO Category theory??? maybe
-
-TODO Good FFI - easy to wrap JS
+WIP Differences from Haskell
+WIP Good FFI - easy to wrap JS
+Another difference from Haskell is that PS is strictly evaluated. This
+lets the PS compiler output normal JS, and does not require a runtime,
+unlike e.g. Elm, another purely functional language that compiles to
+JS. PS makes use of this by providing a lightweight and powerful
+Foreign Function Interface (FFI), which makes it easy to interact with
+and wrap existing JS code.
 
 TODO Property based testing?
-
 
 ** Hypothesis and evaluation
 TODO Hypothesis
