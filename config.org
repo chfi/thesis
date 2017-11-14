@@ -182,7 +182,7 @@ if (thisB.isDragging && rx != dragOrigin && tier.sequenceSource) {
 #+END_SRC
 
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC javascript
 if (hit && hit.length > 0 && !thisB.isDragging) {
     if (doubleClickTimeout) {
         clearTimeout(doubleClickTimeout);
@@ -233,7 +233,7 @@ The type BrowserConfig represents the highest level of the GGB configuration
 hierarchy; it is the parsed version of the JS object provided by the user.
 This is the definition:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle yes :prologue Imports/Config.purs
 newtype BrowserConfig =
   BrowserConfig { wrapRenderer :: RenderWrapper
                 , bdRenderers :: StrMap RendererInfo
@@ -251,7 +251,7 @@ important part is that they're all Purescript types, and have been parsed
 and validated. The parsing is done by the parseBrowserConfig function, which
 has the following type signature:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle no
 parseBrowserConfig :: Foreign -> F BrowserConfig
 #+END_SRC
 
@@ -273,7 +273,7 @@ Purescript and is simply anything that comes from outside Purescript, and thus
 must be parsed before any information can be extracted from them. `F` is a type
 synonym:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle no
 type F = Except (NonEmptyList ForeignError)
 
 data ForeignError =
@@ -300,7 +300,7 @@ Let's look at one of the lines from the function definition (note: if you are ne
 the syntax may look strange - ignore the details, it will slowly make sense and you
 may appreciate the terseness in time).
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle no
 parseBrowserConfig f = do
   browser <- f ! "browser" >>= readTaggedWithError "Function" "Error on 'browser':"
 #+END_SRC
@@ -319,7 +319,7 @@ because it is actually generic:
 
 `readTaggedWithError` is actually simple:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle no
 -- The type is:
 readTaggedWithError :: forall a. String -> String -> Foreign -> F a
 -- The implementation:
@@ -329,7 +329,7 @@ readTaggedWithError s e f = withExcept (append (pure $ ForeignError e)) $ unsafe
 In words, it tries to read the tag, and if unsuccessful, appends the provided error
 message to the error message from unsafeReadTagged. Let's look at the types:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle no
 unsafeReadTagged :: forall a. String -> Foreign -> F a
 
 withExcept :: forall e1 e2 a.
@@ -342,7 +342,7 @@ append :: forall m. Monoid m => m -> m -> m
 
 
 In this case (of the type F), the use of `withExcept` would specialize to have the type:
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle no
 withExcept :: a.
              (a -> a)
            -> F a -> F a
@@ -403,7 +403,7 @@ while the BrowserConfig parsing is done in the type Except (NonEmptyList Foreign
 To actually use these functions when parsing the user-provided configuration,
 we need to do a transformation like this:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle no
 toF :: Either String ~> Except (NonEmptyList ForeignError)
 #+END_SRC
 
@@ -411,13 +411,13 @@ Fortunately, Either and Except are isomorphic - the difference between the two i
 only in how they handle errors, not what data they contain. There already exists a function
 that does part of what we need:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle no
 except :: forall e m a. Applicative m => Either e a -> Except e a
 #+END_SRC
 
 Now we need a function that brings Either String to Either (NonEmptyList ForeignError).
 We can use the fact that Either is a bifunctor, meaning it has lmap:
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle no
 lmap :: forall f a b c.
 	Bifunctor f
      => (a -> b)
@@ -439,21 +439,21 @@ doesn't require any more information. To create the NonEmptyList, we
 exploit the fact that there is an Applicative instance, and use
 `pure`:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle no
 f :: String -> NonEmptyList ForeignError
 f = pure <<< ForeignError
 #+END_SRC
 
 Putting it all together, we have this natural transformation:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle no
 eitherToF :: Either String ~> F
 eitherToF = except <<< lmap (pure <<< ForeignError)
 #+END_SRC
 
 Now we can parse the events configuration in the BrowserConfig parser:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle no
 events <- do
   evs <- f ! "eventSources"
 

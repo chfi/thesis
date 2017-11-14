@@ -55,14 +55,14 @@ As a programmer and user, I find the idea of doing so reprehensible,
 hence the Bp and MBp newtypes:
 
 TODO add link to lines in Units.purs
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 newtype Bp = Bp Number
 newtype MBp = MBp Number
 #+END_SRC
 
 To work with these, we can use pattern matching:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 toBp :: Number -> Bp
 toBp x = Bp x
 
@@ -74,7 +74,7 @@ However, Purescript provides a typeclass to minimize this boilerplate,
 namely the `Newtype` typeclass. The compiler derives the instance, and
 we can then use the generic `wrap` and `unwrap` functions:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 derive instance newtypeBp :: Newtype Bp _
 derive instance newtypeMBp :: Newtype MBp _
 
@@ -91,7 +91,7 @@ two Bp's is in fact pretty silly. Would probably be "better" to use a semigroup
 where <> is addition...
 
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 derive newtype instance eqBp :: Eq Bp
 derive newtype instance ordBp :: Ord Bp
 derive newtype instance fieldBp :: Field Bp
@@ -110,7 +110,8 @@ p1 + p2 == Bp 523.0
 TODO: needs a super basic lens primer somewhere (maybe just a footnote in the
 first use of it), plus readBp might not be correct
 The Newtype instance also gives us access to the _Newtype lens isomorphism:
-#+BEGIN_SRC purescript
+
+#+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 _Bp :: Iso' Bp Number
 _Bp = _Newtype
 
@@ -126,7 +127,7 @@ readBp s = s ^? _Number <<< re _Bp
 Biodalliance represents chromosome identifiers as strings. Like with Bp,
 a newtype wrapper helps keep track of things:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 newtype Chr = Chr String
 derive instance newtypeChr :: Newtype Chr _
 derive newtype instance eqChr :: Eq Chr
@@ -145,7 +146,7 @@ screen coordinates and the coordinates used by data. For simplicity's
 sake, we only care about mapping between basepairs and pixels. We represent
 this with another newtype wrapping Number:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 newtype BpPerPixel = BpPerPixel Number
 derive instance newtypeBpPerPixel :: Newtype BpPerPixel _
 
@@ -165,13 +166,13 @@ what chromosome the feature is on, and what range of basepairs on the chromosome
 it covers.
 
 In Purescript, we represent this type as an algebraic data type (ADT).
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 data Feature c r = Feature Chr c c r
 #+END_SRC
 
 For convenience, we let the compiler derive how to compare two `Features`
 for equality and order:
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 derive instance eqFeature :: (Eq c, Eq r) => Eq (Feature c r)
 derive instance ordFeature :: (Ord c, Ord r) => Ord (Feature c r)
 #+END_SRC
@@ -179,15 +180,15 @@ derive instance ordFeature :: (Ord c, Ord r) => Ord (Feature c r)
 There is also a smart constructor for creating `Features` only with
 coordinates that can be transformed to basepairs.
 
-#+BEGIN_SRC purescript
-feature :: ∀ c r. HCoordinate c => Chr -> c -> c -> r -> Feature c r
+#+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
+feature :: forall c r. HCoordinate c => Chr -> c -> c -> r -> Feature c r
 feature = Feature
 #+END_SRC
 
 Since `Feature` has two type parameters, one for the coordinates and one for the
 data, and is covariant in both, we have a bifunctor instance:
 
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 instance bifunctorFeature :: Bifunctor Feature where
   bimap f g (Feature chr xl xr r) = Feature chr (f xl) (f xr) (g r)
 #+END_SRC
