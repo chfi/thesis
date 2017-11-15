@@ -522,31 +522,47 @@ to actions; from user configuration to functions.
 
 
 TODO (process metrics? if there are easy ones to get from github)
+
 TODO Where our solutions will come from (CT etc.)
+
 TODO How we'll go about things (piece by piece)
 
 ** Graph Genetics Browser
 
 *** TODO Specification
 TODO BD
+
 TODO Cy.js
+
 TODO Legacy stuff
+
 TODO New stuff
 
 
 # Each of these are from their own files
-*** TODO Biodalliance
+# *** Biodalliance
 
-*** TODO Cytoscape.js
+#+INCLUDE: "./bdcy.org" :minlevel 2
 
-*** TODO Units
+# *** Cytoscape.js
 
-*** TODO Rendering
+#+INCLUDE: "./config.org" :minlevel 2
 
-*** TODO Events
+# *** Units
 
-*** TODO UI
+#+INCLUDE: "./units.org" :minlevel 2
 
+# *** Rendering
+
+#+INCLUDE: "./glyph.org" :minlevel 2
+
+# *** Events
+
+#+INCLUDE: "./events.org" :minlevel 2
+
+# *** TODO UI
+
+#+INCLUDE: "./ui.org" :minlevel 2
 
 
 * Results

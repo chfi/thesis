@@ -1,4 +1,4 @@
-* Config
+* Configuration
 
 # NOTE: give an intro on the state-of-the-art - we move that to the main
 # intro later. Explain *why* you decided for this architecture - late
@@ -36,6 +36,7 @@ the browser.
 WIP example config
 A very basic browser configuration could look like this:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC javascript
   var biodalliance = new Browser({
 
@@ -89,6 +90,7 @@ objects. Since this is JavaScript, there is no real type checking,
 though some of the code makes use of basic validation. However, it is
 wordy, and does not provide much:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC javascript
 if (opts.viewStart !== undefined && typeof(opts.viewStart) !== 'number') {
     throw Error('viewStart must be an integer');
@@ -118,6 +120,7 @@ Sources and styles are both tightly coupled and separate -- problematic...
 
 Neat solutions in PS include mapping `Source` -> `SourceSansStyle`,
 Modelling type as (Source, Style), etc. (Isomorphic)
+# TODO this one needs to be reformatted
 #+BEGIN_SRC javascript
 var sourcesAreEqual = sourcecompare.sourcesAreEqual;
 var sourcesAreEqualModuloStyle = sourcecompare.sourcesAreEqualModuloStyle;
@@ -149,6 +152,7 @@ WIP
 This style of code is commonly seen in code throughout BD, including
 configuration:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC javascript
 while (sti < st.length && ry > st[sti].height && sti < (st.length - 1)) {
     ry = ry - st[sti].height - tier.padding;
@@ -165,6 +169,7 @@ It does this with external effects and state.
 
 Stuff like this:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC javascript
 if (thisB.isDragging && rx != dragOrigin && tier.sequenceSource) {
     var a = thisB.viewStart + (rx/thisB.scale);
@@ -182,6 +187,7 @@ if (thisB.isDragging && rx != dragOrigin && tier.sequenceSource) {
 #+END_SRC
 
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC javascript
 if (hit && hit.length > 0 && !thisB.isDragging) {
     if (doubleClickTimeout) {
@@ -233,6 +239,7 @@ The type BrowserConfig represents the highest level of the GGB configuration
 hierarchy; it is the parsed version of the JS object provided by the user.
 This is the definition:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Config.purs
 newtype BrowserConfig =
   BrowserConfig { wrapRenderer :: RenderWrapper
@@ -300,6 +307,7 @@ Let's look at one of the lines from the function definition (note: if you are ne
 the syntax may look strange - ignore the details, it will slowly make sense and you
 may appreciate the terseness in time).
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript :tangle no
 parseBrowserConfig f = do
   browser <- f ! "browser" >>= readTaggedWithError "Function" "Error on 'browser':"
@@ -319,6 +327,7 @@ because it is actually generic:
 
 `readTaggedWithError` is actually simple:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript :tangle no
 -- The type is:
 readTaggedWithError :: forall a. String -> String -> Foreign -> F a
@@ -403,6 +412,7 @@ while the BrowserConfig parsing is done in the type Except (NonEmptyList Foreign
 To actually use these functions when parsing the user-provided configuration,
 we need to do a transformation like this:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript :tangle no
 toF :: Either String ~> Except (NonEmptyList ForeignError)
 #+END_SRC
@@ -411,6 +421,7 @@ Fortunately, Either and Except are isomorphic - the difference between the two i
 only in how they handle errors, not what data they contain. There already exists a function
 that does part of what we need:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript :tangle no
 except :: forall e m a. Applicative m => Either e a -> Except e a
 #+END_SRC
@@ -439,6 +450,7 @@ doesn't require any more information. To create the NonEmptyList, we
 exploit the fact that there is an Applicative instance, and use
 `pure`:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript :tangle no
 f :: String -> NonEmptyList ForeignError
 f = pure <<< ForeignError
@@ -453,6 +465,7 @@ eitherToF = except <<< lmap (pure <<< ForeignError)
 
 Now we can parse the events configuration in the BrowserConfig parser:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript :tangle no
 events <- do
   evs <- f ! "eventSources"

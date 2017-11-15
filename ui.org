@@ -64,6 +64,7 @@ Halogen is a component-based UI library, using a virtual DOM implementation
 to render HTML to the browser. A component is a value of the (fairly complicated)
 type Component (removed constraints etc. for clarity):
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 component :: Component renderer query state message monad
              (1)       (2)      (3)   (4)   (5)     (6)
@@ -86,9 +87,10 @@ stack, or some free monad.
 The "Query algebra" is the type describing the possible actions we can query
 the component to perform. The type is not complicated; in GGB we have:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 data Query a
-  = CreateBD (∀ eff. HTMLElement -> Eff (bd :: BD | eff) Biodalliance) a
+  = CreateBD (forall eff. HTMLElement -> Eff (bd :: BD | eff) Biodalliance) a
   | PropagateMessage Message a
   | BDScroll Bp a
   | BDJump Chr Bp Bp a
@@ -105,6 +107,7 @@ function. This maps Query to Halogen commands, which are also defined
 by a functor type -- the function is a natural transformation from
 our Query DSL to the Halogen DSL (a free monad).
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 eval :: Query ~> HalogenM state query childQuery childSlot message monad
 #+END_SRC
@@ -128,6 +131,7 @@ number of types, a convenience that makes it easy to change the
 number of slots, without more work than a type synonym. `ChildQuery`
 is a coproduct of the two child Query /functors/ (Coproduct2).
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 data Either a b = Left a | Right b
 
@@ -154,6 +158,7 @@ a type describing a path to the child component, and providing an
 action to tell the child component to perform.
 
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 eval = case _ of
   CreateBD bd next -> do
@@ -184,6 +189,7 @@ Depending on which message it is, we print a log message, and then use `H.raise`
 to send the message out from Halogen to subscribers elsewhere in the app (more
 on that later).
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
   PropagateMessage msg next -> do
     case msg of
@@ -195,6 +201,7 @@ on that later).
 
 The rest are simple queries to the respective child component, practically
 the same as `CreateBD`:
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
   BDScroll dist next -> do
     _ <- H.query' CP.cp1 UIBD.Slot $ H.action (UIBD.Scroll dist)
@@ -217,6 +224,7 @@ the component `state` to a description of the DSL used by the `renderer`
 type. In our case, we render to `HTML`, and so use the type `ParentHTML`,
 which contains all the types required to interact with the children.
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 render :: State -> ParentHTML query childQuery childSlot m
 #+END_SRC
@@ -224,6 +232,7 @@ render :: State -> ParentHTML query childQuery childSlot m
 The function itself is simple, we use Arrays and some functions to describe
 the HTML tree, a simplified version follows:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 render _ =
   HH.div_
@@ -269,6 +278,7 @@ than this should be done on another channel (which is what GGB does with events)
 The messages from the BD and Cy.js components are handled by the functions
 `handleBDMessage` and `handleCyMessage`:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 handleBDMessage :: UIBD.Message -> Maybe (Query Unit)
 handleBDMessage (UIBD.SendBD bd) = Just $ H.action $ PropagateMessage (BDInstance bd)
@@ -320,6 +330,7 @@ case runExcept $ parseBrowserConfig fConfig of
 With a validated config, we can create the track/graph configs, and create
 the function which will later be used to create Biodalliance:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 let {bdTracks, cyGraphs} = validateConfigs config.tracks
 
@@ -329,7 +340,7 @@ let {bdTracks, cyGraphs} = validateConfigs config.tracks
 liftEff $ log $ "BDTrack errors: " <> foldMap ((<>) ", ") bdTracks.errors
 liftEff $ log $ "CyGraph errors: " <> foldMap ((<>) ", ") cyGraphs.errors
 
-let mkBd :: (∀ eff. HTMLElement -> Eff (bd :: BD | eff) Biodalliance)
+let mkBd :: (forall eff. HTMLElement -> Eff (bd :: BD | eff) Biodalliance)
     mkBd = initBD opts' config.wrapRenderer config.browser
 #+END_SRC
 
@@ -350,6 +361,7 @@ as well as send queries to it, which we do momentarily. First, we use
 the provided TrackSink and TrackSource configurations to create the
 BD TrackSink and TrackSource:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 let bdTrackSink =   makeTrackSinks <<< _.bdEventSinks =<<
                       note "No BD event sinks configured" (config.events)
@@ -366,6 +378,7 @@ upon creation. We then use the TrackSink and TrackSource configurations
 to hook BD up to the event system. Finally, we ask the main component
 to create the BD instance:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 io.subscribe $ CR.consumer $ case _ of
   BDInstance bd -> do
@@ -394,8 +407,9 @@ by said `TrackSink`. We don't care about being able to kill the
 pure unit`. Similarly, the `TrackSource` is used with the helper
 function `subscribeBDEvents`, defined thusly:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
-subscribeBDEvents :: ∀ r.
+subscribeBDEvents :: forall r.
                      (TrackSource Event)
                   -> Biodalliance
                   -> BusRW Event

@@ -61,8 +61,9 @@ We also need an FFI function to wrap the BD browser constructor. This takes
 the browser constructor, another helper function, and the BD configuration
 as arguments:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
-foreign import initBDimpl :: ∀ eff.
+foreign import initBDimpl :: forall eff.
                              Fn3
                              Foreign
                              RenderWrapper
@@ -79,16 +80,18 @@ to wrap the events from BD (to make sure we don't use a raw event where
 it shouldn't be), and an FFI function that takes a BD instance and an effectful callback,
 returning an effect that attaches the callback.
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 newtype BDEvent = BDEvent Json
 
-foreign import addFeatureListenerImpl :: ∀ eff a.
+foreign import addFeatureListenerImpl :: forall eff a.
                                          EffFn2 (bd :: BD | eff)
                                          Biodalliance
                                          (BDEvent -> Eff eff a)
                                          Unit
 #+END_SRC
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC javascript
 exports.addFeatureListenerImpl = function(bd, callback) {
     bd.addFeatureListener(function(ev, feature, hit, tier) {
@@ -122,7 +125,7 @@ functions to it, as we have Cy.js as a dependency. We can provide a HTML
 element and an array of JSON objects to be used as the initial graph:
 
 #+BEGIN_SRC purescript
-foreign import cytoscapeImpl :: ∀ eff.
+foreign import cytoscapeImpl :: forall eff.
                                 EffFn2 (cy :: CY | eff)
                                 (Nullable HTMLElement)
                                 (Nullable JArray)
@@ -133,6 +136,7 @@ foreign import cytoscapeImpl :: ∀ eff.
 use `cytoscapeImpl`, instead we provide more idiomatic wrapper, so the user
 can use the more common and idiomatic `Maybe`:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 cytoscape :: forall eff.
              Maybe HTMLElement
@@ -144,33 +148,34 @@ cytoscape htmlEl els = runEffFn2 cytoscapeImpl (toNullable htmlEl) (toNullable e
 The Cytoscape.js instance can be worked with in multiple ways. Data can be
 added to the graph, retrieved from it, and deleted:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 -- | Add a Collection of elements to the graph
-foreign import graphAddCollectionImpl :: ∀ eff.
+foreign import graphAddCollectionImpl :: forall eff.
                                          EffFn2 (cy :: CY | eff)
                                          Cytoscape
                                          (CyCollection Element)
                                          Unit
 
-graphAddCollection :: ∀ eff.
+graphAddCollection :: forall eff.
                       Cytoscape
                    -> CyCollection Element
                    -> Eff (cy :: CY | eff) Unit
 graphAddCollection = runEffFn2 graphAddCollectionImpl
 
 -- | Get all elements in the graph
-foreign import graphGetCollectionImpl :: ∀ eff.
+foreign import graphGetCollectionImpl :: forall eff.
                                          EffFn1 (cy :: CY | eff)
                                          Cytoscape
                                          (CyCollection Element)
 
-graphGetCollection :: ∀eff.
+graphGetCollection :: forall eff.
                       Cytoscape
                    -> Eff (cy :: CY | eff) (CyCollection Element)
 graphGetCollection = runEffFn1 graphGetCollectionImpl
 
 
-foreign import graphRemoveCollectionImpl :: ∀ eff.
+foreign import graphRemoveCollectionImpl :: forall eff.
                                             EffFn1 (cy :: CY | eff)
                                             (CyCollection Element)
                                             (CyCollection Element)
@@ -262,6 +267,7 @@ exports.union = function(a, b) {
 };
 #+END_SRC
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 foreign import union :: forall e.
                         Fn2
@@ -343,6 +349,7 @@ namedNodeOrEdge = (elemHasName && isNode) || isEdge
 as expected. For example, the edges and nodes from a graph should both
 be subsets of the graph:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 let edges = filter isEdge eles
     nodes = filter isNode eles

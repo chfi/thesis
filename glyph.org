@@ -22,6 +22,7 @@ as position on screen, color, and so on. For example, the Glyph to create
 a box (rectangle) requires position, size, color, transparency, and
 radius (for rounding corners):
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC javascript
 function BoxGlyph(x, y, width, height, fill, stroke, alpha, radius) {
     this.x = x;
@@ -41,6 +42,7 @@ which draws the Glyph to a provided canvas context. All of the
 follows; the function argument is a HTML5 canvas context to perform the
 drawing actions on:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC javascript
   BoxGlyph.prototype.draw = function(g) {
       var r = this._radius;
@@ -253,6 +255,7 @@ a `String`, which can then be printed to console, or otherwise logged.
 The GlyphF.Log interpreter transforms Glyphs to Strings, which we can then log
 to the console. To run an interpreter, we use foldFree:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 foldFree :: forall f m. MonadRec m => (f ~> m) -> (Free f) ~> m
 #+END_SRC
@@ -277,6 +280,7 @@ glyphLog :: GlyphF ~> Writer String
 The definition of the function is also simple enough. For each primitive, write an
 appropriate string, and return the contents of the functor:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 glyphLogN (Stroke c a)   = do
   tell $ "Set stroke style to " <> c
@@ -296,7 +300,7 @@ writes itself at this point:
 #+BEGIN_SRC purescript
 execWriter :: forall w a. Writer w a -> w
 
-showGlyph :: ∀ a. Glyph a -> String
+showGlyph :: forall a. Glyph a -> String
 showGlyph = execWriter <<< foldFree glyphLog
 #+END_SRC
 
@@ -313,8 +317,9 @@ Drawing line from (37.0, 13.0) to (43.0, 7.0)
 When drawing to canvas, we use Eff as the target for our natural transformation,
 and simply perform whatever canvas effects are appropriate:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
-glyphEffN :: ∀ eff. Context2D -> GlyphF ~> Eff (canvas :: CANVAS | eff)
+glyphEffN :: forall eff. Context2D -> GlyphF ~> Eff (canvas :: CANVAS | eff)
 glyphEffN ctx (Stroke c a) = do
   _ <- C.setStrokeStyle c ctx
   pure a
@@ -332,11 +337,12 @@ glyphEffN ctx (Circle p r a) = do
 -- and so on
 
 -- | Produce an effect to render the glyph to a canvas
-renderGlyph :: ∀ eff. Context2D -> Glyph ~> Eff (canvas :: CANVAS | eff)
+renderGlyph :: forall eff. Context2D -> Glyph ~> Eff (canvas :: CANVAS | eff)
 renderGlyph = foldFree <<< glyphEffN
 #+END_SRC
 
 SVG on the other hand uses the following type as target functor:
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 type SVG a = StateT SVGContext (Writer (Array SVGElement)) a
 #+END_SRC
@@ -344,6 +350,7 @@ type SVG a = StateT SVGContext (Writer (Array SVGElement)) a
 The result is a series of commands which can be used to produce the desired
 SVG element; this can then be rendered to the DOM:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC
 interpSVGEff :: GlyphF ~> SVG
 interpSVGEff (Stroke c a)  = do
@@ -354,11 +361,11 @@ interpSVGEff (Circle p r a) = do
   pure a
 -- and so on
 
-runSVGEff :: ∀ a. Glyph a -> Array SVGElement
+runSVGEff :: forall a. Glyph a -> Array SVGElement
 runSVGEff = execWriter <<< (flip runStateT SVG.initialSVG) <<< foldFree interpSVGEff
 
 -- | Render a glyph to an SVG element
-renderGlyph :: ∀ a eff. Glyph a -> Eff ( dom :: DOM | eff ) Element
+renderGlyph :: forall a eff. Glyph a -> Eff ( dom :: DOM | eff ) Element
 renderGlyph = SVG.renderSVG <<< runSVGEff
 #+END_SRC
 
@@ -405,6 +412,7 @@ Now we can explore how bounding boxes form a monoid.
 TODO: ref to monoids and diagrams functional pearl
 
 The type corresponding to a glyph's position is GlyphPosition:
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 newtype GlyphPosition = GlyphPosition { min :: Number
                                       , max :: Number
@@ -418,6 +426,7 @@ This is a semigroup, where the binary operation produces the minimal bounding bo
 that covers both inputs. That is, we take the minimum or maximum of the respective
 values, to get whichever maximizes the area covered:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 instance semigroupGlyphPosition :: Semigroup GlyphPosition where
   append (GlyphPosition p1) (GlyphPosition p2) =
@@ -469,7 +478,7 @@ glyphPosN (Circle p r a) = do
   pure a
 -- and so on
 
-glyphToGlyphPosition :: ∀ a. Glyph a -> GlyphPosition
+glyphToGlyphPosition :: forall a. Glyph a -> GlyphPosition
 glyphToGlyphPosition = execWriter <<< foldFree glyphPosN
 #+END_SRC
 
@@ -484,6 +493,7 @@ like QuickCheck.
 First, some utility functions to generate and render GlyphPositions:
 
 TODO this is in Test.Glyph
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 type ThreeGlyphs = {l :: GlyphPosition, c :: GlyphPosition, r :: GlyphPosition}
 
@@ -510,6 +520,7 @@ genThreeGlyphs = do
 The law all semigroups should abide is associativity. In Jack, we
 describe a Property asserting that parentheses don't matter for equality:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 prop_semigroup :: Property
 prop_semigroup =
@@ -549,8 +560,9 @@ it to a Foreign value. The main function in its entirety:
 
 # TODO actually this code is garbage code and should be rewritten (that's how I transformed a feature to a record?!)
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
-writeGlyph' :: ∀ a c r. Maybe (Feature c r) -> Glyph a -> Foreign
+writeGlyph' :: forall a c r. Maybe (Feature c r) -> Glyph a -> Foreign
 writeGlyph' f g = toForeign { "draw": unsafePerformEff <<< \ctx -> Canvas.renderGlyph ctx g
                             , "min": const p.min
                             , "max": const p.max
@@ -575,8 +587,9 @@ which is useful when the `Glyphs` were constructed in the process of
 parsing externally provided data. In case of failure, we produce a
 `String` containing the errors, which is the format expected by BD:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
-writeGlyph :: ∀ a c r. Maybe (Feature c r) -> F (Glyph a) -> Foreign
+writeGlyph :: forall a c r. Maybe (Feature c r) -> F (Glyph a) -> Foreign
 writeGlyph f fG = case runExcept fG of
   Left errors -> toForeign $ fold $ renderForeignError <$> errors
   Right glyph -> writeGlyph' f glyph

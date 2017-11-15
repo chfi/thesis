@@ -89,6 +89,8 @@ exRec = { x: 123.0, title: "hello" }
 Row types can also be open, making it possible to write functions that work
 with any record containing at least some given fields. Here is a function
 that works on any record with a field named `title` of type String:
+
+# TODO this one needs to be reformatted
 #+BEGIN_SRC
 -- { label :: Type } is sugar for Record ( label :: Type )
 exRec2 :: { title :: String }
@@ -109,7 +111,8 @@ records are to product types. For example, this function `eitherOr` works with a
 possible Variants, with a default implementation for labels other than "either" and "or".
 A variant with the label "either" must contain a Boolean.
 
-TODO: update to use @ proxy syntax when 0.12 drops
+# TODO: update to use @ proxy syntax when 0.12 drops
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 _either = SProxy :: SProxy "either"
 _or     = SProxy :: SProxy "or"
@@ -355,6 +358,7 @@ something's wrong.
 The implementation is simple. The Cursors here are grabbed from the
 result of toPrims above; the JCursors themselves are unaltered.
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 -- This is just a nicer version of Tuple JCursor String
 type Cursor = { cursor :: JCursor
@@ -379,6 +383,7 @@ value cursor, it's good, otherwise throw an error. To increase this to validate
 the array of cursors defining a finished event, we can make use of Either's
 Applicative instance, and traverse:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 -- specialized to Either String and Array
 traverse :: forall a b.
@@ -402,7 +407,8 @@ side, these are type-safe, but there is no way to ensure that functions passed
 from Javascript to Purescript are type-safe. BD and Cy.js TrackSinks, respectively, should
 have the following types:
 
-(TODO: PS 0.12 will be out soon; effect rows won't be used then)
+# TODO: PS 0.12 will be out soon; effect rows won't be used then
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 newtype TrackSink a = TrackSink (StrMap (Json -> a))
 
@@ -413,6 +419,7 @@ type CyTrackSink = TrackSink (Cytoscape -> Eff Unit)
 These are the "expanded" types, for clarity. Note that they are extremely
 similar; the only difference is what type of browser they work on:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 BDTrackSink = TrackSink (StrMap (Json -> Biodalliance -> Eff Unit)
 CyTrackSink = TrackSink (StrMap (Json -> Cytoscape    -> Eff Unit)
@@ -423,6 +430,7 @@ The callback uses currying to take both the event (as JSON) and the respective
 browser instance, to be used e.g. when scrolling the Biodalliance view to an event.
 
 The following JS code defines a Biodalliance TrackSink (and is correctly typed):
+# TODO this one needs to be reformatted
 #+BEGIN_SRC javascript
 var bdConsumeLoc = function(json) {
     return function(bd) {
@@ -454,6 +462,7 @@ To create a TrackSource, the provided templates are parsed and validated.
 Since a TrackSource is a list of parsers, if the SourceConfig is correct,
 a function from raw events to parsed events is returned, wrapped in a singleton
 list and the TrackSource type:
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 makeTrackSource :: SourceConfig -> Either String (TrackSource Event)
 makeTrackSource sc = do
@@ -472,6 +481,7 @@ we use function composition to first attempt to use each provided configuration
 to create a TrackSource, followed by combining the list of parsers into a single
 one:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 makeTrackSources :: Array SourceConfig -> Either String (TrackSource Event)
 makeTrackSources = map fold <<< traverse makeTrackSource
@@ -496,6 +506,7 @@ about this function; all that is required is swapping out some of the functions.
 Finally, a way to use a TrackSource is required. The following function uses
 a TrackSource to parse a provided JSON value:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 runTrackSource :: TrackSource Event -> Json -> Array Event
 runTrackSource (TrackSource ts) raw = filterMap (_ $ raw) ts
@@ -511,6 +522,7 @@ A TrackSink is a map from event names to a function that handles the event,
 so to make one we create a singleton map from the provided event name to
 the provided function, and wrap it in the TrackSink type:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 makeTrackSink :: SinkConfig ~> TrackSink
 makeTrackSink sc = TrackSink $ StrMap.singleton sc.eventName sc.eventFun
@@ -522,8 +534,9 @@ in itself complicated, but we do some validation, namely ensuring that
 there are not multiple handlers for a given event:
 # NOTE/TODO there is no real reason for there to only be one handler...
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
-makeTrackSinks :: ∀ a.
+makeTrackSinks :: forall a.
                   Array (SinkConfig a)
                -> Either String (TrackSink a)
 makeTrackSinks scs = do
@@ -544,8 +557,9 @@ combine them -- similar to `fold <<< traverse` in the case of `TrackSource`.
 To use a `TrackSink`, we see if a handler for the provided event exists.
 If it does, we apply it to the contents of the event:
 
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
-runTrackSink :: ∀ a. TrackSink a -> Event -> Maybe a
+runTrackSink :: forall a. TrackSink a -> Event -> Maybe a
 runTrackSink (TrackSink sink) event = do
   f <- StrMap.lookup event.name sink
   pure $ f event.evData
@@ -558,8 +572,9 @@ for that is useful. In particular, the following function creates a "thread"
 provided `TrackSink` if the received event has a handler:
 
 # TODO make sure that `forkTrackSink` is correct w/o effect rows
+# TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
-forkTrackSink :: ∀ env.
+forkTrackSink :: forall env.
                  TrackSink (env -> Eff Unit)
               -> env
               -> BusRW Event
