@@ -1,4 +1,9 @@
+#+TITLE: TODO thesis name
+#+AUTHOR: Christian Fischer
+#+EMAIL: christian@chfi.se
 
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
 
 * Introduction - Present legacy code
 ** What is it and why do we care
@@ -7,6 +12,7 @@ Wikipedia defines "legacy system":
 application program, 'of, relating to, or being a previous or outdated computer
 system.' [..] This can also imply that the system is out of date or in need of
 replacement."
+
 
 
 TODO statistics on legacy systems; how pervasive are they, how old do they
@@ -276,7 +282,7 @@ for (TODO REF/FOOTNOTE brainfuck, "turing-tarpits"), and are generally (TODO REF
 interesting only as curiosities or for research, languages based on lambda
 calculus are more wide-spread. Indeed, the pure functional language Haskell
 is at its theoretical core a typed lambda calculus, based on System-F\omega,
-which it compiles to as an intermediate language. (TODO REF,
+which it compiles to as an intermediate language \cite{haskell2010}. (TODO REF,
 https://ghc.haskell.org/trac/ghc/wiki/Commentary/Compiler/FC )
 
 MAYBE TODO differentiate imperative and OOP
@@ -573,4 +579,13 @@ TODO New stuff
 
 
 
-* Appendix? SVG
+* Appendix?
+** SVG stuff?
+** IPFS stuf?
+
+* Bibliography
+
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{bibliography}
