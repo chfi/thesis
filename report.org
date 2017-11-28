@@ -6,6 +6,17 @@
 #+LATEX_CLASS_OPTIONS: [a4paper]
 
 * Introduction
+
+
+#+BEGIN_QUOTE
+"Legacy code. The phrase strikes disgust in the hearts of programmers. It con-
+jures images of slogging through a murky swamp of tangled undergrowth with
+leaches beneath and stinging flies above. It conjures odors of murk, slime, stag-
+nancy, and offal. Although our first joy of programming may have been intense,
+the misery of dealing with legacy code is often sufficient to extinguish that
+flame."  -- Robert C. Martin, Foreword to Working Effectively with Legacy Code \cite{feathers2004working}.
+#+END_QUOTE
+
 # v. quick intro to legacy code
 
 # overview of the problems caused by legacy code
@@ -41,6 +52,19 @@ application program, 'of, relating to, or being a previous or outdated computer
 system.' [..] This can also imply that the system is out of date or in need of
 replacement."
 
+There is no formal definition of "legacy code", but \cite{feathers2004working}
+gives the definition "Legacy code is code that we've gotten from someone else."
+This definition does not capture the spirit of the concept, however. \citeauthor{Bennett1995}
+gives another definition of legacy systems, which gets us closer:
+"large software systems that we don't know how to cope with but that are vital to
+our organization" \cite{Bennett1995}
+
+In other words, legacy code is code that continues to be relevant, e.g. by
+providing a service that is important, and that requires modification,
+or will require modification. If there were never going to be any reason to
+modify the code, it would not be worth talking about, nor is it likely that
+a system that provides a continually valuable service will not at some point
+in the future require maintenance or new features \cite{lehman1980programs}.
 
 # Why legacy code is a problem; i.e. why I should care that there are legacy systems, statistics
   # Num of legacy systems
@@ -48,34 +72,66 @@ replacement."
   # impact of legacy systems
   # difficulty to change
 
-TODO statistics on legacy systems; how pervasive are they, how old do they
-     tend to be, how expensive is their maintenance and where do most of
-     the costs fall
 
-TODO sum up why it's a problem - new features, new data, security issues
+# TODO statistics on legacy systems; how pervasive are they, how old do they
+     # tend to be, how expensive is their maintenance and where do most of
+     # the costs fall
 
-TODO point out source code as one problem; not language or OS, since
-     that's basically stable these days (i.e. they're unlikely to
-     be replaced soon, compared to how fast things moved up until
-     the 90s)
-
-Following this, we define a "legacy codebase" to be the codebase of a
-system which is "old" and "difficult" to work with. The technology itself
-does not matter, only the size and complexity of the codebase itself.
-Likewise we do not look at dependencies, a problem solved by pure functional
-package managers such as Nix and Guix.
-# TODO Nix & Guix refs
+For this very reason, legacy systems are prevalent in the world.
+If a system works as it should, providing the service that is needed,
+and said service must continue to be provided, the safest thing to do
+is to leave it as is --- until it is decided, for whatever reason, that these changes are
+necessary to be made.
 
 
-When someone wants to change the system. Otherwise, if it's running
-smoothly and does everything everyone wants of it, there is no problem.
 
-TODO
-- security fixes
-- bug fixes
-- changes to external dependencies
-- changed features
-- new features (e.g. electronic healthcare records)
+The U.S. goverment federal IT budget for 2017 was over $89 billion, with
+nearly 60% budgeted for operations and maintenance of agency systems,
+with a study by the U.S. Government Accountability Office finding that
+some federal agencies use systems that are up to 50 years old \cite{gao2016legacy}.
+
+
+# TODO Footnote The Danger of Legacy Systems https://web.archive.org/web/20120323165836/http://www.mousesecurity.com/?p=220
+
+# TODO point out source code as one problem; not language or OS, since
+     # that's basically stable these days (i.e. they're unlikely to
+     # be replaced soon, compared to how fast things moved up until
+     # the 90s)
+
+Many of these federal agency systems consist of old hardware, old operating
+systems, etc., however the problems of a legacy system do not need to be
+caused by such factors. The code itself is often the problem \cite{Bisbal1999},
+and is what this thesis is concerned with.
+
+# TODO maybe move this paragraph, and maybe the previous one, to a more suitable position
+We define a "legacy codebase" to be the codebase of a legacy system,
+where the problem of modifying the system is constrained by the code
+itself --- the underlying technology is not relevant. Likewise we do not look
+at dependencies, a problem solved by pure functional
+package managers such as Nix \cite{dolstra2004nix} and Guix \cite{courtes2013functional}.
+
+
+Why would changes need to be made to a legacy codebase? When the
+behavior of the system needs to be changed. \cite{feathers2004working}
+identifies four general reasons:
+
+# TODO
+# - security fixes
+# - bug fixes
+# - changes to external dependencies
+# - changed features
+# - new features (e.g. electronic healthcare records)
+  1. Adding a feature
+  2. Fixing a bug
+  3. Improving the design
+  4. Optimizing resource usage
+
+All of these somehow modify the behavior of the system; if there was
+no change in the system behavior, the change in code must have been
+to some part of the codebase that isn't used! Thus, the desired change
+requires a change in behavior. The problem with legacy code is that
+it is difficult to know how to make the change to the code that produces
+this desired change in behavior, and /only/ the desired change.
 
 
 # Why legacy code is a *difficult* problem; i.e. how people have tried (and failed) to solve it
@@ -85,6 +141,8 @@ TODO
 
 # WIP Nobody understands the code => the set of changes that are safe
     # to make are unknown
+
+
 
 The main reason it is difficult to work with legacy code is lack
 of knowledge of the system and codebase. A lot of work is required
@@ -484,7 +542,7 @@ them together -- all type-checked by the compiler.
 
 #+INCLUDE: "./glyph.org" :minlevel 2
 
-# *** Events
+  # *** Events
 
 #+INCLUDE: "./events.org" :minlevel 2
 
