@@ -1,0 +1,327 @@
+
+What do you think about when you hear the term legacy code? If you are at
+all like me, you think of tangled, unintelligible structure, code that you have to
+change but don’t really understand. You think of sleepless nights trying to add
+in features that should be easy to add, and you think of demoralization, the
+sense that everyone on the team is so sick of a code base that it seems beyond
+care, the sort of code that you just wish would die. Part of you feels bad for
+even thinking about making it better. It seems unworthy of your efforts. That
+definition of legacy code has nothing to do with who wrote it. Code can
+degrade in many ways, and many of them have nothing to do with whether the
+code came from another team.
+
+
+
+
+Code without tests is bad code. It doesn’t matter how well written it is; it doesn’t mat-
+ter how pretty or object-oriented or well-encapsulated it is. With tests, we can change
+the behavior of our code quickly and verifiably. Without them, we really don’t know
+if our code is getting better or worse.
+
+
+
+Knowing precisely what will happen if you change a couple of variables is
+often like knowing whether another gymnast is going to catch your arms after
+you come out of a somersault. If you are on a team with code that clear, you are
+in a better position than most programmers. In my work, I’ve noticed that
+teams with that degree of clarity in all of their code are rare. They seem like a
+statistical anomaly. And, you know what? If they don’t have supporting tests,
+their code changes still appear to be slower than those of teams that do.
+
+I’ve been talking about tests quite a bit so far, but this book is not about test-
+ing. This book is about being able to confidently make changes in any code
+
+In the following chapters, I describe techniques that you can use to under-
+stand code, get it under test, refactor it, and add features.
+
+If this book is not about pretty code, it is even less about pretty design. Good
+design should be a goal for all of us, but in legacy code, it is something that we
+arrive at in discrete steps.
+
+When a patient feels a little better, often that is the time
+when you can help him make commitments to a healthier life style. That is
+what we are shooting for with legacy code.
+
+
+Note: Focus on OOP and procedural programming.
+Functional programming isn't even in the index!
+The only one on "types" is "type conversion errors" -- something covered by a strongly typed language.
+
+Also focus on compiled code. Without any *any* existing correctness checking,
+by the compiler or tests, it becomes extremely difficult to start working on the legacy code.
+
+
+* Four reasons to change software
+
+1. Adding a feature
+2. Fixing a bug
+"Adding a feature seems like the most straightforward type of change to make.
+The software behaves one way, and users say that the system needs to do something else also."
+
+Note that adding features & fixing bugs can be the same thing depending on the viewpoint;
+problems users have are not necessarily code bugs, but they can still be seen as bugs.
+
+
+"Behavior is the most important thing about software. It is what users depend on.
+Users like it when we add behavior (provided it is what they really wanted), but if we
+change or remove behavior they depend on (introduce bugs), they stop trusting us."
+
+Adding behavior without changing the existing behavior to /some/ degree is basically
+impossible. After all, the "total" behavior of the system is changed, even if the
+only difference is adding a button to call the new behavior!
+
+3. Improving the design
+
+Improving code design without changing behavior = refactoring
+
+"One of the main reasons why many programmers don’t attempt
+to improve design often is because it is relatively easy to lose behavior or create
+bad behavior in the process of doing it." - p 5
+
+
+
+"Adding features, refactoring, and optimizing all hold existing functionality
+invariant. In fact, if we scrutinize bug fixing, yes, it does change functionality,
+but the changes are often very small compared to the amount of existing func-
+tionality that is not altered. "
+
+Invariant! This is what a good type system is /for/, enforcing invariants with
+the help of the compiler.
+
+"We have to make sure that the small number
+of things that we change are changed correctly. On the negative side, well, that
+isn’t the only thing we have to concentrate on. We have to figure out how to
+preserve the rest of the behavior. Unfortunately, preserving it involves more
+than just leaving the code alone. We have to know that the behavior isn’t
+changing, and that can be tough. The amount of behavior that we have to pre-
+serve is usually very large, but that isn’t the big deal. The big deal is that we
+often don’t know how much of that behavior is at risk when we make our
+changes. If we knew, we could concentrate on that behavior and not care about
+the rest. Understanding is the key thing that we need to make changes safely."
+
+
+
+"Preserving existing behavior is one of the largest challenges in software development.
+Even when we are changing primary features, we often have very large areas of
+behavior that we have to preserve."
+
+
+
+4. Optimizing resource usage
+
+* Risky change
+
+"Preserving behavior is a large challenge. When we need to make changes and
+preserve behavior, it can involve considerable risk.
+
+To mitigate risk, we have to ask three questions:
+1. What changes do we have to make?
+2. How will we know that we’ve done them correctly?
+3. How will we know that we haven’t broken anything?"
+
+
+* Working with feedback -- testing!
+"Changes in a system can be made in two primary ways. I like to call them Edit
+and Pray and Cover and Modify. Unfortunately, Edit and Pray is pretty much
+the industry standard. When you use Edit and Pray, you carefully plan the
+changes you are going to make, you make sure that you understand the code
+you are going to modify, and then you start to make the changes."
+
+"Cover and Modify is a different way of making changes. The idea behind it is
+that it is possible to work with a safety net when we change software. The
+safety net we use isn’t something that we put underneath our tables to catch us
+if we fall out of our chairs. Instead, it’s kind of like a cloak that we put over
+code we are working on to make sure that bad changes don’t leak out and
+infect the rest of our software. Covering software means covering it with tests."
+
+
+"When we have tests that detect change, it is like having a vise around our code. The
+behavior of the code is fixed in place. When we make changes, we can know that
+we are changing only one piece of behavior at a time. In short, we’re in control of
+our work."
+
+
+Argue that static types limit the amount of possible change.
+
+
+
+"
+Unit tests run fast. If they don’t run fast, they aren’t unit tests.
+Other kinds of tests often masquerade as unit tests. A test is not a unit test if:
+1. It talks to a database.
+2. It communicates across a network.
+3. It touches the file system.
+4. You have to do special things to your environment
+(such as editing configuration files) to run it.
+"
+
+
+
+* Legacy code change algorithm
+"
+The Legacy Code Change Algorithm
+When you have to make a change in a legacy code base, here is an algorithm
+you can use.
+1. Identify change points.
+2. Find test points.
+3. Break dependencies.
+4. Write tests.
+5. Make changes and refactor.
+The day-to-day goal in legacy code is to make changes, but not just any
+"
+
+
+** Identify change points
+   Where to make changes
+** Find test points
+   Where to write tests; what to test
+** Break dependencies
+   Strongly coupled code -- dependencies -- makes it difficult to insert new code/tests
+
+   Argues that making fake objects is a good way to discovery the effects of code. lol
+** Write tests
+** Make changes and refactor
+
+* Seam
+"A seam is a place where you can alter behavior in your program without editing in
+that place."
+
+
+This is only even a thing because the caller has control over side effects...
+
+
+
+
+* Test harnesses
+Chapter 9 and 10 have some potential code smells & solutions
+
+
+* Changing software in limited time
+  that's a potential limitation in my case
+
+
+
+* It takes forever to make a change
+
+
+
+
+** Understanding
+"As the amount of code in a project grows, it gradually surpasses understanding.
+The amount of time it takes to figure out what to change just keeps increasing."
+
+
+"However, there is one key difference between a well-maintained system and a
+legacy system. In a well-maintained system, it might take a while to figure out
+how to make a change, but once you do, the change is usually easy and you feel
+much more comfortable with the system. In a legacy system, it can take a long
+time to figure out what to do, and the change is difficult also. You might also
+feel like you haven’t learned much beyond the narrow understanding you had
+to acquire to make the change. In the worst cases, it seems like no amount of
+time will be enough to understand everything you need to do to make a change,
+and you have to walk blindly into the code and start, hoping that you’ll be able
+to tackle all the problems that you encounter."
+
+
+
+** Lag time
+
+"Changes often take a long time for another very common reason: lag time. Lag
+time is the amount of time that passes between a change that you make and the
+moment that you get real feedback about the change. At the time of this writ-
+ing, the Mars rover Spirit is crawling across the surface of Mars taking pictures."
+
+
+
+** Dependenciess
+
+* Adding features
+** Test-Driven Development
+
+** Programming by Differenc
+
+
+* Need to make a change -- what methods should be tested?
+
+** Reasoning about effects
+
+** Reasoning forward
+
+** Effect propagation
+
+
+
+* Many changes in one area
+** Interception points
+
+
+* Dependencies
+
+
+* "My application is all API calls"
+
+* Don't understand the code enough
+
+* No structure
+
+** Telling the story
+
+* Chapter 19 - project is not object oriented, how to make safe changes?
+"Procedural languages are especially challenging in a legacy environment. It’s
+important to get code under test before modifying it, but the number of things
+you can do to introduce unit tests in procedural languages is pretty small. Often
+the easiest thing to do is think really hard, patch the system, and hope that your
+changes were right.
+
+This testing dilemma is pandemic in procedural legacy code. Procedural
+languages often just don’t have the seams that OO (and many functional)
+programming languages do. Savvy developers can work past this by managing
+their dependencies carefully (there is a lot of great code written in C, for
+instance), but it is also easy to end up with a real snarl that is hard to change
+incrementally and verifiably."
+
+jj
+
+
+"Some procedural programmers like to beat up on object orientation; they consider
+it unnecessary or think that its complexity doesn’t buy anything. But when
+you really think about it, you begin to realize that all procedural programs are
+object oriented; it’s just a shame that many contain only one object."
+
+
+* Same code all over the place
+
+
+* Monster method
+"Long methods are a pain, but monster methods are worse. A monster
+method is a method that is so long and so complex that you really don’t feel
+comfortable touching it. Monster methods can be hundreds or thousands of
+lines long, with enough scattered indentation to make navigation nearly
+impossible. When you have monster methods you’re tempted to print them on a
+couple of yards of continuous-feed paper and lay them out in a hallway so that
+you and your coworkers can figure them out."
+
+
+
+* Chapter 23 - How do I know that I'm not breaking anything?
+
+
+"When you are breaking dependencies for test, you have to apply extra care.
+One thing that I do is Preserve Signatures whenever I can. When you avoid
+changing signatures at all, you can cut/copy and paste entire method signatures
+from place to place and minimize any chances of errors."
+
+TYPES. USE TYPES. TYPES TYPES TYPES
+
+Page 315, "Lean on the Compiler"
+Lean on the Compiler involves two steps:
+1. Altering a declaration to cause compile errors
+2. Navigating to those errors and making changes.
+
+
+This is the babby form of type-driven development, search, etc.
+
+
+* Notes
+so much of the solutions consist of dealing with mutability and variable scope.
+ridiculous.
