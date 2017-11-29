@@ -6,7 +6,28 @@
   booktitle={Information Technology for Organizations Development (IT4OD), 2016 International Conference on},
   pages={1--6},
   year={2016},
-  organization={IEEE}
+  organization={IEEE},
+  notes={Writing unit tests for modules/objects/etc. before modifying them is apparently a good idea},
+  abstract={The maintenance of legacy code is a hard task since
+                  developers do not have access to details of its
+                  implementation. Thus, the refactoring of code units
+                  usually generates problems in other parts of the
+                  code that already had been validated. A solution to
+                  this problem is to use an anticipated test design
+                  methodology, where unit tests are first created to
+                  each module/class/methods before their modification.
+                  Thus, developers are able to ensure the correct
+                  performance of functions after their refactoring.
+                  This work discusses our experience in applying this
+                  methodology to the Data Access Object (DAO) layer
+                  refactoring of a real legacy application of a mobile
+                  multinational. Our results show that this strategy
+                  assists developers in better understanding the code
+                  and improves the performance of unit tests since
+                  they are produced by the own development team.
+                  Furthermore, we show the importance of the miniworld
+                  definition, which tries to represent a set of data
+                  that increases the coverage of the test process.}
 }
 
 @inproceedings{weide1995reverse,
@@ -16,7 +37,13 @@
   publisher = {{ACM} Press},
   author = {Bruce W. Weide and Wayne D. Heym and Joseph E. Hollingsworth},
   title = {Reverse engineering of legacy code exposed},
-  booktitle = {Proceedings of the 17th international conference on Software engineering  - {ICSE} {\textquotesingle}95}
+  booktitle = {Proceedings of the 17th international conference on Software engineering  - {ICSE} {\textquotesingle}95},
+  notes={Reverse engineering large legacy software systems not being
+                  cost-effective, as it is costly to "understand" the
+                  legacy code, plus they argue that it is not possible
+                  to write software that will not need to be reverse
+                  engineered in the future --- i.e. software that will
+                  not become legacy software.}
 }
 
 @inproceedings{lindig1997assessing,
@@ -408,7 +435,7 @@
   publisher={Prentice Hall Professional}
 }
 
-@misc{actiac2016modernization
+@misc{actiac2016modernization,
   title={Legacy System Modernization -- Addressing Challenges on the Path to Success},
   author={American Council for Technology -- Industry Advisory Council},
   year={2016},
@@ -416,9 +443,10 @@
   urldate={2017-11-27}
 }
 
-@techreport{gao2016legacy
+@techreport{gao2016legacy,
   title={Federal Agencies Need to Address Aging Legacy Systems},
   author={Powner, David A.},
+  year={2016},
   institution={U.S. Government Accountability Office},
   url={http://www.gao.gov/products/D13445},
   urldate={2017-11-27}
