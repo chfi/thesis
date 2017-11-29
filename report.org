@@ -5,16 +5,20 @@
 #+LATEX_CLASS: report
 #+LATEX_CLASS_OPTIONS: [a4paper]
 
+#+LATEX_HEADER: \usepackage[numbers]{natbib}
+
 * Introduction
 
-
+# TODO Have this here or in Background/Theory?
 #+BEGIN_QUOTE
-"Legacy code. The phrase strikes disgust in the hearts of programmers. It con-
-jures images of slogging through a murky swamp of tangled undergrowth with
-leaches beneath and stinging flies above. It conjures odors of murk, slime, stag-
-nancy, and offal. Although our first joy of programming may have been intense,
-the misery of dealing with legacy code is often sufficient to extinguish that
-flame."  -- Robert C. Martin, Foreword to Working Effectively with Legacy Code \cite{feathers2004working}.
+Legacy code. The phrase strikes disgust in the hearts of programmers.
+It conjures images of slogging through a murky swamp of tangled
+undergrowth with leaches beneath and stinging flies above. It conjures
+odors of murk, slime, stagnancy, and offal. Although our first joy of
+programming may have been intense, the misery of dealing with legacy
+code is often sufficient to extinguish that flame. --- Robert C.
+Martin, Foreword to Working Effectively with Legacy Code
+\cite{feathers2004working}
 #+END_QUOTE
 
 # v. quick intro to legacy code
@@ -38,6 +42,13 @@ flame."  -- Robert C. Martin, Foreword to Working Effectively with Legacy Code \
 
 
 * Background/Theory
+The prerequisite theory for the thesis project is introduced. A definition
+of "legacy code" is given, followed by relevant statistics, facts, and
+techniques concerning legacy code and working with it. Next, an introduction
+to the purely functional programming paradigm
+
+
+
 ** Legacy code
 # TODO subsections here could use different names
 # Section abstract
@@ -46,20 +57,27 @@ flame."  -- Robert C. Martin, Foreword to Working Effectively with Legacy Code \
 *** Definition
 
 # What legacy code is - definition
-Wikipedia defines "legacy system":
-"In computing, a legacy system is an old method, technology, computer system, or
-application program, 'of, relating to, or being a previous or outdated computer
-system.' [..] This can also imply that the system is out of date or in need of
-replacement."
+# Wikipedia defines "legacy system":
+# "In computing, a legacy system is an old method, technology, computer system, or
+# application program, 'of, relating to, or being a previous or outdated computer
+# system.' [..] This can also imply that the system is out of date or in need of
+# replacement."
 
 There is no formal definition of "legacy code", but \cite{feathers2004working}
 gives the definition "Legacy code is code that we've gotten from someone else."
-This definition does not capture the spirit of the concept, however. \citeauthor{Bennett1995}
-gives another definition of legacy systems, which gets us closer:
-"large software systems that we don't know how to cope with but that are vital to
-our organization" \cite{Bennett1995}
+\citeauthor{Bennett1995} gives another definition, of legacy systems, which
+gives more of an idea of what the problem is: "large software systems that we don't know how to cope with but that are vital to
+our organization" \cite{Bennett1995}.
+Finally, \citeauthor{weide1995reverse} gives a definition closer to the
+spirit of the concept as experienced by programmers in the trenches:
 
-In other words, legacy code is code that continues to be relevant, e.g. by
+#+BEGIN_QUOTE
+[..] legacy code, i.e., programs in which too much has been invested
+just to throw away but which have proved to be obscure, mysterious,
+and brittle in the face of maintenance.
+#+END_QUOTE
+
+In other words, legacy code is code that continues to be relevant, e.g.\ by
 providing a service that is important, and that requires modification,
 or will require modification. If there were never going to be any reason to
 modify the code, it would not be worth talking about, nor is it likely that
@@ -80,10 +98,8 @@ in the future require maintenance or new features \cite{lehman1980programs}.
 For this very reason, legacy systems are prevalent in the world.
 If a system works as it should, providing the service that is needed,
 and said service must continue to be provided, the safest thing to do
-is to leave it as is --- until it is decided, for whatever reason, that these changes are
-necessary to be made.
-
-
+is to leave it as is --- until it is decided, for whatever reason, that
+changes must be made.
 
 The U.S. goverment federal IT budget for 2017 was over $89 billion, with
 nearly 60% budgeted for operations and maintenance of agency systems,
@@ -115,7 +131,7 @@ Why would changes need to be made to a legacy codebase? When the
 behavior of the system needs to be changed. \cite{feathers2004working}
 identifies four general reasons:
 
-# TODO
+# TODO Maybe add examples?
 # - security fixes
 # - bug fixes
 # - changes to external dependencies
@@ -134,79 +150,104 @@ it is difficult to know how to make the change to the code that produces
 this desired change in behavior, and /only/ the desired change.
 
 
+# Rewrite & use these two paragraphs if more concrete examples are desired
+# *maaaybeeee* include this
+# WIP The existing data structures etc. can be arbitrarily complex,
+#      have old/unused data/fields, be mutated at various places;
+#      thus it is difficult to know where to start when inserting
+#      new code
+# If the system has grown organically over a longer period of time,
+# the data structures and procedures that manipulate them have likely
+# also grown to fit new features etc., leading to large pieces of
+# state that are difficult to reason about. Objects may be doing
+# something much different from their original purpose. WIP
+# TODO REF
+
+# also *maaaybeeee* include this
+# WIP Some new feature/solution to a new problem may involve
+#      ""stuff (architecture etc.)"" that the existing code
+#      is difficult to fit into, or vice versa
+# The changes that need to be made may fundamentally be "out of phase"
+# with the existing system. For example, it may require data that
+# does exist in some part of the system, but the data is tangled
+# up with other state and so on.
+
 # Why legacy code is a *difficult* problem; i.e. how people have tried (and failed) to solve it
-  # or, equivalently, why it is still a problem
+# or, equivalently, why it is still a problem
 
 # WIP Why is it difficult to do these things, to change legacy code?
-
-# WIP Nobody understands the code => the set of changes that are safe
-    # to make are unknown
-
+#     Nobody understands the code => the set of changes that are safe
+#     to make are unknown
 
 
-The main reason it is difficult to work with legacy code is lack
-of knowledge of the system and codebase. A lot of work is required
-to discover what changes can be done without compromising the
-system's current function; one must then come up with a way to
-fit in the desired changes (new features, bug fixes, etc.) in
-that possible implementation space.
-TODO REF
+The main reason it is difficult to work with legacy code is lack of
+knowledge of the system and codebase, and how the system's behavior
+relates to the underlying code. Legacy codebases often lack
+documentation and tests, without which a new programmer on the project
+has few, if any, tools at their disposal to understand the codebase as
+it is, since they do not have any knowledge of how and why the code
+came to be as it is. Even if there is a design or system specification
+--- which is far from certain --- it is not necessarily accurate. The
+code may very well have grown beyond the initial specification, and
+the specification need not have been updated in step with the code.
 
-# "The maintenance of legacy code is a hard task since developers do not have
-# access to details of its implementation."
-# TODO REF: http://ieeexplore.ieee.org/abstract/document/7479256/?reload=true
-
-WIP There is no clear specification of the design or the system
-This lack of knowledge can be caused by not having a system specification,
-but even if there is one, it is possible (likely?) that the system
-has grown past it -- that the specification does not actually
-describe the current system. A system specification does
-not necessarily help understand the codebase, either.
-TODO REF
-
-
-WIP The system is only partly known; there is no way to test changes
-Often there are few or no tests, making it difficult, if not impossible,
-to be sure that a change has not caused some kind of regression.
-TODO REF
-
-WIP The existing data structures etc. can be arbitrarily complex,
-     have old/unused data/fields, be mutated at various places;
-     thus it is difficult to know where to start when inserting
-     new code
-If the system has grown organically over a longer period of time,
-the data structures and procedures that manipulate them have likely
-also grown to fit new features etc., leading to large pieces of
-state that are difficult to reason about. Objects may be doing
-something much different from their original purpose. WIP
-TODO REF
-
-WIP Some new feature/solution to a new problem may involve
-     ""stuff (architecture etc.)"" that the existing code
-     is difficult to fit into, or vice versa
-The changes that need to be made may fundamentally be "out of phase"
-with the existing system. For example, it may require data that
-does exist in some part of the system, but the data is tangled
-up with other state and so on.
-
-In short, the problem is lack of knowledge in what the system does, and how the
-code relates to the system and its parts. It may also be extremely difficult to
-know if a change made is safe.
+For these reasons, one of the main problems of working with legacy
+code is understanding it in the first place \cite{feathers2004working}
+\cite{Bennett1995} \cite{siebra2016anticipated}. This is also a
+difficult, time-consuming process, and one of the reasons reverse
+engineering legacy systems is rarely, if ever, a cost-effective
+undertaking \cite{weide1995reverse}. Also according to \citeauthor*{weide1995reverse},
+even if a system is successfully reverse engineered and modified,
+even if a /new/ system is successfully developed that provides
+the same behavior as the legacy system but with a better design,
+it is highly likely that the new system, eventually, reaches
+a point where it too must be reverse engineered --- where the
+new system becomes another legacy system.
+# TODO there's a more forceful and better way to end this paragraph...
 
   # to know why it is still a problem we need to know why it became a problem
   # it "became" a problem when it "became", i.e. when its code was written
   # thus: the problem is bad code.
 
+In short, the problem with legacy code is lack of knowledge in what
+the system does, and how the code relates to the system and its parts.
+This makes it difficult to know what changes to make to the code to
+produce the desired change in system behavior, and if a change made is safe,
+i.e.\ that /no/ undesired change in system behavior results.
+
+Not only is working with legacy code difficult and expensive, it may
+be the case that doing so will not solve the underlying problems,
+dooming the legacy system to a lifetime of being subject to the
+swearing of programmers.
+# TODO this last sentence must be worded better
+
+One question remain: is there anything special with legacy code,
+is /all/ successful code doomed to one day bear the "legacy" label,
+or is it possible to write code that avoids, or at least reduces,
+the problems associated with legacy code? In other words, what
+characterizes the source code of legacy systems, and could code
+be written in another way?
+# TODO REFS need to show that it is in fact possible to write code
+# that avoids/reduces the problems. GNU, Linux, etc. would be good.
+
   # subsection outro: legacy code problems are caused by bad code being
   #   difficult to work with, extend, etc.
+
+Legacy code is difficult to work with; its dual would be code
+that is easy, even pleasant, to work with. Let us call that
+code "good", and the code that is characteristic of (but hardly
+unique to) the problems related to legacy code, "bad" code.
+
+The question then becomes, what makes code good or bad? This is
+what the next section attempts to answer.
 
 
 *** Code quality
 
-It's also desirable to know what makes code more or less difficult to
-work with -- both to give a clearer picture of what code to focus on
-when refactoring old systems, as well as give programmers guidelines
-when developing new code.
+# It's also desirable to know what makes code more or less difficult to
+# work with -- both to give a clearer picture of what code to focus on
+# when refactoring old systems, as well as give programmers guidelines
+# when developing new code.
 
 # begs the question -- what is bad code?
   # limited definition, but:
@@ -235,6 +276,16 @@ Many of the code smells they list, as well as the solutions to them, are
 concerned about class-based object-oriented programming (OOP). OOP has
 been the primary programming paradigm for decades (TODO REF),
 WIP more here (but what?)
+
+
+
+# IDK if this quote fits here, but I want it somewhere!
+#+BEGIN_QUOTE
+Most large software systems, even if apparently well-engineered on
+a component-by-component basis, have proved to be incoherent as a
+whole due to unanticipated long-range "weird interactions" among
+supposedly independent parts. \cite{weide1995reverse}
+#+END_QUOTE
 
   # what is good code?
     # maybe something about the semantic space of the program vs. the implementation space
@@ -570,5 +621,5 @@ them together -- all type-checked by the compiler.
 
 
 # \nocite{*}
-\bibliographystyle{plain}
+\bibliographystyle{plainnat}
 \bibliography{bibliography}
