@@ -1,0 +1,9 @@
+_minted-report
+missfont.log
+old
+*.aux
+*.bbl
+*.log
+*.out
+*.tex
+*.toc
