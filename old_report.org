@@ -1,0 +1,591 @@
+#+TITLE: TODO thesis name
+#+AUTHOR: Christian Fischer
+#+EMAIL: christian@chfi.se
+
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
+
+* Introduction - Present legacy code
+** What is it and why do we care
+Wikipedia defines "legacy system":
+"In computing, a legacy system is an old method, technology, computer system, or
+application program, 'of, relating to, or being a previous or outdated computer
+system.' [..] This can also imply that the system is out of date or in need of
+replacement."
+
+
+
+TODO statistics on legacy systems; how pervasive are they, how old do they
+     tend to be, how expensive is their maintenance and where do most of
+     the costs fall
+
+TODO sum up why it's a problem - new features, new data, security issues
+
+TODO point out source code as one problem; not language or OS, since
+     that's basically stable these days (i.e. they're unlikely to
+     be replaced soon, compared to how fast things moved up until
+     the 90s)
+
+Following this, we define a "legacy codebase" to be the codebase of a
+system which is "old" and "difficult" to work with. The technology itself
+does not matter, only the size and complexity of the codebase itself.
+Likewise we do not look at dependencies, a problem solved by pure functional
+package managers such as Nix and Guix.
+
+TODO
+What remains is "legacy code".
+Why is it a problem, i.e. what causes it (when the system is being
+designed/built) and why does it come up (when someone wants to make
+changes to the system)?
+How have people attempted to solve this problem?
+
+"The maintenance of legacy code is a hard task since developers do not have
+access to details of its implementation."
+http://ieeexplore.ieee.org/abstract/document/7479256/?reload=true
+
+** Why is legacy code a problem
+When someone wants to change the system. Otherwise, if it's running
+smoothly and does everything everyone wants of it, there is no problem.
+
+TODO
+- security fixes
+- bug fixes
+- changes to external dependencies
+- changed features
+- new features (e.g. electronic healthcare records)
+
+
+WIP Why is it difficult to do these things, to change legacy code?
+WIP Nobody understands the code => the set of changes that are safe
+    to make are unknown
+The main reason it is difficult to work with legacy code is lack
+of knowledge of the system and codebase. A lot of work is required
+to discover what changes can be done without compromising the
+system's current function; one must then come up with a way to
+fit in the desired changes (new features, bug fixes, etc.) in
+that possible implementation space.
+TODO REF
+
+WIP There is no clear specification of the design or the system
+This lack of knowledge can be caused by not having a system specification,
+but even if there is one, it is possible (likely?) that the system
+has grown past it -- that the specification does not actually
+describe the current system. A system specification does
+not necessarily help understand the codebase, either.
+TODO REF
+
+
+WIP The system is only partly known; there is no way to test changes
+Often there are few or no tests, making it difficult, if not impossible,
+to be sure that a change has not caused some kind of regression.
+TODO REF
+
+WIP The existing data structures etc. can be arbitrarily complex,
+     have old/unused data/fields, be mutated at various places;
+     thus it is difficult to know where to start when inserting
+     new code
+If the system has grown organically over a longer period of time,
+the data structures and procedures that manipulate them have likely
+also grown to fit new features etc., leading to large pieces of
+state that are difficult to reason about. Objects may be doing
+something much different from their original purpose. WIP
+TODO REF
+
+WIP Some new feature/solution to a new problem may involve
+     ""stuff (architecture etc.)"" that the existing code
+     is difficult to fit into, or vice versa
+The changes that need to be made may fundamentally be "out of phase"
+with the existing system. For example, it may require data that
+does exist in some part of the system, but the data is tangled
+up with other state and so on.
+
+In short, the problem is lack of knowledge in what the system does, and how the
+code relates to the system and its parts. It may also be extremely difficult to
+know if a change made is safe.
+
+
+** How have people tried to solve it
+Reverse engineering of legacy code exposed
+https://doi.org/10.1145/225014.225045
+
+"Reverse engineering of large legacy software systems generally cannot meet its
+objectives because it cannot be cost-effective. [..] it is very costly to
+“understand” legacy code sufficiently well to permit changes to be made safely,
+because reverse engineering of legacy code is intractable in the usual
+computational complexity sense."
+
+As one of the main problems of legacy code is lack of knowledge, one
+of the main ways to attempt to solve it is to reverse engineer
+the existing system. This is usually done manually [TODO REF], but
+can also be done using automatic analysis of the code.
+
+*** Code analysis
+One common way is to analyze the code to find ways to modularize
+it, to decouple the pieces from one another. This can be done
+by OOP stuff
+
+Another interesting route is finding a modularization by constructing
+a concept lattice based on where different global variables are used.
+This lattice can then be used to create descriptions on how to
+modularize the codebase.
+REF: Assessing Modular Structure of Legacy Code Based on Mathematical
+     Concept Analysis
+     https://doi.org/10.1145/253228.253354
+
+TODO Problems with these approaches, and to automation of this in general
+TODO probably something about machine learning
+
+
+*** Manual reverse engineering
+The most common (TODO REF) solution is simply to do it by hand. This
+requires that programmers look at, and comprehend, the codebase, and
+how the codebase relates to the semantics of the system. Writing tests
+should also be done to give greater confidence when changes are made.
+
+REF The most common way - Do it by hand.
+
+It's also desirable to know what makes code more or less difficult to
+work with -- both to give a clearer picture of what code to focus on
+when refactoring old systems, as well as give programmers guidelines
+when developing new code. In a word, we want heuristics for good vs.
+bad code. These are called code smells, or antipatterns.
+
+TODO this probably needs... more
+First, however, we need to define what is meant by "good" or "bad" code.
+Simply, a good piece of code makes it clear what it does, how it relates
+to the system at large, and how it can be changed or reused without
+compromising its behavior or the behavior of the system.
+
+TODO get Armstrong quote in here
+
+*** Code smells
+Beck & Fowler [TODO REF] provides a list of 22 code smells that have been
+used (extensively?) since publication.
+(TODO REFs
+http://ieeexplore.ieee.org/abstract/document/1235447/
+https://link.springer.com/article/10.1007/s10664-006-9002-8
+https://dl.acm.org/citation.cfm?id=2629648
+http://www.sciencedirect.com/science/article/pii/S0164121215000631
+)
+
+Many of the code smells they list, as well as the solutions to them, are
+concerned about class-based object-oriented programming (OOP). OOP has
+been the primary programming paradigm for decades (TODO REF),
+WIP more here (but what?)
+
+TODO is it even worth pointing out the OOP specific ones? Doesn't really apply to project
+
+Some of the code smells:
+
+**** General
+- Duplicated code - when a piece of code appears multiple times
+  in the codebase, it's a sign of a potential abstraction.
+  It also makes it difficult to change things, as the change needs
+  to be duplicated several times -- which also leads to more opportunities for mistakes to be made.
+
+
+- primitive obsession - Using primitive types to represent values that could
+  be better represented by composite types or wrapped types. This can
+  lead to values being used where they shouldn't be (e.g. providing a
+  Number representing a pixel to a function expecting a Number actually
+  representing the number of objects in an array). This also makes it
+  more difficult to understand what a variable or value is to the program.
+
+- shotgun surgery - When functionality is spread out in the codebase in such a way that
+  making a change at one place requires making a change at many other places.
+  Reduces code comprehension, as distant pieces of code are somehow interacting,
+  and makes it more difficult to modify the codebase successfully.
+
+
+TODO this section is probably superfluous
+**** Procedural-specific
+- long method - If a function or method is long, it can be difficult to understand,
+  especially if the function interacts with implicit or global state, or performs side-effects.
+
+- long parameter list
+
+- switch statements
+
+- msg chains
+
+
+**** Summary
+What makes a code smell? Our definition of "good" from above
+seems to fit in well with the more general of these code smells.
+These code smells are generally concerned with limiting the reach
+of a piece of code (fewer, more organized method parameters, shorter
+methods, not touching other classes), as well as minimize
+
+TODO something with SOLID maybe
+
+TODO something like:
+     Code whose implementation is in the neighborhood of the implementation
+     space of semantically relevant extensions to the program.
+
+     "What we want is to increase the possible implementation space without
+     changing the existing implementation. By transitivity, we're not doing
+     anything in PS that cannot be done in BD. What we *are* doing, is doing
+     this in a way such that the new implementation is closer to the intended
+     program semantics -- for some definition of "closer"."
+
+WIP
+Generally, the code smells are largely concerned with procedural
+code. Mutability and side-effects are taken for granted; however,
+pure functional programming (FP) has been growing in popularity, which
+disallows or at least discourages functions with side-effects,
+and immutable data is the norm.
+
+*** Functional programming as a potential solution
+
+TODO As noted, OOP has been used both to fix as well as prevent legacy code issues,
+     but has it really worked? If it has, is it the best, or even the only, way?
+
+
+
+WIP Functional programming as (a -> b) w/o implicit state
+Functional programming as a paradigm focuses on functions in the mathematical
+sense, where functions, with some given input, always produces the same output.
+In purely functional programming, this concept taken to its limit, with
+functions not being able to perform side-effects, such as reading input from the
+user, or updating the user interface; more on these actions below. This is in
+contrast to the imperative paradigm, which places no such limitations on
+functions, other than scoping. (Footnote: an imperative language could of course
+provide purity, but it's not exactly common, nor is it a natural part of the
+paradigm).
+
+WIP Referential transparency
+Pure FP provides something called "referential transparency", which means that
+changing a piece of code to the result of running that code does not change the
+program(TODO REF). This makes "equational reasoning" possible(TODO REF), letting the programmer
+reason about parts of the program code as separate from the rest of the program.
+It gives the programmer confidence in what a function does.
+
+TODO referential transparency example and counterexample
+
+WIP Lambda calc (& purity)
+The purely functional paradigm can be seen as a natural extension to the lambda
+calculus, a model of computation invented by Alonzo Church(TODO REF), while
+imperative programming is closely connected to the von Neumann-style of computer
+on which it runs, and is similar to the idea of a Turing machine (TODO REF).
+Whereas a Turing machine models computation as manipulating symbols on an
+infinite tape of memory given a set of instructions (TODO REF), the lambda
+calculus models computation as function abstraction and application; the name
+derives from using \lambda to define functions. (TODO footnote about
+lambda/anonymous functions, maybe)
+
+The Turing machine and lambda calculus models of computation are (as far as
+anyone has proven so far) equivalent, by the Church-Turing thesis. Thus
+any program that can be run on a theoretical Turing machine can be transformed
+to "run" in the lambda calculus. However, while programming languages that
+are built on the idea of a Turing machine are notoriously difficult to develop
+for (TODO REF/FOOTNOTE brainfuck, "turing-tarpits"), and are generally (TODO REF)
+interesting only as curiosities or for research, languages based on lambda
+calculus are more wide-spread. Indeed, the pure functional language Haskell
+is at its theoretical core a typed lambda calculus, based on System-F\omega,
+which it compiles to as an intermediate language \cite{haskell2010}. (TODO REF,
+https://ghc.haskell.org/trac/ghc/wiki/Commentary/Compiler/FC )
+
+MAYBE TODO differentiate imperative and OOP
+
+  WIP Static types -- w/ inference and powerful features
+Functional programming is orthogonal from type systems, but powerful type
+systems are closely related to pure functional languages (TODO REF). Haskell,
+being based on a typed lambda calculus, is a statically typed language,
+
+  WIP Pure FP as leveraging type system to ensure purity
+and is an example of using a powerful type system(TODO define) to capture effects that are
+performed by the program -- that is, letting a purely functional language
+express effects such as interacting with the real world (TODO like 2 refs).
+
+Besides capturing effects, a powerful type system provides the programmer with
+tools to increase productivity(TODO REF), decrease bugs(TODO REF), make
+refactoring easier(TODO REF), and improve the programming experience in multiple
+ways (TODO ref & explanation, type-directed search).
+
+NOTE this is maybe overkill, or could be moved to the PS syntax intro
+For example, Haskell and many(most?) other languages with similar type systems,
+do not have a `null` value, instead encoding the possibility of lacking a value
+in the type system. In Haskell, the type `Maybe` captures this possibility;
+if a function produces an `Int`, you can be sure that after calling the function
+you do indeed have an `Int`.
+
+TODO maybe something about the saying "if it compiles, it works" and refactoring
+
+WIP Category theory as 70 years of documentation in pure FP languages. (Abstractions, good ones!)
+As a type system gains features, the number of abstractions that can be expressed
+in it increases. Category Theory is a highly abstract branch of mathematics concerned
+with `categories` consisting of `objects` and `morphisms` between objects. It is
+a rich field of research, and has over 70 years of results -- and ideas and abstractions
+from it has been used in programming, especially pure FP. A classic example is
+Haskell's use of `monads`, an abstraction which captures the essence of sequential
+computation(TODO REF). Haskell uses a monadic type for its IO system(TODO REF).
+
+If a programmer can express their problem in the language of category theory,
+they gain access to 70 years of documentation concerning their problem. If the
+abstractions used can be expressed in the type system, the compiler can help
+prove that the program is correct.
+
+(maybe footnote: for example, everything is an adjunction(TODO REF) and a monoid(TODO REF))
+
+
+
+TODO (maybe) Partial application, currying
+
+TODO Immutability (and how it's getting more and more common outside FP)
+     (follows from purity!)
+A lower-level part of pure FP, which has seen increased use outside of FP(TODO REF)
+is immutability of data. In a purely functional language, functions cannot modify
+data passed to them, as doing so would be to perform a side-effect -- passing the
+same variable to two functions would not necessarily have the result expected
+if one function can modify the input to the other. Using data structures that
+are immutable by default makes reasoning about programs much easier as it removes
+that possible side-effect, no matter the programming paradigm.
+
+
+TODO Result: referential transparency, program composition, more useful abstractions
+     - Lambda calculus & first-class functions
+     - Purity
+     - Types
+
+TODO Reasons why it would work well (earlier "good code")
+
+TODO Argue that FP is easier to comprehend, reason about
+
+TODO Argue that it (often) decreases complexity vs. OOP code
+
+
+While writing a program in a pure functional language, the programmer
+is encouraged by the language and environment to write code that is
+reusable and easy to reason about [REF Why functional programming matters].
+You also get some level of program correctness, by writing code
+using types that correspond to the program semantics. You're able
+to construct transformations between data structures and compose
+them together -- all type-checked by the compiler.
+
+** Transformations to and from a legacy system
+TODO Not sure about this section. maybe rewrite to be more abstract, or cut down
+and use as an intro to the following two sections
+
+WIP We extend an existing system + create a new platform blah bla
+To investigate using pure FP to work with, and extend, legacy systems, we will
+do just that. We will extend Biodalliance (BD), a JavaScript-based genome browser,
+with functionality to make extending it further easier, while staying backward
+compatible. This will be done in a minimally invasive manner, i.e. by modifying
+as little of BD's source code as possible.
+
+WIP By identifying the key data structures and how sys. creates them & from what
+
+WIP Goal: A system that feeds data to/from the legacy system,
+           including producing modules for the legacy API,
+           and will later subsume the legacy system
+Instead of modifying BD, a program that hooks into BD and communicates with it will
+be developed. This program will produce data compatible with BD, telling the browser
+how to render data in new ways, how to fetch data from new sources, etc. However,
+rather than be written in JavaScript, this program will be written in Purescript,
+a Haskell-inspired purely functional language that compiles to JS.
+
+This program will not only be used to extend BD; instead, that will only be the
+first part of a new genetics browser, entirely written in Purescript. The new
+browser will feature BD-compatibility, but will also embed a Cytoscape.js
+graph browser, as well as a genome browser written entirely in Purescript. These
+various components will be able to communicate with one another, and the user
+will be able to configure interactions between the components, to allow for new
+ways of exploring genetic data.
+
+TODO Goal: A structured application that is both robust and easy to update and
+           change
+
+** Biodalliance - A Legacy JavaScript Application
+TODO describe BD
+
+TODO describe GN2
+
+TODO describe my earlier work on BD: adding modular renderers
+
+TODO describe our general goal with GGB
+
+TODO why we want BD (file format support, ease of adoption)
+
+TODO why we don't want BD (horrible legacy code)
+
+TODO what we do instead:
+  TODO generating renderer modules with glyphs,
+  TODO generating fetching modules
+  TODO wrapping BD and controlling it from external UI
+
+** Pure web development with Purescript
+WIP What Purescript is
+WIP Statically typed
+Purescript (PS) is a purely functional programming language, inspired
+by and in many ways similar to Haskell, sharing much of its syntax,
+and a powerful type system [Footnote not the *same* type system
+exactly] that can represent many high level abstractions. Unlike
+Haskell, PS compiles to JS, and can be used in the browser.
+
+WIP Differences from Haskell
+WIP Good FFI - easy to wrap JS
+Another difference from Haskell is that PS is strictly evaluated. This
+lets the PS compiler output normal JS, and does not require a runtime,
+unlike e.g. Elm, another purely functional language that compiles to
+JS. PS makes use of this by providing a lightweight and powerful
+Foreign Function Interface (FFI), which makes it easy to interact with
+and wrap existing JS code.
+
+TODO Property based testing?
+
+** Hypothesis and evaluation
+TODO Hypothesis
+FROM
+   Given that code smells are a cause for concern wrt. maintainability and
+   extensibility of legacy code, find code smells -- ones relevant
+   to the Genetics Browser work we want to do -- in the BD codebase,
+   identify the problems they imply if one were to naively try to extend
+   the BD codebase, then identify and present a functional solution
+   using Purescript.
+
+
+
+* Method
+** TODO Our code smells
+TODO list the ones we're looking at, and why (and why not others)
+
+*** TODO Long complicated functions -- but only unnecessarily so.
+maybe remove this. doesn't really apply
+
+*** TODO Duplicated code
+Duplicated code can be a sign of many potential changes and ways
+to refactor the code; especially an unextracted abstraction.
+
+It's problematic because if you find you need to make a change
+to the "abstraction" or how it works, you need to make changes
+in every single piece of related dupe'd code.
+
+It also is difficult to reason about an "abstraction" that hasn't
+actually been abstracted out -- it is likely that each instance
+differs slightly, and the code provides no assistance in reasoning
+on a higher level; you must think the lower-level data flow,
+even if it's not actually semantically relevant to what the
+abstraction should be doing. E.g. why should a function that
+scrolls the view care about how the view is rendered (DOM etc.)
+(there are probably better examples)
+
+FP helps deduplicate code; there are plenty of abstractions to
+let us compose functions and data structures to maximize reuse.
+
+
+*** TODO Primitive obsession
+Primitive obsession is when primitive types are used to represent
+parts of the system that would be better represented as types
+of their own. In JS, we don't really have types, so this is
+rampant. However, even in typed languages such as Java, it is
+common to e.g. represent positions as Integers or Doubles, rather
+than create a type that actually represents the unit corresponding
+to measurements of the value.
+
+Purescript has many tools to create new types; the `newtype`
+keyword is especially useful for this.
+
+
+*** TODO Use of mutable state
+TODO rewrite this paragraph
+
+Mutable state is inherently difficult to reason about (citation needed).
+Functions and objects that refer to implicit mutable state, be it global
+or fields on an object, can behave differently depending on the
+state of the object in question; it becomes extremely difficult
+to reason about what a piece of code does, as it may depend,
+in the middle of the snippet, on some obscure field; worse, it may
+change some field.
+
+
+*** TODO Side effects
+More generally, code that performs side effects is difficult, if not
+impossible, to reason about. Depending on the nature and magnitude
+of the side effects, the effect and output of the code may change
+immensely, even though the code itself, and even the calling code,
+is the same. In short: there is no way to be certain what calling
+a function with side effects does -- there is no way to be confident
+that changing it, or calling it again, is safe.
+
+Purity solves this problem.
+
+
+*** TODO Difficult to make changes
+code that is tightly coupled to other parts, for no apparent reason
+actually this is covered by side effects, basically
+
+
+
+*** Transformations
+We want code that is free from side effects, doesn't use mutable
+state unless appropriate, uses types that are appropriate for
+the values they contain.
+
+We also want code that is easy to reuse etc.
+
+Transformations: From raw data to visualizations; from user input
+to actions; from user configuration to functions.
+
+
+TODO (process metrics? if there are easy ones to get from github)
+
+TODO Where our solutions will come from (CT etc.)
+
+TODO How we'll go about things (piece by piece)
+
+** Graph Genetics Browser
+
+*** TODO Specification
+TODO BD
+
+TODO Cy.js
+
+TODO Legacy stuff
+
+TODO New stuff
+
+
+# Each of these are from their own files
+# *** Biodalliance
+
+#+INCLUDE: "./bdcy.org" :minlevel 2
+
+# *** Cytoscape.js
+
+#+INCLUDE: "./config.org" :minlevel 2
+
+# *** Units
+
+#+INCLUDE: "./units.org" :minlevel 2
+
+# *** Rendering
+
+#+INCLUDE: "./glyph.org" :minlevel 2
+
+# *** Events
+
+#+INCLUDE: "./events.org" :minlevel 2
+
+# *** TODO UI
+
+#+INCLUDE: "./ui.org" :minlevel 2
+
+
+* Results
+
+
+
+* Discussion
+
+
+
+* Appendix?
+** SVG stuff?
+** IPFS stuf?
+
+* Bibliography
+
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{bibliography}

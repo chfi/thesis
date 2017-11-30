@@ -91,7 +91,7 @@ with any record containing at least some given fields. Here is a function
 that works on any record with a field named `title` of type String:
 
 # TODO this one needs to be reformatted
-#+BEGIN_SRC
+#+BEGIN_SRC purescript
 -- { label :: Type } is sugar for Record ( label :: Type )
 exRec2 :: { title :: String }
 exRec2 = { title: "another record" }
@@ -140,7 +140,7 @@ eitherOr vOr     == "or unit"
 eitherOr vNope   == "neither!"
 #+END_SRC
 
-TODO rewrite the rest of this section
+# TODO rewrite the rest of this section
 The goal of using variants and rows was to provide type-safety of events. An Event
 would simply be a variant, and the different types of events would have different
 labels, and thus also different types. Producers and consumers of events would
@@ -149,8 +149,8 @@ corollary, Purescript's type checker would ensure that a consumer only receives
 events that it knows how to consume. In other words, a consumer could be connected
 to a producer if the producer's row is a subset of the consumer's row.
 
-TODO maybe could use a somewhat more in depth description here, e.g. how
-events tended to be records, type Location = { chr :: Chr, pos :: Bp } etc.
+# TODO maybe could use a somewhat more in depth description here, e.g. how
+# events tended to be records, type Location = { chr :: Chr, pos :: Bp } etc.
 
 This is all well and good, and my early attempts worked well. Problems arose when
 attempting to move from a hardcoded event flow to configuring one -- this is when
@@ -164,7 +164,7 @@ What I actually desired was a way to express events in an easy to configure way,
 while also guaranteeing correctness as far as possible, with good error reporting
 picking up the slack where necessary.
 
-TODO Footnote: maybe possible with reflection/reification?
+# TODO Footnote: maybe possible with reflection/reification?
 
 ** JSON zippers and stringy types
 
@@ -196,7 +196,7 @@ seen as a kind of pattern matching.
 
 ** TrackSource and TrackSink
 
-TODO garbage paragraph
+# TODO garbage paragraph
 The solution consists of two types, `TrackSource` and `TrackSink`. The former
 transforms events from browsers to GGB events, the latter handles received
 events on browser tracks.
@@ -567,8 +567,10 @@ runTrackSink (TrackSink sink) event = do
 
 However, since `TrackSinks` are intended to perform effects, a helper function
 for that is useful. In particular, the following function creates a "thread"
-(TODO footnote on JS singlethreaded) that reads events from a provided `BusRW`
-(TODO define/refer to `BusRW` intro), running effectful functions from the
+# TODO footnote on JS singlethreaded)
+that reads events from a provided `BusRW`,
+# TODO define/refer to `BusRW` intro)
+running effectful functions from the
 provided `TrackSink` if the received event has a handler:
 
 # TODO make sure that `forkTrackSink` is correct w/o effect rows

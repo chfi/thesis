@@ -307,7 +307,7 @@ showGlyph = execWriter <<< foldFree glyphLog
 For example, logging the process of drawing the previously defined `crossedOut` glyph
 at the point `{ x: 40.0, y: 10.0 }` with radius `3.0` would produce the following output:
 
-#+BEGIN_SRC
+#+BEGIN_SRC purescript
 Drawing circle at (40.0, 10.0) with radius 3.0
 Drawing line from (37.0, 7.0) to (43.0, 13.0)
 Drawing line from (37.0, 13.0) to (43.0, 7.0)
@@ -351,7 +351,7 @@ The result is a series of commands which can be used to produce the desired
 SVG element; this can then be rendered to the DOM:
 
 # TODO this one needs to be reformatted
-#+BEGIN_SRC
+#+BEGIN_SRC purescript
 interpSVGEff :: GlyphF ~> SVG
 interpSVGEff (Stroke c a)  = do
   SVG.setStrokeStyle c
@@ -387,7 +387,7 @@ This is clearly insufficient for our purposes; instead, we make use of the fact
 that bounding boxes form a semigroup, and in fact also a monoid.
 
 *** Semigroups and monoids
-TODO: <> can be rendered nice in latex, look that up
+# TODO: <> can be rendered nice in latex, look that up
 Semigroups and monoids are concepts from abstract algebra and category theory,
 however they are immensely useful in pure FP, as they appear in many different
 areas.
@@ -403,8 +403,8 @@ A monoid is a semigroup with one special element, an identity. The example from
 above is a monoid if there is an element `e` in `S` such that these laws apply
 for all elements `x` in `S`:
 
-Left identity:   x <> e == x
-Right identity:  e <> x == x
+$Left identity:   x <> e == x$
+$Right identity:  e <> x == x$
 
 Now we can explore how bounding boxes form a monoid.
 
@@ -442,7 +442,7 @@ how they're really doing all the heavy lifting. For `GlyphPosition` to be a
 monoid, we require an identity element. We can use the fact that the semigroup
 instance uses `min` and `max` as a hint. While there is no minimum or maximum
 real number,
-(TODO: add footnote about floating point inaccuracies... would also be better off using Maybe)
+# TODO: add footnote about floating point inaccuracies... would also be better off using Maybe
 we can cheat and use positive and negative infinity, which exist in JS. Then
 we have:
 
@@ -492,7 +492,7 @@ like QuickCheck.
 
 First, some utility functions to generate and render GlyphPositions:
 
-TODO this is in Test.Glyph
+# TODO this is in Test.Glyph
 # TODO this one needs to be reformatted
 #+BEGIN_SRC purescript
 type ThreeGlyphs = {l :: GlyphPosition, c :: GlyphPosition, r :: GlyphPosition}
@@ -541,7 +541,7 @@ prop_monoid =
 
 Jack then takes care of generating GlyphPositions, ensuring that these properties hold.
 
-TODO test output
+# TODO test output
 
 ** Putting it all together
 

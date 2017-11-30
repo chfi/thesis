@@ -33,7 +33,7 @@ to display. All of this is provided by the user as a single JS object,
 and passed to the browser constructor which takes care of configuring
 the browser.
 
-WIP example config
+# WIP example config
 A very basic browser configuration could look like this:
 
 # TODO this one needs to be reformatted
@@ -132,14 +132,14 @@ The constructor itself calls a method `browser.realInit()` as it finishes.
 This function continues much like the constructor, preparing the browser.
 Finally, the method `browser.realInit2()` is called.
 
-TODO rewrite:
+# TODO rewrite:
 Basically, the entire constructor, and its "subroutines" realInit and realInit2
 (those names are themselves code smells), create ad-hoc browser elements,
 set a bunch of default state, some of which are just values, others are
 derived from other configuration or data, until the whole thing is "ready".
 
 **** Event handlers
-WIP last sentence probably needs rewording
+# WIP last sentence probably needs rewording
 The browser constructor also sets the various DOM event handlers used
 by the browser's UI. A handler can be any function that takes an event
 as argument, meaning it is easy to write a handler that directly takes
@@ -148,7 +148,7 @@ handler that modifies some UI state is another possibility for interference
 when working with the UI.
 
 **** Validation and transformations
-WIP
+# WIP
 This style of code is commonly seen in code throughout BD, including
 configuration:
 
@@ -209,7 +209,7 @@ to debouncing a switch with electronics vs assembly (maybe).
 
 
 **** Code smell summary
-REWRITE
+# REWRITE
 There's no control that each part of the configuration/construction
 works as it should, nor is there any structure to it. These functions:
 
@@ -322,8 +322,8 @@ to the name browser, which is later referred to when putting the eventual
 BrowserConfig together. If the object doesn't have a "browser" property, or said
 property is not a JS function, we fail, and tell the user what went wrong.
 
-NOTE: I would move the rest of the section to a chaptor on error handling
-because it is actually generic:
+# NOTE: I would move the rest of the section to a chaptor on error handling
+# because it is actually generic:
 
 `readTaggedWithError` is actually simple:
 
@@ -437,7 +437,7 @@ lmap :: forall f a b c.
 
 It's exactly the same as map on a normal functor, except it's on the left-hand type.
 
-(TODO: idk if this is actually a good comparison)
+# TODO: idk if this is actually a good comparison
 The bifunctor instance on Either can be seen as letting us build up a
 chain of actions to perform on both success and failure, a functional
 alternative to nested if-else statements.

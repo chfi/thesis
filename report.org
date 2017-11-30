@@ -1,11 +1,38 @@
+# -*- eval: (let () (org-babel-goto-named-src-block "setup-export-class") (org-babel-execute-src-block)); -*-
+
 #+TITLE: TODO thesis name
 #+AUTHOR: Christian Fischer
 #+EMAIL: christian@chfi.se
 
-#+LATEX_CLASS: report
+# Define custom org-latex-class for exporting with correct headers
+#+NAME: setup-export-class
+#+BEGIN_SRC emacs-lisp :exports none :results silent
+  (add-to-list 'org-latex-classes
+               '("thesis-report"
+                 "\\documentclass{article}
+  [DEFAULT-PACKAGES]
+  [EXTRA]"
+  ("\\chapter{%s}" . "\\chapter*{%s}")
+  ("\\section{%s}" . "\\section*{%s}")
+  ("\\subsection{%s}" . "\\subsection*{%s}")
+  ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+  ("\\paragraph{%s}" . "\\paragraph*{%s}")))
+#+END_SRC
+
+#+BIND: org-export-filter-plain-text-functions (tmp-f-symbols)
+#+BEGIN_SRC emacs-lisp :exports results :results none
+(defun tmp-f-symbols (text backend info)
+  (when (org-export-derived-backend-p backend 'latex)
+        (replace-regexp-in-string "<>" "\Diamond" text)))
+#+END_SRC
+
+
+#+LATEX_CLASS: thesis-report
 #+LATEX_CLASS_OPTIONS: [a4paper]
 
+
 #+LATEX_HEADER: \usepackage[numbers]{natbib}
+
 
 * Introduction
 
@@ -45,7 +72,7 @@ Martin, Foreword to Working Effectively with Legacy Code
 The prerequisite theory for the thesis project is introduced. A definition
 of "legacy code" is given, followed by relevant statistics, facts, and
 techniques concerning legacy code and working with it. Next, an introduction
-to the purely functional programming paradigm
+to the purely functional programming paradigm <> follows.
 
 
 
@@ -105,7 +132,6 @@ The U.S. goverment federal IT budget for 2017 was over $89 billion, with
 nearly 60% budgeted for operations and maintenance of agency systems,
 with a study by the U.S. Government Accountability Office finding that
 some federal agencies use systems that are up to 50 years old \cite{gao2016legacy}.
-
 
 # TODO Footnote The Danger of Legacy Systems https://web.archive.org/web/20120323165836/http://www.mousesecurity.com/?p=220
 
@@ -260,17 +286,19 @@ what the next section attempts to answer.
 
 In a word, we want heuristics for good vs. bad code. These are called code smells, or antipatterns.
 
-TODO this probably needs... more
+# TODO this probably needs... more
 First, however, we need to define what is meant by "good" or "bad" code.
 
-Beck & Fowler [TODO REF] provides a list of 22 code smells that have been
+Beck & Fowler
+# TODO REF
+ provides a list of 22 code smells that have been
 used (extensively?) since publication.
-(TODO REFs
-http://ieeexplore.ieee.org/abstract/document/1235447/
-https://link.springer.com/article/10.1007/s10664-006-9002-8
-https://dl.acm.org/citation.cfm?id=2629648
-http://www.sciencedirect.com/science/article/pii/S0164121215000631
-)
+# TODO REFs
+# http://ieeexplore.ieee.org/abstract/document/1235447/
+# https://link.springer.com/article/10.1007/s10664-006-9002-8
+# https://dl.acm.org/citation.cfm?id=2629648
+# http://www.sciencedirect.com/science/article/pii/S0164121215000631
+
 
 Many of the code smells they list, as well as the solutions to them, are
 concerned about class-based object-oriented programming (OOP). OOP has
@@ -354,12 +382,12 @@ Another interesting route is finding a modularization by constructing
 a concept lattice based on where different global variables are used.
 This lattice can then be used to create descriptions on how to
 modularize the codebase.
-REF: Assessing Modular Structure of Legacy Code Based on Mathematical
-     Concept Analysis
-     https://doi.org/10.1145/253228.253354
+# REF: Assessing Modular Structure of Legacy Code Based on Mathematical
+#      Concept Analysis
+#      https://doi.org/10.1145/253228.253354
 
-TODO Problems with these approaches, and to automation of this in general
-TODO probably something about machine learning
+# TODO Problems with these approaches, and to automation of this in general
+# TODO probably something about machine learning
 
 
 # the main course: manual reverse engineering
@@ -368,12 +396,14 @@ TODO probably something about machine learning
 **** Manual reverse engineering
 this section is not even a section.
 
-The most common (TODO REF) solution is simply to do it by hand. This
+The most common
+# TODO REF
+solution is simply to do it by hand. This
 requires that programmers look at, and comprehend, the codebase, and
 how the codebase relates to the semantics of the system. Writing tests
 should also be done to give greater confidence when changes are made.
 
-REF The most common way - Do it by hand.
+# REF The most common way - Do it by hand.
 
 # a quick exploration of the literature/background in this area, OOP etc.
 
@@ -617,8 +647,7 @@ them together -- all type-checked by the compiler.
 * Conclusion
 
 
-* Bibliography
-
+# Bibliography
 
 # \nocite{*}
 \bibliographystyle{plainnat}
