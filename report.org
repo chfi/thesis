@@ -649,28 +649,78 @@ Followed by briefly detailing the components of GGB?
   evaluation and the parts that make up Results.
 #+end_comment
 
+
+* Results
+
+#+begin_comment
+The results are presented
+
+First an introduction of the "completed" GGB -- its features and scope
+
+Then a walk through the code:
+  each section corresponds to one module or part of the GGB, and looks like:
+    problems in BD wrt. legacy code (code smells) are presented
+    the code in GGB is presented as one way of solving those problems
+    (or, present each section as a transformation)
+
+The sections:
+
+  bdcy:   extracting a minimal usable interface from JS APIs
+          enforcing safety with types
+          mapping JS functions to law-abiding abstractions (Semigroup, Monoid)
+      smells:
+
+  config: configuring the browser in a type-safe manner
+          validating at launch with type-checking and helpful error messages
+          mapping GGB config to BD and Cy.js configuration
+      smells:
+
+  units:  type-checking domain-specific operations
+          more assistance from the compiler in ensuring semantics of program
+          compiler-checked documentation
+      smells:
+
+  glyph:  using pure FP abstractions to create an extensible transformation pipeline
+            for working with various display and input methods
+          semigroups and monoids + generative testing = verification
+          creating a language that "compiles" to BD-compatible data structures
+            but also is extensible
+      smells:
+
+  events: transforming events between "disjoint" JS apps with configuration for free
+          exploiting JSON's tree structure for a kind-of type-safe system
+      smells:
+
+  ui:     fitting BD and Cy.js into a type-safe UI library;
+            tying it all together
+          type-safe and extensible, with error-checking from many of the previous sections
+      smells:
+
+
+End with summing up where the various code smells showed up in BD,
+and how they were solved with FP/PS in GGB.
 #+end_comment
 
 
 
-# Introduction to the method - evaluating pure FP as a tool for extending legacy code bases
+** The Completed Product
 
-** Biodalliance
-# Describe BD, its history, etc.
+#+begin_comment
+A brief section serving to provide the reader with an image or two to
+anchor the rest of the results section to, and prepare them with a
+basic framework to fit the examples to.
+#+end_comment
 
-** Genetics Graph Browser
-# specify the product
+# Present the finished browser!
 
-# detail how the product is developed,
-# and how it connects to & extends the BD legacy codebase
+  # What it looks like
 
-# list the parts of BD/GGB where legacy-type problems were an issue
-  # i.e. the parts that are detailed in results (and why they were chosen)
+  # How it's used -- show basic functionality with screenshots
 
-# explain how this answers the research question (case study)
+  # Figure to refer to concepts such as "tracks", "feature", "glyph" etc.
 
+# Outro
 
-* Results
 
 ** Interfacing with existing JS
 # or: transforming JS APIs to PS APIs (kind of)
@@ -704,20 +754,57 @@ Followed by briefly detailing the components of GGB?
 ** The User Interface
 # or: transformations between user and application (or something like that)
 
-** The Completed Product
+#+INCLUDE: "./ui.org" :minlevel 2
 
-# Present the finished browser!
 
-# What it looks like
+** Summary
 
-# How it's used
+# Summarize by selecting a few code smells and briefly describing,
+# conceptually, how they were removed/avoided/bypassed
 
 
 * Discussion
 
 
+#+begin_comment
+
+Discuss results -- each of the code parts (subsections from Results)
+  Does the code give "answer" to the code smells?
+  Is the GGB code "good" code wrt. our code smell definition?
+  Is the GGB code "good" code more generally? (maybe skip this one if it's too much)
+
+How do the various parts from the Background/FP section fit in?
+  Purity
+  Static types
+  (CT) Abstractions
+
+
+Discuss refactoring; something that happened many times during the project,
+  and something a good type system assists with to a great extent
+
+Discuss future work *on GGB*, i.e. predict how easy it will be to extend;
+  how the abstractions will help or hinder this, and why
+
+Concede that it is entirely possible to write "bad" code in PS
+also that pure FP and PS have their own antipatterns/code smells
+  (though I'm not sure if they're comparable to imperative/OOP ones wrt.
+   their effect on codebases)
+#+end_comment
+
+
+
 
 * Conclusion
+
+
+#+begin_comment
+Case-study nature as a limitation;
+will probably want to argue that the results are thanks in large part to the
+nature of pure FP and PS; not merely happenstance even though n=1.
+#+end_comment
+
+
+** Limitations and Future Work
 
 
 # Bibliography
