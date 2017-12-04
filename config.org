@@ -1,9 +1,4 @@
-* Configuration
-
-# NOTE: give an intro on the state-of-the-art - we move that to the main
-# intro later. Explain *why* you decided for this architecture - late
-# type checking. (late type checking is more Events; much of this chapter
-# probably ought to be refactored to that chapter)
+# * Configuration
 
 # Note: configuration is a big topic, so deserves a large chapter. Configuration
 # with the type system leaves little necessary code for logic. You can prove that!
@@ -423,7 +418,8 @@ interface to function properly, and are JS functions provided by Biodalliance.
 # TODO note that wrapRenderer is only in a modified repo?
 
 *** Cytoscape.js
-
+# TODO expand on this
+# TODO add example
 Cytoscape graphs are currently configured by providing a name and a URL from
 which to fetch the elements in JSON format.
 

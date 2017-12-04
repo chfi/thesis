@@ -1,11 +1,11 @@
-* Events
+# * Events
 
 #+begin_comment
 
 ** Notes
    not *really* a problem in BD, however there is no checking that the features
 provided to listeners actually have the data expected by them, leading to a risk
-of runtime errors and decreased reusability
+of runtime errors and decreased reusability (hardly unique to BD)
 
 would be horrible when working with events from multiple different sources,
 e.g. BD and Cy.js -- would end up with a bunch of nestled if-else statements,
@@ -417,6 +417,7 @@ the array of cursors defining a finished event, we can make use of Either's
 Applicative instance, and traverse:
 
 # TODO this one needs to be reformatted
+# TODO this one is probably overkill
 #+name: code:events-validate-templates-2
 #+BEGIN_SRC purescript
 -- specialized to Either String and Array

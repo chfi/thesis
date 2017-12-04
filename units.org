@@ -1,5 +1,8 @@
-* Units
+# * Units
+
+
 ** Biodalliance/The problem
+
 It is often the case that values in programs are represented using
 primitive types, rather than using the fact that different units
 in fact can be viewed as different types. When all values are regular

@@ -1,4 +1,5 @@
-* User interface
+# * User interface
+
 The main function of GGB's user interface is to tie the browser tracks --
 BD and Cy.js -- together. It also creates and to some extent manages
 the JS browser track instances, and renders the HTML for the entire

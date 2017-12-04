@@ -609,27 +609,37 @@ them together -- all type-checked by the compiler.
 
 * Results
 
+** Interfacing with existing JS
+# or: transforming JS APIs to PS APIs (kind of)
+
 #+INCLUDE: "./bdcy.org" :minlevel 2
 
-# *** Cytoscape.js
+
+** Safe application configuration
+# or: transforming user configuration to safe application options
 
 #+INCLUDE: "./config.org" :minlevel 2
 
-# *** Units
+
+** Working with units
+# or: domain-based type checking of transformations
+#     (or something like that)
 
 #+INCLUDE: "./units.org" :minlevel 2
 
-# *** Rendering
+
+** Transforming data for screen and space
 
 #+INCLUDE: "./glyph.org" :minlevel 2
 
-  # *** Events
+
+** Transforming events between tracks
 
 #+INCLUDE: "./events.org" :minlevel 2
 
-# UI
 
-#+INCLUDE: "./ui.org" :minlevel 2
+** The User Interface
+# or: transformations between user and application (or something like that)
 
 ** The Completed Product
 

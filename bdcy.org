@@ -1,16 +1,25 @@
-* Interfacing with existing JS
+# * Interfacing with existing JS
+#+begin_comment
 
-# TODO this chapter requires more reasoning;
-#      all examples that are brought up should be directly
-#      relevant to the hypothesis.
-#      for example, I don't think BDEvent applies; it doesn't deserve more than two sentences,
-#      and and we shouldn't bash on the reader too much about newtypes.
-#      Same with FFI examples in general. Show one impl + foreign import per module,
-#      then focus on the actual PS interface.
-# Idea: Move solid newtype arguments to FFI intro, and then bring up one example for BD and Cy resp.
-# TODO need to be more consistent in what code is shown from both modules
-# TODO refer to code blocks via labels
-# TODO Add captions to code blocks
+TODO this chapter requires more reasoning;
+     all examples that are brought up should be directly
+     relevant to the hypothesis.
+     for example, I don't think BDEvent applies; it doesn't deserve more than two sentences,
+     and and we shouldn't bash on the reader too much about newtypes.
+     Same with FFI examples in general. Show one impl + foreign import per module,
+     then focus on the actual PS interface.
+
+Idea: Move solid newtype arguments to FFI intro, and then bring up one example for BD and Cy resp.
+TODO need to be more consistent in what code is shown from both modules
+TODO refer to code blocks via labels
+TODO Add captions to code blocks
+
+Code smells (barely applies):
+Primitive obsession
+
+TODO: write about the changes made to BD (i.e. modularized renderers, wrapRenderer)
+
+#+end_comment
 
 The Genome Graph Browser uses BD and Cy.js, which are both written in JS.
 To interact with their respective APIs, we must use Purescript's Foreign
