@@ -588,14 +588,77 @@ them together -- all type-checked by the compiler.
 
 
 * Method
+
+# TODO I'm not sure about the structure of this section, it feels convoluted;
+#      the narrative is unclear to me
+
+#+begin_comment
+Introduces the method
+  i.e. how I went about evaluating pure FP by way of PS as a tool for extending
+       legacy code bases and minimizing potential future (legacy) problems of a new code base
+
+Two questions:
+  1. Can pure FP help when working with a legacy code base?
+  2. Does writing code with pure FP lead to code that is
+     less emblematic of legacy code problems? (i.e. better code)
+
+This was be done by identifying code smells in a legacy code base
+and writing a new program that interfaces with the legacy system;
+solving or minimizing the impact of said code smells where applicable,
+and writing code that avoids recreating the code smells where entirely
+new code is necessary.
+
+#+end_comment
+
+
+
+** Extending a Legacy System
+
+
+#+begin_comment
+present BD as legacy code project; including examples of previous work on extending it etc.
+present GGB as both extending & a new platform, with intro to purescript
+
+Evaluation of the hypothesis as comparing the resulting code (or a subset of it)
+to the code smells and the respective code in BD (where applicable).
+If correct -- or at least not obviously incorrect -- the resulting code should
+be free of the code smells.
+#+end_comment
+
+
+*** Biodalliance
+
+# Describe BD, its history, etc.
+
+
+*** Genetics Graph Browser
+# detail how the product is developed,
+# and how it connects to & extends the BD legacy codebase
+
+# list the parts of BD/GGB where legacy-type problems were an issue
+  # i.e. the parts that are detailed in results (and why they were chosen)
+
+
+
+** Code smells
+#+begin_comment
+Then present the code smells (briefly if already detailed in Background)
+
+Followed by briefly detailing the components of GGB?
+  At least the general goal; it ties in with the
+  evaluation and the parts that make up Results.
+#+end_comment
+
+#+end_comment
+
+
+
 # Introduction to the method - evaluating pure FP as a tool for extending legacy code bases
+
 ** Biodalliance
 # Describe BD, its history, etc.
 
-** Purescript
-
-
-** Genetics Graph Browser/Evaluation
+** Genetics Graph Browser
 # specify the product
 
 # detail how the product is developed,
