@@ -1,10 +1,38 @@
-* Glyphs
+# * Glyphs
+
+# Say that rendering data to the screen is obviously important for a viz. tool
+
+# then, since users must be able to interact with the data, it must be
+# possible to know where they end up on the screen, so we can map from
+# clicked screen coordinates to feature.
+
+# tie these concepts up by presenting them as parallel transformations
+# on a single data type that features are transformed to: the Glyph
+
+# maybe have a chart showing it,
+# pointing out that the transformations *from* Glyph are data-agnostic;
+# they are free if we can provide a way to transform the data to a Glyph
+
+#+begin_comment
+
+  Data-specific
+    transformation               -> SVG
+                 \              /
+            Data -> Glyph - - - -> HTML5 Canvas
+                            /   \
+                Data-agnostic    -> Bounding Box
+                   transformation
+
+#+end_comment
+
+
 A "glyph" is something that can be drawn to the browser display,
 as well as be exported to SVG. They are also what the user interacts
 with, and so have bounding boxes that are used to detect whether
 the user has clicked on them, to produce browser events.
 
 ** Biodalliance
+
 # WIP Biodalliance has a bunch of classes
 Biodalliance has a number of Glyphs, which are classes sharing
 a basic interface -- they have a function which draws itself
