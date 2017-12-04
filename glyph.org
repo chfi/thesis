@@ -5,26 +5,30 @@ with, and so have bounding boxes that are used to detect whether
 the user has clicked on them, to produce browser events.
 
 ** Biodalliance
-WIP Biodalliance has a bunch of classes
+# WIP Biodalliance has a bunch of classes
 Biodalliance has a number of Glyphs, which are classes sharing
 a basic interface -- they have a function which draws itself
 to the canvas, one which produces an SVG element, as well
 as functions providing the bounding boxes.
 
-WIP "higher order" glyphs
+# WIP "higher order" glyphs
 The Glyphs range from basic geometric shapes such as boxes and
 triangles, to more complex "higher order" ones, which take
 other glyphs and e.g. translates them.
 
-WIP constructor
+# WIP constructor
 Glyphs are created using the appropriate constructor, which takes data such
 as position on screen, color, and so on. For example, the Glyph to create
 a box (rectangle) requires position, size, color, transparency, and
 radius (for rounding corners):
 
-# TODO this one needs to be reformatted
+# TODO this one needs to be reformatted Done?
+#+name: code:glyph-bd-1
 #+BEGIN_SRC javascript
-function BoxGlyph(x, y, width, height, fill, stroke, alpha, radius) {
+function BoxGlyph(x, y,
+                  width, height,
+                  fill, stroke,
+                  alpha, radius) {
     this.x = x;
     this.y = y;
     this._width = width;
@@ -42,31 +46,36 @@ which draws the Glyph to a provided canvas context. All of the
 follows; the function argument is a HTML5 canvas context to perform the
 drawing actions on:
 
-# TODO this one needs to be reformatted
+# TODO this one needs to be reformatted Done?
+#+name: code:glyph-bd-2
 #+BEGIN_SRC javascript
   BoxGlyph.prototype.draw = function(g) {
       var r = this._radius;
     // ...
       if (this._alpha != null) {
-            g.save();
-            g.globalAlpha = this._alpha;
-        }
+          g.save();
+          g.globalAlpha = this._alpha;
+      }
 
-        if (this.fill) {
-            g.fillStyle = this.fill;
-            g.fillRect(this.x, this.y, this._width, this._height);
-        }
+      if (this.fill) {
+          g.fillStyle = this.fill;
+          g.fillRect(this.x, this.y,
+                     this._width,
+                     this._height);
+      }
 
-        if (this.stroke) {
-            g.strokeStyle = this.stroke;
-            g.lineWidth = 0.5;
-            g.strokeRect(this.x, this.y, this._width, this._height)
-        }
+      if (this.stroke) {
+          g.strokeStyle = this.stroke;
+          g.lineWidth = 0.5;
+          g.strokeRect(this.x, this.y,
+                       this._width,
+                       this._height)
+      }
 
-        if (this._alpha != null) {
-            g.restore();
-        }
-    }
+      if (this._alpha != null) {
+          g.restore();
+      }
+  }
 #+END_SRC
 
 Note that the HTML5 canvas context is stateful, and commands such
@@ -74,11 +83,12 @@ as "fillRect" and "strokeRect" draw shapes using the current state,
 which is set with e.g. the `fillStyle` and `strokeStyle` fields.
 
 
-WIP .toSVG() using thin wrapper around DOM API
+# WIP .toSVG() using thin wrapper around DOM API
 BD supports exporting the browser view to SVG, which is accomplished by
 each Glyph having a `toSVG` method. `toSVG()` returns an SVG element
 representing the glyph in question.
 
+#+name: code:glyph-bd-3
 #+BEGIN_SRC javascript
   BoxGlyph.prototype.toSVG = function() {
       var s = makeElementNS(NS_SVG, 'rect', null,
@@ -98,11 +108,12 @@ representing the glyph in question.
   }
 #+END_SRC
 
-WIP .min(), .max(), .height(), minY(), maxY()
+# WIP .min(), .max(), .height(), minY(), maxY()
 Constant functions `min()`, `max()`, and so on, are used to calculate
 the bounding boxes of glyphs, to detect whether a user has clicked
 on a glyph:
 
+#+name: code:glyph-bd-4
 #+BEGIN_SRC javascript
 BoxGlyph.prototype.min = function() {
     return this.x;
@@ -119,8 +130,8 @@ BoxGlyph.prototype.height = function() {
 
 
 
-WIP problems: difficult to create new glyphs,
-               difficult to add new glyphs to rendering system
+# WIP problems: difficult to create new glyphs,
+#              difficult to add new glyphs to rendering system
 The problems with this way of creating and working with glyphs
 largely relate to code duplication, and it being difficult to
 compose existing glyphs to create new ones. Having to explicitly
@@ -128,7 +139,7 @@ write these various functions provide many opportunities for
 mistakes to sneak their way in.
 
 
-WIP solution: Free monads and code generation!
+# WIP solution: Free monads and code generation!
 In GGB, we instead use a Free monad to provide a simple DSL for describing
 Glyphs. The DSL is then interpreted into functions for rendering it to a HTML5
 canvas, as an SVG element, and bounding boxes. This vastly reduces the
@@ -141,6 +152,7 @@ We require some types to represent our Glyphs. First, a simple `Point`
 type representing a point in 2D space, and the `GlyphF` type which
 contains the commands in our Glyph DSL:
 
+#+name: code:glyph-ggb-1
 #+BEGIN_SRC purescript
 type Point = { x :: Number, y :: Number }
 
@@ -159,6 +171,9 @@ To reduce boilerplate, we let the compiler derive the Functor instance
 for GlyphF -- if a type can be made into a Functor, there is only one
 implementation, and it is mechanical.
 
+# TODO the Functor instance in PS's implementation of Free is provided
+#      by the Yoneda lemma, so this doesn't quite apply
+#+name: code:glyph-ggb-2
 #+BEGIN_SRC purescript
 derive instance functorGlyph :: Functor GlyphF
 #+END_SRC
@@ -167,12 +182,13 @@ The Free monad is named so because it is the
 
 In Haskell, the definition is very simple, thanks to non-strict evaluation:
 
+#+name: code:glyph-ggb-3
 #+BEGIN_SRC haskell
 data Free f a = Pure a
               | Bind f (Free f a)
 #+END_SRC
 
-NOTE: this is probably overkill; especially the stuff with ((,) a)
+# NOTE: this is probably overkill; especially the stuff with ((,) a)
 Here, `f` is the underlying functor, and `a` is whatever value we want to return.
 `Free` provides two value constructors; one containing only a single value (equivalent
 to the `pure` function in the Applicative typeclass), the other containing a value
@@ -184,6 +200,7 @@ is `(,) a`, that is, the type of two-element pairs where the first element is
 of some type `a`, we have a type that is isomorphic to a regular list:
 
 
+#+name: code:glyph-ggb-4
 #+BEGIN_SRC haskell
   type List a = Free ((,) a) ()
 
@@ -200,14 +217,15 @@ interpreted into some other functor, including effectful ones. Examples will
 come; there is some work left before we get there. First we wrap our `GlyphF`
 functor in `Free`, with a type synonym to make things cleaner:
 
+#+name: code:glyph-ggb-5
 #+BEGIN_SRC purescript
-
 type Glyph = Free GlyphF
 #+END_SRC
 
 Next we want to lift our `GlyphF` data constructors into functions. This is
 done using the `liftF` function, which has the following signature:
 
+#+name: code:glyph-ggb-6
 #+BEGIN_SRC purescript
 liftF :: forall f a. f a ~> Free f a
 #+END_SRC
@@ -215,15 +233,15 @@ liftF :: forall f a. f a ~> Free f a
 Here we use `liftF` to lift two of the commands in `GlyphF` to `Free GlyphF`,
 the rest are exactly analogous and elided:
 
+#+name: code:glyph-ggb-7
 #+BEGIN_SRC purescript
-
 circle :: Point -> Number -> Glyph Unit
 circle p r = liftF $ Circle p r unit
 
 stroke :: String -> Glyph Unit
 stroke c = liftF $ Stroke c unit
 
--- and so on
+-- ..
 #+END_SRC
 
 Since it's a monad, we also can use
@@ -234,6 +252,7 @@ With them, we can use Purescript's do-notation, and all the other tools that
 come with the Monad typeclass. Here we create a simple glyph that consists of
 three primitives:
 
+#+name: code:glyph-ggb-8
 #+BEGIN_SRC purescript
 crossedOut :: Point -> Number -> Glyph Unit
 crossedOut p@{x,y} r = do
@@ -253,16 +272,24 @@ a `String`, which can then be printed to console, or otherwise logged.
 
 ** Logging glyphs
 The GlyphF.Log interpreter transforms Glyphs to Strings, which we can then log
-to the console. To run an interpreter, we use foldFree:
+to the console. To run an interpreter, we use `foldFree`; see [[code:glyph-log-1]]
+for its type signature.
 
 # TODO this one needs to be reformatted
+#+name: code:glyph-log-1
 #+BEGIN_SRC purescript
-foldFree :: forall f m. MonadRec m => (f ~> m) -> (Free f) ~> m
+foldFree :: forall f m.
+            MonadRec m
+         => (f ~> m)
+         -> (Free f)
+         ~> m
 #+END_SRC
 
+# TODO this is probably overly granular
 The `MonadRec` constraint ensures that only monads supporting tail recursion can be
 used. Without it stack safety would be a problem. The type operator ~> denotes a
 natural transformation, it has the same meaning as:
+#+name: code:glyph-log-2
 #+BEGIN_SRC purescript
 forall a. f a -> g a
 #+END_SRC
@@ -273,6 +300,7 @@ touch the contents of the functor.
 For producing a String, the Writer type is a natural fit, and conveniently also
 has a MonadRec instance. The type of the natural transformation is then:
 
+#+name: code:glyph-log-3
 #+BEGIN_SRC purescript
 glyphLog :: GlyphF ~> Writer String
 #+END_SRC
@@ -280,23 +308,27 @@ glyphLog :: GlyphF ~> Writer String
 The definition of the function is also simple enough. For each primitive, write an
 appropriate string, and return the contents of the functor:
 
-# TODO this one needs to be reformatted
+#+name: code:glyph-log-4
 #+BEGIN_SRC purescript
 glyphLogN (Stroke c a)   = do
   tell $ "Set stroke style to " <> c
   pure a
 
 glyphLog (Circle p r a) = do
-  tell $ "Drawing circle at (" <> show p.x <> ", " <> show p.y <>
-         ") with radius " <> show r <> "."
+  tell $ "Drawing circle at ("
+      <> show p.x <> ", "
+      <> show p.y
+      <> ") with radius "
+      <> show r <> "."
   pure a
--- similar for the rest
+-- ..
 #+END_SRC
 
 Running the interpreter consists of applying this natural transformation to the Free GlyphF,
 using foldFree, and then getting the resulting String from the Writer. The function `showGlyph` nearly
 writes itself at this point:
 
+#+name: code:glyph-log-5
 #+BEGIN_SRC purescript
 execWriter :: forall w a. Writer w a -> w
 
@@ -307,6 +339,7 @@ showGlyph = execWriter <<< foldFree glyphLog
 For example, logging the process of drawing the previously defined `crossedOut` glyph
 at the point `{ x: 40.0, y: 10.0 }` with radius `3.0` would produce the following output:
 
+#+name: code:glyph-log-6
 #+BEGIN_SRC purescript
 Drawing circle at (40.0, 10.0) with radius 3.0
 Drawing line from (37.0, 7.0) to (43.0, 13.0)
@@ -314,12 +347,18 @@ Drawing line from (37.0, 13.0) to (43.0, 7.0)
 #+END_SRC
 
 ** Drawing glyphs to canvas and SVG
-When drawing to canvas, we use Eff as the target for our natural transformation,
-and simply perform whatever canvas effects are appropriate:
+When drawing to canvas, we use Eff as the target for our natural transformation.
+Interpretation is done by performing the appropriate canvas effects, see code
+block [[code:glyph-draw-1]]. `glyphEffN` is then used in `renderGlyph`, in block
+[[code:glyph-draw-2]], to interpret an entire `Glyph` structure into a canvas
+instruction.
 
-# TODO this one needs to be reformatted
+#+name: code:glyph-draw-1
 #+BEGIN_SRC purescript
-glyphEffN :: forall eff. Context2D -> GlyphF ~> Eff (canvas :: CANVAS | eff)
+glyphEffN :: forall eff.
+             Context2D
+          -> GlyphF
+          ~> Eff (canvas :: CANVAS | eff)
 glyphEffN ctx (Stroke c a) = do
   _ <- C.setStrokeStyle c ctx
   pure a
@@ -334,23 +373,36 @@ glyphEffN ctx (Circle p r a) = do
   _ <- C.stroke ctx
   _ <- C.fill ctx
   pure a
--- and so on
+-- ..
+#+END_SRC
 
--- | Produce an effect to render the glyph to a canvas
-renderGlyph :: forall eff. Context2D -> Glyph ~> Eff (canvas :: CANVAS | eff)
+#+name: code:glyph-draw-2
+#+BEGIN_SRC purescript
+renderGlyph :: forall eff.
+               Context2D
+            -> Glyph
+            ~> Eff (canvas :: CANVAS | eff)
 renderGlyph = foldFree <<< glyphEffN
 #+END_SRC
 
-SVG on the other hand uses the following type as target functor:
-# TODO this one needs to be reformatted
+# TODO expand on this (pure representation of SVG elements) (or remove)
+SVG on the other hand interprets `Glyphs` into the `SVG` type, a monad
+transformer stack defined in block [[code:glyph-draw-3]].
+
+#+name: code:glyph-draw-3
 #+BEGIN_SRC purescript
-type SVG a = StateT SVGContext (Writer (Array SVGElement)) a
+type SVG a =
+  StateT SVGContext
+    (Writer (Array SVGElement)) a
 #+END_SRC
 
 The result is a series of commands which can be used to produce the desired
-SVG element; this can then be rendered to the DOM:
+SVG element. The interpreter is in block [[code:glyph-draw-4]], and is
+very similar to the HTML canvas interpreter in block [[code:glyph-draw-1]].
+
 
 # TODO this one needs to be reformatted
+#+name: code:glyph-draw-4
 #+BEGIN_SRC purescript
 interpSVGEff :: GlyphF ~> SVG
 interpSVGEff (Stroke c a)  = do
@@ -359,32 +411,49 @@ interpSVGEff (Stroke c a)  = do
 interpSVGEff (Circle p r a) = do
   SVG.circle p.x p.y r
   pure a
--- and so on
+-- ..
+#+END_SRC
 
-runSVGEff :: forall a. Glyph a -> Array SVGElement
-runSVGEff = execWriter <<< (flip runStateT SVG.initialSVG) <<< foldFree interpSVGEff
+The interpreter is used in code block [[code:glyph-draw-5]], first to map
+`Glyphs` to pure SVG elements, then to render the SVG elements using the DOM.
 
--- | Render a glyph to an SVG element
-renderGlyph :: forall a eff. Glyph a -> Eff ( dom :: DOM | eff ) Element
+#+name: code:glyph-draw-5
+#+BEGIN_SRC purescript
+runSVGEff :: forall a.
+             Glyph a
+          -> Array SVGElement
+runSVGEff =
+  execWriter
+    <<< flip runStateT SVG.initialSVG
+    <<< foldFree interpSVGEff
+
+renderGlyph :: forall a eff.
+               Glyph a
+            -> Eff ( dom :: DOM | eff ) Element
 renderGlyph = SVG.renderSVG <<< runSVGEff
 #+END_SRC
 
 
 ** Generating bounding boxes
-BD produces events when clicking on glyphs -- which GGB make use of. To do this, BD
-expects four constant functions on each glyph. In Purescript, the "bounding box" type
-would look like this, and could be used directly by BD:
+BD produces events when clicking on glyphs, events that GGB makes use
+of. To do this, BD expects four constant functions on each glyph. In
+Purescript, the "bounding box" type would look like `BoundingBox` in
+code block [[code:glyph-bounding-box-1]]. Since `BoundingBox` is a
+record, it has the exact same runtime representation that BD expects.
 
+#+name: code:glyph-bounding-box-1
 #+BEGIN_SRC purescript
-type BoundingBox = { min :: Unit -> Number
-                   , max :: Unit -> Number
-                   , minY :: Unit -> Number
-                   , maxY :: Unit -> Number }
+type BoundingBox =
+  { min :: Unit -> Number
+  , max :: Unit -> Number
+  , minY :: Unit -> Number
+  , maxY :: Unit -> Number }
 #+END_SRC
 
 When constructing glyphs in BD, each new glyph provides its own explicit bounding box.
 This is clearly insufficient for our purposes; instead, we make use of the fact
-that bounding boxes form a semigroup, and in fact also a monoid.
+that bounding boxes form a semigroup, and in fact also a monoid. A brief
+introduction of these concepts follows.
 
 *** Semigroups and monoids
 # TODO: <> can be rendered nice in latex, look that up
@@ -397,7 +466,13 @@ associative binary operation. Let `S` be the set in question and `x`, `y`, `z`
 any three elements from `S`, with the binary operation `<>`. If this following
 law is true, we have a semigroup:
 
-Associativity: (x <> y) <> z == x <> (y <> z)
+$Associativity: (x <> y) <> z == x <> (y <> z)$
+
+# TODO use fancy N for natural numbers
+Semigroups can intuitively be viewed as things that can be "appended" to each
+other. For example, arrays, lists, and strings are semigroups, with the binary operation
+being appending the two arguments. Another example is the natural numbers
+with addition as the operation.
 
 A monoid is a semigroup with one special element, an identity. The example from
 above is a monoid if there is an element `e` in `S` such that these laws apply
@@ -406,35 +481,47 @@ for all elements `x` in `S`:
 $Left identity:   x <> e == x$
 $Right identity:  e <> x == x$
 
-Now we can explore how bounding boxes form a monoid.
+Again, arrays, lists, and strings are monoids, where the identity element is
+the empty array/list/string. The natural numbers with addition form a monoid only if
+zero is counted among the naturals; without zero, it is only a semigroup.
+# TODO another example of semigroup but not monoid? NonEmpty?
+
+With these definitions we can explore how bounding boxes form a monoid.
 
 *** Monoidal bounding boxes
-TODO: ref to monoids and diagrams functional pearl
+# TODO: ref to monoids and diagrams functional pearl
 
-The type corresponding to a glyph's position is GlyphPosition:
-# TODO this one needs to be reformatted
+The type corresponding to a glyph's position is `GlyphPosition` in
+block [[code:glyph-bounding-box-2]]
+#+name: code:glyph-bounding-box-2
 #+BEGIN_SRC purescript
-newtype GlyphPosition = GlyphPosition { min :: Number
-                                      , max :: Number
-                                      , minY :: Number
-                                      , maxY :: Number
-                                      }
+newtype GlyphPosition =
+  GlyphPosition { min :: Number
+                , max :: Number
+                , minY :: Number
+                , maxY :: Number
+                }
 #+END_SRC
 
-It is a newtype wrapper over a record describing each of the four edges of the bounding box.
-This is a semigroup, where the binary operation produces the minimal bounding box
-that covers both inputs. That is, we take the minimum or maximum of the respective
-values, to get whichever maximizes the area covered:
+# TODO this reasoning could be cleaned up; go at it more constructively.
+It is a newtype wrapper over a record describing each of the four
+edges of the bounding box. This is a semigroup, where the binary
+operation produces the minimal bounding box that covers both inputs.
+That is, we take the minimum or maximum of the respective values, to
+get whichever maximizes the area covered:
 
-# TODO this one needs to be reformatted
+#+name: code:glyph-bounding-box-3
 #+BEGIN_SRC purescript
-instance semigroupGlyphPosition :: Semigroup GlyphPosition where
-  append (GlyphPosition p1) (GlyphPosition p2) =
-    GlyphPosition $ { min:  Math.min p1.min  p2.min
-                    , max:  Math.max p1.max  p2.max
-                    , minY: Math.min p1.minY p2.minY
-                    , maxY: Math.max p1.maxY p2.maxY
-                    }
+instance semigroupGlyphPosition
+  :: Semigroup GlyphPosition where
+    append (GlyphPosition p1)
+           (GlyphPosition p2) =
+      GlyphPosition
+        { min:  Math.min p1.min  p2.min
+        , max:  Math.max p1.max  p2.max
+        , minY: Math.min p1.minY p2.minY
+        , maxY: Math.max p1.maxY p2.maxY
+        }
 #+END_SRC
 
 Note the use of the the minimum and maximum functions from the Math module, and
@@ -446,6 +533,7 @@ real number,
 we can cheat and use positive and negative infinity, which exist in JS. Then
 we have:
 
+#+name: code:glyph-bounding-box-4
 #+BEGIN_SRC purescript
 forall x. Math.min x  infinity == x
 forall x. Math.max x -infinity == x
@@ -454,18 +542,22 @@ forall x. Math.max x -infinity == x
 Now the identity `GlyphPosition` is obvious -- the minimum sides are set to
 positive infinity, and the maximum sides are set to negative infinity:
 
+#+name: code:glyph-bounding-box-5
 #+BEGIN_SRC purescript
-instance monoidGlyphPosition :: Monoid GlyphPosition where
-  mempty = GlyphPosition { min:    infinity
-                         , max:  (-infinity)
-                         , minY:   infinity
-                         , maxY: (-infinity)
-                         }
+instance monoidGlyphPosition
+  :: Monoid GlyphPosition where
+    mempty =
+      GlyphPosition { min:    infinity
+                    , max:  (-infinity)
+                    , minY:   infinity
+                    , maxY: (-infinity)
+                    }
 #+END_SRC
 
-Now, with our Monoid in hand, we can write another interpreter for Glyph,
+Now, with our `Monoid` instance in hand, we can write another interpreter for Glyph,
 using Writer as our monad in the natural transformation:
 
+#+name: code:glyph-bounding-box-6
 #+BEGIN_SRC purescript
 glyphPosN :: GlyphF ~> Writer GlyphPosition
 glyphPosN (Stroke _ a) = pure a
@@ -478,11 +570,14 @@ glyphPosN (Circle p r a) = do
   pure a
 -- and so on
 
-glyphToGlyphPosition :: forall a. Glyph a -> GlyphPosition
-glyphToGlyphPosition = execWriter <<< foldFree glyphPosN
+glyphToGlyphPosition :: forall a.
+                        Glyph a
+                     -> GlyphPosition
+glyphToGlyphPosition =
+  execWriter <<< foldFree glyphPosN
 #+END_SRC
 
-With that, we get bounding boxes for free when constructing glyphs.
+Now bounding boxes come for free with all `Glyphs`.
 
 *** Testing our monoid
 Semigroups and monoids have laws; while I'm reasonably confident in
@@ -492,17 +587,27 @@ like QuickCheck.
 
 First, some utility functions to generate and render GlyphPositions:
 
+# TODO remove most if not all of the boilerplate; keep enough to intro generative testing
 # TODO this is in Test.Glyph
 # TODO this one needs to be reformatted
+#+name: code:glyph-testing-1
 #+BEGIN_SRC purescript
-type ThreeGlyphs = {l :: GlyphPosition, c :: GlyphPosition, r :: GlyphPosition}
+type ThreeGlyphs =
+  { l :: GlyphPosition
+  , c :: GlyphPosition
+  , r :: GlyphPosition}
 
-renderGlyphs :: ThreeGlyphs -> String
-renderGlyphs {l,c,r} = "{ l: " <> show l <> ", c:" <> show c <> ", r:" <> show r <> "}"
+renderGlyphs :: ThreeGlyphs
+             -> String
+renderGlyphs {l,c,r} =
+     "{ l: " <> show l
+  <> ", c:"  <> show c
+  <> ", r:"  <> show r <> "}"
 
 genGlyphPosition :: Gen GlyphPosition
 genGlyphPosition = do
-  let cf = toNumber <$> chooseInt (-10000000) (10000000)
+  let cf = toNumber <$>
+             chooseInt (-10000000) (10000000)
   min <- cf
   max <- cf
   minY <- cf
@@ -521,6 +626,7 @@ The law all semigroups should abide is associativity. In Jack, we
 describe a Property asserting that parentheses don't matter for equality:
 
 # TODO this one needs to be reformatted
+#+name: code:glyph-testing-2
 #+BEGIN_SRC purescript
 prop_semigroup :: Property
 prop_semigroup =
@@ -531,6 +637,7 @@ prop_semigroup =
 In addition to that, monoids require that the identity element in fact
 be left and right identity. The Property:
 
+#+name: code:glyph-testing-3
 #+BEGIN_SRC purescript
 prop_monoid :: Property
 prop_monoid =
@@ -561,26 +668,34 @@ it to a Foreign value. The main function in its entirety:
 # TODO actually this code is garbage code and should be rewritten (that's how I transformed a feature to a record?!)
 
 # TODO this one needs to be reformatted
+#+name: code:glyph-together-1
 #+BEGIN_SRC purescript
-writeGlyph' :: forall a c r. Maybe (Feature c r) -> Glyph a -> Foreign
-writeGlyph' f g = toForeign { "draw": unsafePerformEff <<< \ctx -> Canvas.renderGlyph ctx g
-                            , "min": const p.min
-                            , "max": const p.max
-                            , "minY": const p.minY
-                            , "maxY": const p.maxY
-                            , "feature": f'
-                            , "toSVG": unsafePerformEff <<< \_ -> SVG.renderGlyph g
-                            }
-    where p = unwrap $ glyphToGlyphPosition g
-          f' = toNullable $
-                 (\(Feature chr min max _) -> {chr, min, max}) <$> f
+writeGlyph' :: forall a c r.
+               Maybe (Feature c r)
+            -> Glyph a
+            -> Foreign
+writeGlyph' f g =
+  toForeign
+    { "draw": unsafePerformEff <<< \ctx -> Canvas.renderGlyph ctx g
+    , "min": const p.min
+    , "max": const p.max
+    , "minY": const p.minY
+    , "maxY": const p.maxY
+    , "feature": f'
+    , "toSVG": unsafePerformEff <<< \_ -> SVG.renderGlyph g
+    }
+  where p = unwrap $ glyphToGlyphPosition g
+        f' = toNullable $
+               (\(Feature chr min max _) -> {chr, min, max}) <$> f
 #+END_SRC
 
-Note the use of `const` to produce the constant functions that describe the
-bounding box, after converting the `Glyph` to a `GlyphPosition`, and `unsafePerformEff` to create functions that use the canvas
-and SVG interpreters to produce the output expected by BD. Since the `feature`
-field is optional, `toNullable` is used to transform an eventual `Nothing` to an
-actual JS null, before being placed in the record.
+Note the use of `const` to produce the constant functions that
+describe the bounding box, after converting the `Glyph` to a
+`GlyphPosition`, and `unsafePerformEff` to create functions that use
+the canvas and SVG interpreters to produce the output expected by BD.
+Since the `feature` field is optional, `toNullable` is used to
+transform an eventual `Nothing` to an actual JS null, before being
+placed in the record.
 
 A helper function exists for working with `Glyphs` in the `F` functor,
 which is useful when the `Glyphs` were constructed in the process of
@@ -588,10 +703,16 @@ parsing externally provided data. In case of failure, we produce a
 `String` containing the errors, which is the format expected by BD:
 
 # TODO this one needs to be reformatted
+#+name: code:glyph-together-2
 #+BEGIN_SRC purescript
-writeGlyph :: forall a c r. Maybe (Feature c r) -> F (Glyph a) -> Foreign
+writeGlyph :: forall a c r.
+              Maybe (Feature c r)
+           -> F (Glyph a)
+           -> Foreign
 writeGlyph f fG = case runExcept fG of
-  Left errors -> toForeign $ fold $ renderForeignError <$> errors
+  Left errors ->
+    toForeign $ fold
+      $ renderForeignError <$> errors
   Right glyph -> writeGlyph' f glyph
 #+END_SRC
 
@@ -600,13 +721,21 @@ the format expected by BD, while staying type safe.
 
 
 
-NOTE these should be in discussion or something
+# NOTE these should be in discussion or something
+
+#+begin_comment
+
 ** Limitations/Performance
 TODO inefficient -- rendering tens of thousands of glyphs can be slow,
      each glyph setting its own stroke & fill colors, even if all glyphs
      look the same
      NOTE: still pretty fast! 100k in 8 seconds, and (probably?) O(n).
 
-TODO cause: free monad
+# TODO cause: free monad
 
-TODO potential solution: free applicative
+# TODO potential solution: free applicative
+
+#+end_comment
+
+** Summary
+# TODO summary

@@ -10,6 +10,10 @@
 # (Pointed out that the type signature of parseBrowserConfig provides a lot
 #  of information)
 
+# TODO refer to code blocks via labels
+# TODO Add captions to code blocks
+# TODO requires a big rewrite
+
 Software needs to be configurable.  The Genetics Graph Browser (GGB)
 has many pieces that can and/or need to be configured by the user or system
 administrator. For example, what tracks are currently in the view.
@@ -37,22 +41,22 @@ the browser.
 A very basic browser configuration could look like this:
 
 # TODO this one needs to be reformatted
+#+name: code:config-bd-example
 #+BEGIN_SRC javascript
   var biodalliance = new Browser({
+    prefix: '../',
+    fullScreen: true
 
-        prefix: '../',
-        fullScreen: true
+    chr:        '19',
+    viewStart:  30000000,
+    viewEnd:    40000000,
 
-        chr:        '19',
-        viewStart:  30000000,
-        viewEnd:    40000000,
-
-        sources:      [{name: 'Genome',
-                        twoBitURI:  'http://www.biodalliance.org/datasets/GRCm38/mm10.2bit',
-                        desc: 'Mouse reference genome build GRCm38',
-                        tier_type: 'sequence'
-                       }]
-
+    sources:
+      [{name: 'Genome',
+        twoBitURI:  'http://www.biodalliance.org/datasets/GRCm38/mm10.2bit',
+        desc: 'Mouse reference genome build GRCm38',
+        tier_type: 'sequence'
+      }]
   });
 #+END_SRC
 
@@ -91,8 +95,10 @@ though some of the code makes use of basic validation. However, it is
 wordy, and does not provide much:
 
 # TODO this one needs to be reformatted
+#+name: code:config-bd-init-1
 #+BEGIN_SRC javascript
-if (opts.viewStart !== undefined && typeof(opts.viewStart) !== 'number') {
+if (opts.viewStart !== undefined &&
+    typeof(opts.viewStart) !== 'number') {
     throw Error('viewStart must be an integer');
 }
 
@@ -102,6 +108,7 @@ this.viewStart = opts.viewStart;
 Verbosity alone makes it is understandable that only a few of the many values
 set are checked like this. After various defaults are set, all other
 options from the configuration object are set on the browser object:
+#+name: code:config-bd-init-2
 #+BEGIN_SRC javascript
 // 140 lines of setting default options
 for (var k in opts) {
@@ -121,9 +128,12 @@ Sources and styles are both tightly coupled and separate -- problematic...
 Neat solutions in PS include mapping `Source` -> `SourceSansStyle`,
 Modelling type as (Source, Style), etc. (Isomorphic)
 # TODO this one needs to be reformatted
+#+name: code:config-bd-init-3
 #+BEGIN_SRC javascript
-var sourcesAreEqual = sourcecompare.sourcesAreEqual;
-var sourcesAreEqualModuloStyle = sourcecompare.sourcesAreEqualModuloStyle;
+var sourcesAreEqual =
+      sourcecompare.sourcesAreEqual;
+var sourcesAreEqualModuloStyle =
+      sourcecompare.sourcesAreEqualModuloStyle;
 #+END_SRC
 
 
@@ -147,14 +157,20 @@ care of e.g. updating a UI element. That is also a problem, as every
 handler that modifies some UI state is another possibility for interference
 when working with the UI.
 
+
+#+begin_comment:
 **** Validation and transformations
 # WIP
 This style of code is commonly seen in code throughout BD, including
 configuration:
 
 # TODO this one needs to be reformatted
+# TODO This one is good to keep as a general example; not here, though
+
 #+BEGIN_SRC javascript
-while (sti < st.length && ry > st[sti].height && sti < (st.length - 1)) {
+while (sti < st.length &&
+       ry > st[sti].height &&
+       sti < (st.length - 1)) {
     ry = ry - st[sti].height - tier.padding;
     ++sti;
 }
@@ -166,6 +182,10 @@ if (sti >= st.length) {
 This code removes the sum of the height in pixels of the tracks from a value.
 It does this with external effects and state.
 
+#+end_comment
+
+#+begin_comment
+# TODO these are only relevant to the new native track; probably not applicable to report
 
 Stuff like this:
 
@@ -207,6 +227,7 @@ All of that to handle double clicks. Using purescript-behaviors, we could
 define an Event on double clicks by composition (I think). Compare
 to debouncing a switch with electronics vs assembly (maybe).
 
+#+end_comment
 
 **** Code smell summary
 # REWRITE
@@ -240,17 +261,19 @@ hierarchy; it is the parsed version of the JS object provided by the user.
 This is the definition:
 
 # TODO this one needs to be reformatted
+#+name: code:config-browser-type
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Config.purs
 newtype BrowserConfig =
-  BrowserConfig { wrapRenderer :: RenderWrapper
-                , bdRenderers :: StrMap RendererInfo
-                , browser :: BrowserConstructor
-                , tracks :: TracksMap
-                , events :: Maybe
-                    { bdEventSources :: Array SourceConfig
-                    , cyEventSources :: Array SourceConfig
-                    }
-                }
+  BrowserConfig
+    { wrapRenderer :: RenderWrapper
+      , bdRenderers :: StrMap RendererInfo
+      , browser :: BrowserConstructor
+      , tracks :: TracksMap
+      , events :: Maybe
+          { bdEventSources :: Array SourceConfig
+          , cyEventSources :: Array SourceConfig
+          }
+    }
 #+END_SRC
 
 At this point, the specific types of the values in the record are irrelevant; the
@@ -258,6 +281,7 @@ important part is that they're all Purescript types, and have been parsed
 and validated. The parsing is done by the parseBrowserConfig function, which
 has the following type signature:
 
+#+name: code:config-parse-config-type-sig
 #+BEGIN_SRC purescript :tangle no
 parseBrowserConfig :: Foreign -> F BrowserConfig
 #+END_SRC
@@ -280,6 +304,7 @@ Purescript and is simply anything that comes from outside Purescript, and thus
 must be parsed before any information can be extracted from them. `F` is a type
 synonym:
 
+#+name: code:config-F-type
 #+BEGIN_SRC purescript :tangle no
 type F = Except (NonEmptyList ForeignError)
 
@@ -308,7 +333,9 @@ the syntax may look strange - ignore the details, it will slowly make sense and 
 may appreciate the terseness in time).
 
 # TODO this one needs to be reformatted
+#+name: code:config-parse-config-1
 #+BEGIN_SRC purescript :tangle no
+parseBrowserConfig :: Foreign -> F BrowserConfig
 parseBrowserConfig f = do
   browser <- f ! "browser" >>= readTaggedWithError "Function" "Error on 'browser':"
 #+END_SRC
@@ -322,12 +349,19 @@ to the name browser, which is later referred to when putting the eventual
 BrowserConfig together. If the object doesn't have a "browser" property, or said
 property is not a JS function, we fail, and tell the user what went wrong.
 
+
+# TODO move this section to a general error-handling section
+# TODO create error-handling section
+
+#+begin_comment:
+
 # NOTE: I would move the rest of the section to a chaptor on error handling
 # because it is actually generic:
 
 `readTaggedWithError` is actually simple:
 
 # TODO this one needs to be reformatted
+#+name: code:config-read-tagged
 #+BEGIN_SRC purescript :tangle no
 -- The type is:
 readTaggedWithError :: forall a. String -> String -> Foreign -> F a
@@ -359,6 +393,9 @@ withExcept :: a.
 
 Another way to look at it is that `withExcept` is `map` but for the error type.
 
+
+#+end_comment:
+
 ** Tracks
 Tracks configurations are different for BD tracks and Cy.js graphs, though both
 are provided as arrays of JSON, under different properties in the `tracks`
@@ -383,7 +420,7 @@ is later sent, unaltered, to the Biodalliance constructor.
 The Biodalliance constructor is another parameter that the configuration requires.
 This and the `wrapRenderer :: RenderWrapper` function are required for the BD
 interface to function properly, and are JS functions provided by Biodalliance.
-(TODO note that wrapRenderer is only in a modified repo?)
+# TODO note that wrapRenderer is only in a modified repo?
 
 *** Cytoscape.js
 
@@ -394,6 +431,8 @@ which to fetch the elements in JSON format.
 
 # NOTE remove the rest of the file? none of it is really relevant
 
+#+begin_comment
+
 ** Events
 # DONE? the first line should be made clearer for novices:
 When a user interacts with a track, e.g. by clicking on a data point, the track
@@ -401,6 +440,8 @@ can communicate the interaction to the rest of the system, including other
 tracks. The user can configure the structure of the events that a track
 produces, and what a track does when receiving an event of some specific
 structure, e.g. scrolling the track on receiving an event containing a position.
+
+
 
 TODO: remove below text into the source files for documentation. You can refer
 to that, but I would just continue with TrackSink here.
@@ -466,6 +507,7 @@ eitherToF = except <<< lmap (pure <<< ForeignError)
 Now we can parse the events configuration in the BrowserConfig parser:
 
 # TODO this one needs to be reformatted
+#+name: code:config-parse-config-2
 #+BEGIN_SRC purescript :tangle no
 events <- do
   evs <- f ! "eventSources"
@@ -481,12 +523,15 @@ events <- do
 		}
 #+END_SRC
 
-(TODO: should probably just validate in the parseSourceConfig)
+# TODO: should probably just validate in the parseSourceConfig
 Note how we discard (_ <- ...) the results from the config validation;
 we only care about the validation error, since the configuration
 values have already been parsed.
 
 
 **** Future work
+# TODO more of this
 Typing events -- types are there, just not checked (also only makes
 sense w/ some kinda DSL/interpreter)
+
+#+end_comment

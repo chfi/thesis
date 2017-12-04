@@ -1,4 +1,17 @@
 * Interfacing with existing JS
+
+# TODO this chapter requires more reasoning;
+#      all examples that are brought up should be directly
+#      relevant to the hypothesis.
+#      for example, I don't think BDEvent applies; it doesn't deserve more than two sentences,
+#      and and we shouldn't bash on the reader too much about newtypes.
+#      Same with FFI examples in general. Show one impl + foreign import per module,
+#      then focus on the actual PS interface.
+# Idea: Move solid newtype arguments to FFI intro, and then bring up one example for BD and Cy resp.
+# TODO need to be more consistent in what code is shown from both modules
+# TODO refer to code blocks via labels
+# TODO Add captions to code blocks
+
 The Genome Graph Browser uses BD and Cy.js, which are both written in JS.
 To interact with their respective APIs, we must use Purescript's Foreign
 Function Interface (FFI).
@@ -19,6 +32,8 @@ we print it, but Javascript has no such qualms:
 
 # TODO: this might be a *terrible* example... typewise and everything
 
+#+caption: Unsafe function that "adds" two values and prints the result to the browser console.
+#+name: code:bdcy-js-untyped-example
 #+BEGIN_SRC javascript
 exports.showStuff = function(a) {
     return function(b) {
@@ -31,14 +46,25 @@ exports.showStuff = function(a) {
 
 Since JS doesn't care about the types, neither do we. The type signature
 is polymorphic in its two arguments, and returns an effect:
+# TODO make sure caption exports correctly
 # TODO remove row on 0.12 release
+#+caption: The type signature for importing the function defined in [[code:bdcy-js-untyped-example]]
+#          to Purescript.
+#+name: code:bdcy-purs-typed-example-1
 #+BEGIN_SRC purescript
-foreign import showStuff :: forall a b. a -> b -> Eff _ Unit
+foreign import showStuff
+  :: forall eff a b.
+     a
+  -> b
+  -> Eff (console :: CONSOLE | eff) Unit
 #+END_SRC
 
 We can also define types (and kinds, and things of other kinds) using the
 `foreign import` syntax:
 
+# TODO this should be inline, or at least not a full-on code block figure
+#+caption: It is also possible to define data types that can only be instanced from FFI functions.
+#+NAME: code:bdcy-purs-typed-example-2
 #+BEGIN_SRC purescript
 foreign import data JSType :: Type
 #+END_SRC
@@ -53,6 +79,10 @@ entirely opaque.
 
 To work with Biodalliance, we define a foreign type corresponding to
 instances of the BD browser:
+
+# TODO this should be inline, or at least not a full-on code block figure
+#+caption: The data type corresponding to BD browser instances.
+#+NAME: code:bdcy-bd-types-1
 #+BEGIN_SRC purescript
 foreign import data Biodalliance :: Type
 #+END_SRC
@@ -62,13 +92,19 @@ the browser constructor, another helper function, and the BD configuration
 as arguments:
 
 # TODO this one needs to be reformatted
+# TODO initBDimpl or just initBD? The latter makes more sense I think.
+#      the whole point is to make the FFI as small as possible;
+#
+#+caption: The FFI import for the BD browser constructor wrapper.
+#+NAME: code:bdcy-bd-init
 #+BEGIN_SRC purescript
-foreign import initBDimpl :: forall eff.
-                             Fn3
-                             Foreign
-                             RenderWrapper
-                             BrowserConstructor
-                             (HTMLElement -> Eff (bd :: BD | eff) Biodalliance)
+foreign import initBDimpl
+  :: forall eff.
+     Fn3
+     Foreign
+     RenderWrapper
+     BrowserConstructor
+     (HTMLElement -> Eff (bd :: BD | eff) Biodalliance)
 #+END_SRC
 
 The output of the function is a continuation that takes an HTML element to
@@ -81,17 +117,20 @@ it shouldn't be), and an FFI function that takes a BD instance and an effectful 
 returning an effect that attaches the callback.
 
 # TODO this one needs to be reformatted
+#+NAME: code:bdcy-bd-events-purs
 #+BEGIN_SRC purescript
 newtype BDEvent = BDEvent Json
 
-foreign import addFeatureListenerImpl :: forall eff a.
-                                         EffFn2 (bd :: BD | eff)
-                                         Biodalliance
-                                         (BDEvent -> Eff eff a)
-                                         Unit
+foreign import addFeatureListenerImpl
+  :: forall eff a.
+     EffFn2 (bd :: BD | eff)
+     Biodalliance
+     (BDEvent -> Eff eff a)
+     Unit
 #+END_SRC
 
 # TODO this one needs to be reformatted
+#+NAME: code:bdcy-bd-events-purs-ffi
 #+BEGIN_SRC javascript
 exports.addFeatureListenerImpl = function(bd, callback) {
     bd.addFeatureListener(function(ev, feature, hit, tier) {
@@ -108,13 +147,12 @@ Like BD, we define a foreign type for the Cy.js browser instance. We also
 have types for the Cy.js elements, collections, and a newtype wrapper
 for events. Note how the CyCollection type is a type constructor:
 
+#+NAME: code:bdcy-cy-types-1
 #+BEGIN_SRC purescript
 foreign import data Cytoscape :: Type
 
 -- | Cytoscape elements (Edges and Nodes)
 foreign import data Element :: Type
-
-newtype CyEvent = CyEvent Json
 
 -- | A cytoscape collection of elements
 foreign import data CyCollection :: Type -> Type
@@ -124,12 +162,14 @@ The Cy.js constructor is similar to BD's, except we don't need to pass any
 functions to it, as we have Cy.js as a dependency. We can provide a HTML
 element and an array of JSON objects to be used as the initial graph:
 
+#+NAME: code:bdcy-cytoscapeImpl
 #+BEGIN_SRC purescript
-foreign import cytoscapeImpl :: forall eff.
-                                EffFn2 (cy :: CY | eff)
-                                (Nullable HTMLElement)
-                                (Nullable JArray)
-                                Cytoscape
+foreign import cytoscapeImpl
+  :: forall eff.
+     EffFn2 (cy :: CY | eff)
+     (Nullable HTMLElement)
+     (Nullable JArray)
+     Cytoscape
 #+END_SRC
 
 `Nullable` is a type for dealing with `null` in the FFI. We don't actually
@@ -137,71 +177,52 @@ use `cytoscapeImpl`, instead we provide more idiomatic wrapper, so the user
 can use the more common and idiomatic `Maybe`:
 
 # TODO this one needs to be reformatted
+# TODO explain runEffFn2 (or remove example)
+#+NAME: code:bdcy-cytoscape
 #+BEGIN_SRC purescript
 cytoscape :: forall eff.
              Maybe HTMLElement
           -> Maybe JArray
           -> Eff (cy :: CY | eff) Cytoscape
-cytoscape htmlEl els = runEffFn2 cytoscapeImpl (toNullable htmlEl) (toNullable els)
+cytoscape htmlEl els =
+  runEffFn2 cytoscapeImpl
+    (toNullable htmlEl) (toNullable els)
 #+END_SRC
 
 The Cytoscape.js instance can be worked with in multiple ways. Data can be
 added to the graph, retrieved from it, and deleted:
 
 # TODO this one needs to be reformatted
+#+NAME: code:bdcy-cytoscape-graph-1
 #+BEGIN_SRC purescript
 -- | Add a Collection of elements to the graph
-foreign import graphAddCollectionImpl :: forall eff.
-                                         EffFn2 (cy :: CY | eff)
-                                         Cytoscape
-                                         (CyCollection Element)
-                                         Unit
+graphAddCollection
+  :: forall eff.
+     Cytoscape
+  -> CyCollection Element
+  -> Eff (cy :: CY | eff) Unit
 
-graphAddCollection :: forall eff.
-                      Cytoscape
-                   -> CyCollection Element
-                   -> Eff (cy :: CY | eff) Unit
-graphAddCollection = runEffFn2 graphAddCollectionImpl
+graphGetCollection
+  :: forall eff.
+     Cytoscape
+  -> Eff (cy :: CY | eff) (CyCollection Element)
 
--- | Get all elements in the graph
-foreign import graphGetCollectionImpl :: forall eff.
-                                         EffFn1 (cy :: CY | eff)
-                                         Cytoscape
-                                         (CyCollection Element)
-
-graphGetCollection :: forall eff.
-                      Cytoscape
-                   -> Eff (cy :: CY | eff) (CyCollection Element)
-graphGetCollection = runEffFn1 graphGetCollectionImpl
-
-
-foreign import graphRemoveCollectionImpl :: forall eff.
-                                            EffFn1 (cy :: CY | eff)
-                                            (CyCollection Element)
-                                            (CyCollection Element)
-
-graphRemoveCollection :: forall eff.
-                         CyCollection Element
-                      -> Eff ( cy :: CY | eff) (CyCollection Element)
-graphRemoveCollection = runEffFn1 graphRemoveCollectionImpl
+graphRemoveCollection
+  :: forall eff.
+     CyCollection Element
+  -> Eff ( cy :: CY | eff) (CyCollection Element)
 #+END_SRC
 
 The graph layout can be controlled with the `runLayout` function, which
 takes a `Layout` value to update the Cy.js browser's current layout:
 
+#+NAME: code:bdcy-cytoscape-layout-1
 #+BEGIN_SRC purescript
 -- | Apply a layout to the graph
-foreign import runLayoutImpl :: forall eff.
-                                EffFn2 (cy :: CY | eff)
-                                Cytoscape
-                                Layout
-                                Unit
-
 runLayout :: forall eff.
              Cytoscape
           -> Layout
           -> Eff (cy :: CY | eff) Unit
-runLayout = runEffFn2 runLayoutImpl
 #+END_SRC
 
 `Layout` is simply a newtype wrapper over `String`. The native Cy.js
@@ -209,6 +230,7 @@ layout function takes a `String` as an argument, and with this newtype wrapper
 we can both easily support all the layouts supported by Cy.js -- easily
 adding more if appropriate -- while staying type-safe.
 
+#+NAME: code:bdcy-cytoscape-layout-2
 #+BEGIN_SRC purescript
 newtype Layout = Layout String
 
@@ -222,6 +244,7 @@ circle = Layout "circle"
 Cy.js produces events in JSON format, a newtype wrapper is used to keep things safe
 (and improve readability of type signatures):
 
+#+NAME: code:bdcy-cytoscape-event-1
 #+BEGIN_SRC purescript
 newtype CyEvent = CyEvent Json
 #+END_SRC
@@ -232,6 +255,7 @@ and a `String` representing the type of event, e.g. "click" for adding a
 handler on click events. The function returns an effect that attaches
 the handler to the provided Cytoscape instance:
 
+#+NAME: code:bdcy-cytoscape-event-2
 #+BEGIN_SRC purescript
 onEvent :: forall a.
            Cytoscape
@@ -240,6 +264,7 @@ onEvent :: forall a.
         -> Eff Unit
 #+END_SRC
 
+#+NAME: code:bdcy-cytoscape-event-3
 #+BEGIN_SRC javascript
 exports.onEventImpl = function(cy, evs, callback) {
     cy.on(evs, function(e) {
@@ -261,6 +286,7 @@ must be implemented in terms of the FFI.
 `CyCollection` is a semigroup where the binary operation is taking the union of
 the two `CyCollections`:
 
+#+NAME: code:bdcy-cytoscape-union-1
 #+BEGIN_SRC javascript
 exports.union = function(a, b) {
     return a.union(b);
@@ -268,12 +294,15 @@ exports.union = function(a, b) {
 #+END_SRC
 
 # TODO this one needs to be reformatted
+# TODO this one is probably also superfluous. This whole section should only be a page, if that.
+#+NAME: code:bdcy-cytoscape-union-2
 #+BEGIN_SRC purescript
-foreign import union :: forall e.
-                        Fn2
-                        (CyCollection e)
-                        (CyCollection e)
-                        (CyCollection e)
+foreign import union
+  :: forall e.
+     Fn2
+     (CyCollection e)
+     (CyCollection e)
+     (CyCollection e)
 
 instance semigroupCyCollection :: Semigroup (CyCollection e) where
   append = runFn2 union
@@ -282,6 +311,7 @@ instance semigroupCyCollection :: Semigroup (CyCollection e) where
 Another common interaction with a collection is extracting a subcollection. With `CyCollection`,
 we can use the `filter` function for this:
 
+#+NAME: code:bdcy-cytoscape-filter-1
 #+BEGIN_SRC purescript
 -- | Filter a collection with a predicate
 filter :: forall e.
@@ -292,6 +322,7 @@ filter :: forall e.
 
 The FFI definition of `filter` uses the Cy.js API:
 
+#+NAME: code:bdcy-cytoscape-filter-2
 #+BEGIN_SRC javascript
 exports.filterImpl = function(pred, coll) {
     return coll.filter(pred);
@@ -302,6 +333,7 @@ The `Predicate` type is another newtype wrapper, this time of functions from the
 given type to Boolean. Since it's a newtype, it can be provided to the FFI functions
 without unwrapping it.
 
+#+NAME: code:bdcy-cytoscape-predicate-1
 #+BEGIN_SRC purescript
 newtype Predicate e = Predicate (e -> Boolean)
 #+END_SRC
@@ -309,6 +341,7 @@ newtype Predicate e = Predicate (e -> Boolean)
 The Cytoscape.js API provides some basic predicates on elements, nodes, and edges.
 For example:
 
+#+NAME: code:bdcy-cytoscape-predicate-2
 #+BEGIN_SRC purescript
 foreign import isNode :: Predicate Element
 foreign import isEdge :: Predicate Element
@@ -323,6 +356,7 @@ This lets us filter the Cytoscape graph with all the powerful JSON parsing tools
 at our disposal.
 
 # TODO better example
+#+NAME: code:bdcy-cytoscape-predicate-3
 #+BEGIN_SRC purescript
 hasName :: Predicate Json
 hasName = Predicate f
@@ -336,6 +370,7 @@ elemHasName = elementJson >$< hasName
 us combine `Predicates` using the normal Boolean logic combinators such as
 `&&` and `||`:
 
+#+NAME: code:bdcy-cytoscape-predicate-4
 #+BEGIN_SRC purescript
 namedNodeOrEdge :: Predicate Element
 namedNodeOrEdge = (elemHasName && isNode) || isEdge
@@ -350,6 +385,7 @@ as expected. For example, the edges and nodes from a graph should both
 be subsets of the graph:
 
 # TODO this one needs to be reformatted
+#+NAME: code:bdcy-cytoscape-tests-1
 #+BEGIN_SRC purescript
 let edges = filter isEdge eles
     nodes = filter isNode eles
@@ -360,8 +396,13 @@ when (not $ eles `contains` nodes) (fail "Graph doesn't contain its nodes")
 Conversely, the union of the edges and nodes should be equal to the
 original graph, and this should be commutative:
 
+#+NAME: code:bdcy-cytoscape-tests-1
 #+BEGIN_SRC purescript
 (edges <> nodes) `shouldEqual` eles
 (nodes <> edges) `shouldEqual` eles
 (edges <> nodes) `shouldEqual` (nodes <> edges)
 #+END_SRC
+
+
+** Summary
+# TODO summary

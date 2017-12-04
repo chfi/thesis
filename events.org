@@ -1,5 +1,7 @@
 * Events
 
+#+begin_comment
+
 ** Notes
    not *really* a problem in BD, however there is no checking that the features
 provided to listeners actually have the data expected by them, leading to a risk
@@ -14,8 +16,12 @@ is the BD API also limited in what can be done? well, not really;
 I certainly won't be able to do any more than featurelisteners can do
 (and only barely in a cleaner/more correct way)
 
+#+end_comment
 
-** Events
+# TODO clean up a bunch
+# TODO clean up language
+
+** Track interactions
    When working with connected data, we want to be able to interact with the data
 in multiple ways, to explore one data set by examining another. In the architecture
 of GGB, this comes down to sending events between tracks -- when clicking on some
@@ -37,6 +43,7 @@ a way as to minimize the risk of callbacks receiving events they cannot process
 We begin by looking at what events are provided by BD and Cy.js.
 
 ** Biodalliance
+# TODO move examples from bdcy.org & config.org to here
    BD provides several facilities for the user to add event handlers, functions
 that are called when the user interacts with the browser, or the browser performs
 some action. We are interested in only one, `addFeatureListener`. This function
@@ -50,6 +57,8 @@ feature is a JS object, and can contain any information that BD parsed from the 
 meaning two features from two different tracks can look very different, and
 
 ** Cytoscape.js
+# TODO move examples from bdcy.org to here
+
    Cy.js has a vast array of potential interactions and event handlers. We will
 focus on regular click-events, and thus are interested in the `cy.on("click")`
 function, which adds on-click event handlers to the elements matching the provided
@@ -72,6 +81,12 @@ data to be found in the same place in the respective JS objects, or be of the
 same format. Even so, we want a
 
 
+# TODO this reads more like a blog post than thesis report,
+#      and is not directly relevant to the thesis.
+#      Extract what's usable, move the rest to a blog post or something
+
+#+begin_comment
+
 ** Type-safe -- but compile-time doesn't make sense
 My first attempt, ambitious as it was, failed, and was in fact misguided from
 the beginning -- however, it serves to illustrate the goal, and illuminate the path there.
@@ -80,6 +95,7 @@ row types and polymorphic variants from purescript-variant.
 
 Row types make it possible to express extensible records; they are essentially
 type-level maps from labels to types. For example, a record in Purescript:
+
 
 #+BEGIN_SRC purescript
 exRec :: Record ( x :: Number, title :: String )
@@ -157,8 +173,8 @@ attempting to move from a hardcoded event flow to configuring one -- this is whe
 I realized that it doesn't make sense to have the compiler check something that
 needs to be configured by the user, and thus checked at runtime!
 
-(Footnote? It may be possible using type/value-level reflection/reification,
-as done in Functional Pearl: implicit configurations http://www.cs.rutgers.edu/~ccshan/prepose/prepose.pdf)
+# Footnote? It may be possible using type/value-level reflection/reification,
+ as done in Functional Pearl: implicit configurations http://www.cs.rutgers.edu/~ccshan/prepose/prepose.pdf)
 
 What I actually desired was a way to express events in an easy to configure way,
 while also guaranteeing correctness as far as possible, with good error reporting
@@ -166,7 +182,10 @@ picking up the slack where necessary.
 
 # TODO Footnote: maybe possible with reflection/reification?
 
-** JSON zippers and stringy types
+#+end_comment
+
+** JSON Configuration and Semantics
+# TODO rewrite to fit with rewritten previous section
 
    What was needed was using a single type for all the possible events,
 but also providing enough data to do some kind of validation -- validation
@@ -212,6 +231,9 @@ namely purescript-argonaut.
 
 **** Json decoding with Argonaut
 
+# TODO rewrite this to be more focused on the objective;
+#      write about JCursor from the viewpoint of maintenance, code reuse, etc.
+
 Argonaut is a library for working with JSON in Purescript, including serializing
 and deserializing, as well as working with the JSON trees.
 
@@ -225,6 +247,7 @@ we're interested in walking arbitrary JSON trees and transforming lists of
 paths. Before looking at how the parsing works, here is an example of a
 legal SourceConfig:
 
+#+name: code:events-sourceconfig-1
 #+BEGIN_SRC json
 {
   "eventName": "range",
@@ -242,6 +265,7 @@ legal SourceConfig:
 This defines a source that parses objects/events like this one, the JS object
 passed to the event handler when clicking on a feature in BD:
 
+#+name: code:events-raw-event-1
 #+BEGIN_SRC javascript
 {
   // ...
@@ -253,6 +277,7 @@ passed to the event handler when clicking on a feature in BD:
 #+END_SRC
 
 Into a JS object that looks like
+#+name: code:events-parsed-event-1
 #+BEGIN_SRC javascript
 {
   chr: "chr11",
@@ -260,8 +285,6 @@ Into a JS object that looks like
   maxPos: 1270230
 }
 #+END_SRC
-
-# DONE: was that legal JSON?
 
 This is useful if several tracks produce events with the same data but in
 objects that look different; the consumer of the event will only see events of
@@ -278,6 +301,7 @@ the value we need in the finished event, from the provided raw event.
 Fortunately, Argonaut provides functions for dealing with exactly this. First,
 the JCursor type describes a path to a point in a JSON tree:
 
+#+name: code:events-jcursor-1
 #+BEGIN_SRC purescript
 data JCursor =
   JIndex Int JCursor
@@ -287,6 +311,7 @@ data JCursor =
 
 It can be seen as a list of accessors. If we have an object in JS:
 
+#+name: code:events-jcursor-2
 #+BEGIN_SRC javascript
 let thing = { x: [{a: 0},
                   {b: {c: true}}
@@ -295,11 +320,14 @@ let thing = { x: [{a: 0},
 
 We can grab the value at `c` with
 
+#+name: code:events-jcursor-3
 #+BEGIN_SRC javascript
 let cIs = thing.x[1].b.c;
 #+END_SRC
 
 With JCursor, this accessor chain `x[1].b.c` would look like:
+
+#+name: code:events-jcursor-4
 #+BEGIN_SRC purescript
 (JField "x"
    (JIndex 1
@@ -309,8 +337,9 @@ With JCursor, this accessor chain `x[1].b.c` would look like:
 
 It's not pretty when printed like this, but fortunately not much direct manipulation
 will be needed. We create these JCursors from a JSON structure like the templates
-above with the function toPrims:
+above with the function toPrims, seen in [[code:events-jcursor-5]].
 
+#+name: code:events-jcursor-5
 #+BEGIN_SRC purescript
 toPrims :: Json -> List (Tuple JCursor JsonPrim)
 #+END_SRC
@@ -327,6 +356,7 @@ With the eventTemplate we don't want to pick out the leaf, but the label of the 
 In this case we do need to step into the JCursor structure, but only a single step,
 after reversing it:
 
+#+name: code:events-jcursor-6
 #+BEGIN_SRC purescript
 insideOut :: JCursor -> JCursor
 
@@ -358,9 +388,10 @@ something's wrong.
 The implementation is simple. The Cursors here are grabbed from the
 result of toPrims above; the JCursors themselves are unaltered.
 
-# TODO this one needs to be reformatted
+# TODO this one needs to be reformatted (Done?)
+#+name: code:events-validate-templates-1
 #+BEGIN_SRC purescript
--- This is just a nicer version of Tuple JCursor String
+-- Labelled version of Tuple JCursor String
 type Cursor = { cursor :: JCursor
               , name :: String
               }
@@ -375,7 +406,9 @@ validateTemplate :: Array RawCursor
 validateTemplate rcs vc =
   if any (\rc -> vc.name == rc.name) rcs
   then pure vc
-  else throwError $ "Event property " <> vc.name <> " is not in raw template"
+  else throwError $ "Event property "
+                 <> vc.name
+                 <> " is not in raw template"
 #+END_SRC
 
 In words, if one of the many raw event cursors has the same name as the given
@@ -384,12 +417,13 @@ the array of cursors defining a finished event, we can make use of Either's
 Applicative instance, and traverse:
 
 # TODO this one needs to be reformatted
+#+name: code:events-validate-templates-2
 #+BEGIN_SRC purescript
 -- specialized to Either String and Array
 traverse :: forall a b.
-	          (a -> Either String b)
-	       -> Array a
-	       -> Either String (Array b)
+	    (a -> Either String b)
+	 -> Array a
+	 -> Either String (Array b)
 
 validateTemplates :: Array RawCursor
                   -> Array ValueCursor
@@ -409,6 +443,8 @@ have the following types:
 
 # TODO: PS 0.12 will be out soon; effect rows won't be used then
 # TODO this one needs to be reformatted
+
+#+name: code:events-tracksinks-1
 #+BEGIN_SRC purescript
 newtype TrackSink a = TrackSink (StrMap (Json -> a))
 
@@ -420,32 +456,38 @@ These are the "expanded" types, for clarity. Note that they are extremely
 similar; the only difference is what type of browser they work on:
 
 # TODO this one needs to be reformatted
+#+name: code:events-tracksinks-2
 #+BEGIN_SRC purescript
-BDTrackSink = TrackSink (StrMap (Json -> Biodalliance -> Eff Unit)
-CyTrackSink = TrackSink (StrMap (Json -> Cytoscape    -> Eff Unit)
+BDTrackSink = TrackSink
+  (StrMap (Json -> Biodalliance -> Eff Unit)
+
+CyTrackSink = TrackSink
+  (StrMap (Json -> Cytoscape    -> Eff Unit)
 #+END_SRC
 
 The event name is used to place the function in the correct index of the StrMap.
 The callback uses currying to take both the event (as JSON) and the respective
 browser instance, to be used e.g. when scrolling the Biodalliance view to an event.
 
-The following JS code defines a Biodalliance TrackSink (and is correctly typed):
+In [[code:events-tracksinks-3]] a BD TrackSink is defined that scrolls the BD viewport
+upon receiving an event.
 # TODO this one needs to be reformatted
+#+name: code:events-tracksinks-3
 #+BEGIN_SRC javascript
 var bdConsumeLoc = function(json) {
     return function(bd) {
         return function() {
-            bd.setLocation(json.chr,
-                           json.pos - 1000000.0,
-                           json.pos + 1000000.0);
+            bd.setLocation(
+              json.chr,
+              json.pos - 1000000.0,
+              json.pos + 1000000.0);
         };
     };
 };
 
-var bdTrackSinkConfig = [ { eventName: "location",
-                            eventFun: bdConsumeLoc
-                          }
-                        ];
+var bdTrackSinkConfig =
+  [ { eventName: "location",
+      eventFun: bdConsumeLoc } ];
 #+END_SRC
 
 # NOTE: add example of passing this information into PS.
@@ -460,11 +502,15 @@ events as appropriate.
 
 To create a TrackSource, the provided templates are parsed and validated.
 Since a TrackSource is a list of parsers, if the SourceConfig is correct,
-a function from raw events to parsed events is returned, wrapped in a singleton
-list and the TrackSource type:
+a function from raw events to parsed events is returned, wrapped in a
+list and the TrackSource type, as seen in [[code:events-running-1]].
+
 # TODO this one needs to be reformatted
+# TODO maybe clean it up more
+#+name: code:events-running-1
 #+BEGIN_SRC purescript
-makeTrackSource :: SourceConfig -> Either String (TrackSource Event)
+makeTrackSource :: SourceConfig
+                -> Either String (TrackSource Event)
 makeTrackSource sc = do
   rawTemplates <- parseRawTemplateConfig sc.rawTemplate
   eventTemplates <- validateTemplates rawTemplates
@@ -477,14 +523,17 @@ makeTrackSource sc = do
 #+END_SRC
 
 To extend the above function to work on a collection of configuration objects,
-we use function composition to first attempt to use each provided configuration
-to create a TrackSource, followed by combining the list of parsers into a single
-one:
+function composition is used in [[code:events-running-2]] to first attempt to
+use each provided configuration to create a TrackSource, followed by combining
+the list of parsers into a single one.
 
 # TODO this one needs to be reformatted
+#+name: code:events-running-2
 #+BEGIN_SRC purescript
-makeTrackSources :: Array SourceConfig -> Either String (TrackSource Event)
-makeTrackSources = map fold <<< traverse makeTrackSource
+makeTrackSources :: Array SourceConfig
+                 -> Either String (TrackSource Event)
+makeTrackSources =
+  map fold <<< traverse makeTrackSource
 #+END_SRC
 
 First `traverse` is used to try to create the TrackSources, which
@@ -503,13 +552,16 @@ about this function; all that is required is swapping out some of the functions.
 # TODO an example of this! e.g. collecting both successes and failures.
 # it's a fold and a tuple, basically
 
-Finally, a way to use a TrackSource is required. The following function uses
-a TrackSource to parse a provided JSON value:
-
+Finally, a way to use a TrackSource, to parse a raw event, is required.
+Code block [[code:events-running-3]] shows the function that does so.
 # TODO this one needs to be reformatted
+#+name: code:events-running-3
 #+BEGIN_SRC purescript
-runTrackSource :: TrackSource Event -> Json -> Array Event
-runTrackSource (TrackSource ts) raw = filterMap (_ $ raw) ts
+runTrackSource :: TrackSource Event
+               -> Json
+               -> Array Event
+runTrackSource (TrackSource ts) raw =
+  filterMap (_ $ raw) ts
 #+END_SRC
 
 It works by applying each function in the array wrapped by TrackSource to the
@@ -523,28 +575,41 @@ so to make one we create a singleton map from the provided event name to
 the provided function, and wrap it in the TrackSink type:
 
 # TODO this one needs to be reformatted
+#+name: code:events-running-4
 #+BEGIN_SRC purescript
-makeTrackSink :: SinkConfig ~> TrackSink
-makeTrackSink sc = TrackSink $ StrMap.singleton sc.eventName sc.eventFun
+makeTrackSink :: SinkConfig
+              ~> TrackSink
+makeTrackSink sc =
+  TrackSink
+    $ StrMap.singleton sc.eventName sc.eventFun
 #+END_SRC
 
 
 Using a collection of `SinkConfigs` to produce a single `TrackSink` is not
-in itself complicated, but we do some validation, namely ensuring that
+in itself complicated; see the code is in block [[code:events-running-5]].
+The bulk of the logic is in validation, namely ensuring that
 there are not multiple handlers for a given event:
-# NOTE/TODO there is no real reason for there to only be one handler...
 
+# NOTE/TODO there is no real reason for there to only be one handler...
 # TODO this one needs to be reformatted
+# TODO probably rewrite this code; `count` could be much cleaner,
+#      plus it'd be nicer to just use a case .. of instead of `when`
+#+name: code:events-running-5
 #+BEGIN_SRC purescript
 makeTrackSinks :: forall a.
                   Array (SinkConfig a)
                -> Either String (TrackSink a)
 makeTrackSinks scs = do
-  let count = StrMap.fromFoldableWith (+) $ map (\c -> Tuple c.eventName 1) scs
-      overlapping = StrMap.filter (_ > 1) count
+  let count =
+        StrMap.fromFoldableWith (+)
+          $ map (\c -> Tuple c.eventName 1) scs
+
+      overlapping =
+        StrMap.filter (_ > 1) count
 
   when (not StrMap.isEmpty overlapping)
-    let error = foldMap (append "\n" <<< show) $ StrMap.keys overlapping
+    let error = foldMap (append "\n" <<< show)
+                  $ StrMap.keys overlapping
     in throwError $ "Overlapping tracksinks!\n" <> error
 
   pure $ foldMap makeTrackSink scs
@@ -554,19 +619,28 @@ In this case, we use `foldMap` to map the `makeTrackSink` function over the
 provided configurations, and then use the `TrackSink` monoid instance to
 combine them -- similar to `fold <<< traverse` in the case of `TrackSource`.
 
+
+# TODO explain do-notation or remove remark?
 To use a `TrackSink`, we see if a handler for the provided event exists.
-If it does, we apply it to the contents of the event:
+If it does, we apply it to the contents of the event. In code block
+[[code:events-running-6]] this is done using PS's `do-notation` syntax.
 
 # TODO this one needs to be reformatted
+# TODO maybe rewrite this as a one-liner
+#+name: code:events-running-6
 #+BEGIN_SRC purescript
-runTrackSink :: forall a. TrackSink a -> Event -> Maybe a
+runTrackSink :: forall a.
+                TrackSink a
+             -> Event
+             -> Maybe a
 runTrackSink (TrackSink sink) event = do
   f <- StrMap.lookup event.name sink
   pure $ f event.evData
 #+END_SRC
 
 However, since `TrackSinks` are intended to perform effects, a helper function
-for that is useful. In particular, the following function creates a "thread"
+for that is useful. In particular, the function `forkTrackSink` in
+[[code:events-running-7]] creates a "thread"
 # TODO footnote on JS singlethreaded)
 that reads events from a provided `BusRW`,
 # TODO define/refer to `BusRW` intro)
@@ -575,16 +649,23 @@ provided `TrackSink` if the received event has a handler:
 
 # TODO make sure that `forkTrackSink` is correct w/o effect rows
 # TODO this one needs to be reformatted
+# TODO and could be cleaned up
+#+name: code:events-running-7
 #+BEGIN_SRC purescript
 forkTrackSink :: forall env.
                  TrackSink (env -> Eff Unit)
               -> env
               -> BusRW Event
               -> Aff Canceler
-forkTrackSink sink env bus = forkAff $ forever do
-  event <- Bus.read bus
+forkTrackSink sink env bus =
+  forkAff $ forever do
+    event <- Bus.read bus
 
-  case runTrackSink sink event of
-    Nothing -> pure unit
-    Just f  -> liftEff $ f env
+    case runTrackSink sink event of
+      Nothing -> pure unit
+      Just f  -> liftEff $ f env
 #+END_SRC
+
+** Summary
+# TODO write summary
+# TODO tie together semi-typesafety of TrackSource & TrackSink to hypothesis
