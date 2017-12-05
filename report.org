@@ -302,8 +302,9 @@ used (extensively?) since publication.
 
 Many of the code smells they list, as well as the solutions to them, are
 concerned about class-based object-oriented programming (OOP). OOP has
-been the primary programming paradigm for decades (TODO REF),
-WIP more here (but what?)
+been the primary programming paradigm for decades,
+# TODO REF
+# WIP more here (but what?)
 
 
 
@@ -367,8 +368,9 @@ computational complexity sense."
 
 As one of the main problems of legacy code is lack of knowledge, one
 of the main ways to attempt to solve it is to reverse engineer
-the existing system. This is usually done manually [TODO REF], but
-can also be done using automatic analysis of the code.
+the existing system. This is usually done manually,
+# TODO REF
+but can also be done using automatic analysis of the code.
 
 # some short side-paths: modularization, automated code analyses
 
@@ -515,7 +517,8 @@ you do indeed have an `Int`.
     # Other functor-based effects (Maybe vs. null)
 
   # Immutability - mutation as side effect
-A lower-level part of pure FP, which has seen increased use outside of FP(TODO REF)
+A lower-level part of pure FP, which has seen increased use outside of FP
+# TODO REF
 is immutability of data. In a purely functional language, functions cannot modify
 data passed to them, as doing so would be to perform a side-effect -- passing the
 same variable to two functions would not necessarily have the result expected
@@ -566,51 +569,53 @@ them together -- all type-checked by the compiler.
 # i.e. "Next it is argued why pure FP can help with the problems of legacy code"
 
 
-** Functional programming for legacy codebases
-# section needs a better name. later.
+#+begin_comment
+summary of the Background chapter
 
-# intro - the various (apparent) causes for problems of legacy code
-  # are analyzed from the viewpoint of pure FP
+briefly describe the concepts of legacy code and FP;
+  but leave the details of how they interact for the Method section
 
-
-# code duplication
-
-# primitive obsession
-
-# side effects
-
-# mutability
-
-# summary - by eliminating side effects & giving the programmer tools to know
-   # what various parts of the system do,
-   # pure FP appears to be usable to limit the problems that lead to legacy code problems
-
+outro by asking that question -- how do they interact? esp. from an FP viewpoint
+#+end_comment
 
 
 * Method
-
-# TODO I'm not sure about the structure of this section, it feels convoluted;
-#      the narrative is unclear to me
 
 #+begin_comment
 Introduces the method
   i.e. how I went about evaluating pure FP by way of PS as a tool for extending
        legacy code bases and minimizing potential future (legacy) problems of a new code base
 
-Two questions:
-  1. Can pure FP help when working with a legacy code base?
-  2. Does writing code with pure FP lead to code that is
-     less emblematic of legacy code problems? (i.e. better code)
-
-This was be done by identifying code smells in a legacy code base
-and writing a new program that interfaces with the legacy system;
-solving or minimizing the impact of said code smells where applicable,
-and writing code that avoids recreating the code smells where entirely
-new code is necessary.
-
 #+end_comment
 
 
+
+** Functional programming for legacy codebases
+# section needs a better name. later.
+
+#+begin_comment
+intro - the various parts of FP we're going to make use of,
+  and how they help wrt. the problems related to legacy code
+
+
+Static types
+Abstractions
+  Semigroup & monoid
+Generative testing (esp. checking typeclass laws)
+more..
+
+wrt.
+
+code duplication
+primitive obsession
+side effects
+mutability
+
+summary - by eliminating side effects & giving the programmer tools to know
+  what various parts of the system do,
+  pure FP appears to be usable to limit the problems that lead to legacy code problems
+
+#+end_comment
 
 ** Extending a Legacy System
 
