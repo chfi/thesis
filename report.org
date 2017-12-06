@@ -665,7 +665,30 @@ Introduces the method
   i.e. how I went about evaluating pure FP by way of PS as a tool for extending
        legacy code bases and minimizing potential future (legacy) problems of a new code base
 
+First introduce pure FP as a potential tool for legacy code,
+looking at specific features and how they correspond to (solving/preventing)
+problems
+
+then frame hypothesis
+
+finally present BD & GGB; describe project
+
+
 #+end_comment
+
+# TODO this quote should fit in somewhere in the Method section
+#+BEGIN_QUOTE
+I think the lack of reusability comes in object-oriented languages,
+not functional languages. Because the problem with object-oriented
+languages is they’ve got all this implicit environment that they carry
+around with them. You wanted a banana but what you got was a gorilla
+holding the banana and the entire jungle.
+
+If you have referentially transparent code, if you have pure functions
+— all the data comes in its input arguments and everything goes out
+and leave no state behind — it’s incredibly reusable.
+--- Joe Armstrong\cite{seibel2009coders}
+#+END_QUOTE
 
 
 
@@ -683,12 +706,15 @@ Abstractions
 Generative testing (esp. checking typeclass laws)
 more..
 
-wrt.
+wrt. assisting the programmer in knowing what code does and does not do
+use code smells only as shorthand for specific causes of this
+    code duplication --
+      more similar pieces of code -> more places to look; less clarity of what to change & effects of change
+      e.g. *why* are there multiple similar pieces of code? are they really the same? scope etc.
 
-code duplication
-primitive obsession
-side effects
-mutability
+    primitive obsession -- less clear
+    side effects -- obvious
+    mutability -- obvious
 
 summary - by eliminating side effects & giving the programmer tools to know
   what various parts of the system do,
@@ -724,8 +750,10 @@ be free of the code smells.
 
 
 
-** Code smells
+# NOTE actually we probably don't need the code smells in Method at all
 #+begin_comment
+
+** Code smells
 Then present the code smells (briefly if already detailed in Background)
 
 Followed by briefly detailing the components of GGB?
@@ -853,15 +881,21 @@ basic framework to fit the examples to.
 #+begin_comment
 
 Discuss results -- each of the code parts (subsections from Results)
-  Does the code give "answer" to the code smells?
-  Is the GGB code "good" code wrt. our code smell definition?
-  Is the GGB code "good" code more generally? (maybe skip this one if it's too much)
+
+Does the various FP features/tools from the Method help in producing
+"good" code in the Results?
+
+On a higher level, is the resulting codebase "easy" to understand,
+and to work with? How difficult is it to understand the overall
+architecture, to know what areas to change, and what changes in
+system behavior ones' modifications to the code leads to?
+  And how much of this can be attributed to FP?
+  This will all need to be argued for.
 
 How do the various parts from the Background/FP section fit in?
   Purity
   Static types
   (CT) Abstractions
-
 
 Discuss refactoring; something that happened many times during the project,
   and something a good type system assists with to a great extent
@@ -876,8 +910,6 @@ also that pure FP and PS have their own antipatterns/code smells
 #+end_comment
 
 
-
-
 * Conclusion
 
 
@@ -885,6 +917,14 @@ also that pure FP and PS have their own antipatterns/code smells
 Case-study nature as a limitation;
 will probably want to argue that the results are thanks in large part to the
 nature of pure FP and PS; not merely happenstance even though n=1.
+
+Also relatively "easy" because BD is open source and JS; it also has nearly
+no external dependencies. Other legacy systems are likely to be much more
+difficult to apply this approach to. Java/JVM has some tools and languages;
+C or something becomes even more difficult.
+
+Future work:
+  Looking at open source projects; is functional OSS "better"?
 #+end_comment
 
 
