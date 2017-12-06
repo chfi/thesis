@@ -111,14 +111,8 @@ modify the code, it would not be worth talking about, nor is it likely that
 a system that provides a continually valuable service will not at some point
 in the future require maintenance or new features \cite{lehman1980programs}.
 
-# Why legacy code is a problem; i.e. why I should care that there are legacy systems, statistics
-  # Num of legacy systems
-  # size of legacy systems
-  # impact of legacy systems
-  # difficulty to change
-
-
-# TODO statistics on legacy systems; how pervasive are they, how old do they
+# TODO could maybe do with a bit more
+# WIP statistics on legacy systems; how pervasive are they, how old do they
      # tend to be, how expensive is their maintenance and where do most of
      # the costs fall
 
@@ -135,10 +129,6 @@ some federal agencies use systems that are up to 50 years old \cite{gao2016legac
 
 # TODO Footnote The Danger of Legacy Systems https://web.archive.org/web/20120323165836/http://www.mousesecurity.com/?p=220
 
-# TODO point out source code as one problem; not language or OS, since
-     # that's basically stable these days (i.e. they're unlikely to
-     # be replaced soon, compared to how fast things moved up until
-     # the 90s)
 
 Many of these federal agency systems consist of old hardware, old operating
 systems, etc., however the problems of a legacy system do not need to be
@@ -151,7 +141,6 @@ where the problem of modifying the system is constrained by the code
 itself --- the underlying technology is not relevant. Likewise we do not look
 at dependencies, a problem solved by pure functional
 package managers such as Nix \cite{dolstra2004nix} and Guix \cite{courtes2013functional}.
-
 
 Why would changes need to be made to a legacy codebase? When the
 behavior of the system needs to be changed. \cite{feathers2004working}
@@ -329,51 +318,137 @@ what the next section attempts to answer.
 
 *** Code quality
 
-# It's also desirable to know what makes code more or less difficult to
-# work with -- both to give a clearer picture of what code to focus on
-# when refactoring old systems, as well as give programmers guidelines
-# when developing new code.
+#+begin_comment
+Knowing what code is safe to change & knowing what code *to* change
+  -> Good code is code that tells the programmer what it does,
+     but also what it does *not* do.
 
-# begs the question -- what is bad code?
-  # limited definition, but:
-    # difficult to know what changes to code produce what changes in output (transformation!)
-      # i think this is enough, actually. at least if prim. obs./types can fit in here
+Describe code smells wrt. that
+#+end_comment
 
+The problems of legacy code revolve around knowing what different
+parts of the codebase do; what changes in code lead to what changes
+in behavior, and what changes in code do not lead to changes in
+a subset of the system behavior. "Good" code could, then, be defined
+as code which:
 
-  # code smells as heuristics for bad code
-    # argue that
+1. Tells the programmer what it does
+2. Tells the programmer what it does *not* do
 
-In a word, we want heuristics for good vs. bad code. These are called code smells, or antipatterns.
+Conversely, "bad" code makes it difficult to see why it exists,
+why it is called, and what effects it has, and does not have,
+on the system behavior.
 
-# TODO this probably needs... more
-First, however, we need to define what is meant by "good" or "bad" code.
+These definitions only beg further questions, however, and require
+deeper investigation.
 
-Beck & Fowler
+**** Knowing what a piece of code does
+     means knowing what data it requires to do whatever it is it does,
+i.e. what other code it depends on, and knowing what effects it has
+on the system behavior.
+This may sound simple, but a function or method
+can easily grow to the point where it is difficult to see what the
+dependencies truly are, e.g. if a compound data type is provided
+as the input to a function, is every piece used? If so, how are those
+pieces created; what parts of the codebase are truly responsible for the
+input to the function? Knowing what code calls the function is not
+enough unless the call site is entirely responsible for the input.
+# TODO REF, working with legacy code or
+
+While dependencies may be difficult to unravel, the opposite problem
+is often much worse.
 # TODO REF
- provides a list of 22 code smells that have been
-used (extensively?) since publication.
-# TODO REFs
-# http://ieeexplore.ieee.org/abstract/document/1235447/
-# https://link.springer.com/article/10.1007/s10664-006-9002-8
-# https://dl.acm.org/citation.cfm?id=2629648
-# http://www.sciencedirect.com/science/article/pii/S0164121215000631
+Knowing what effects a piece of code has on the system can be extremely
+difficult in commonly used languages such as Java and Python,
+# TODO REF, why FP matters? something like that
+as there is often little limiting what some function or method can
+do. A given method may perform a simple calculation on its input
+and return the results. It may also perform an HTTP request to some
+service and receive the results that way -- with no indication that
+the system communicates with the outside world in this manner, nor
+that the system /depends/ on said service. It could also modify global
+state, which potentially changes the behavior of all other parts of
+the codebase that interact with said state, despite there being no
+direct interaction between the different parts. This has been called
+"spooky action at a distance,"\cite{feathers2004working} a reference
+to what Einstein thought of quantum mechanics.
+# TODO REF or footnote for Einstein
 
-
-Many of the code smells they list, as well as the solutions to them, are
-concerned about class-based object-oriented programming (OOP). OOP has
-been the primary programming paradigm for decades,
-# TODO REF
-# WIP more here (but what?)
-
-
-
-# IDK if this quote fits here, but I want it somewhere!
+# TODO keep this or the "spooky action at a distance" quote
 #+BEGIN_QUOTE
 Most large software systems, even if apparently well-engineered on
 a component-by-component basis, have proved to be incoherent as a
 whole due to unanticipated long-range "weird interactions" among
 supposedly independent parts. \cite{weide1995reverse}
 #+END_QUOTE
+
+# TODO add appropriately convoluted example (with misleading function names)
+#+begin_comment
+#+BEGIN_SRC c
+int globalValue = 0;
+
+int rq(int x) {
+   globalValue++;
+   return x + globalValue;
+}
+
+int rt(int x) {
+   return x + 1;
+}
+#+END_SRC
+#+end_comment
+
+
+**** Knowing what a piece of code does not do
+# TODO this needs to be reworded & expanded.
+#      my point is regarding that knowing that some function F
+#      is one place to change the code to produce the desired system change,
+#      does *not* imply knowing that said modification *only* produces the desired behavior change.
+#      Probably best to bake together this and the previous subsubsection/paragraph
+     is, for the above reasons, difficult in many languages. In fact,
+while these two questions may appear very similar, it is often not the
+case that knowing the answer to one of them lets the programmer deduce
+the answer to the other.
+# idk if this is right
+
+
+**** Good code
+     must then, somehow, communicate as much information to the programmer
+as possible. At the same time, throwing too much information at the programmer
+will not help.
+# TODO REF cognitive psychology or something; too much shit is bad, obv.
+We have seen that legacy code is often if not always imperative code, and
+that the OOP paradigm has been an oft-tried solution for legacy code. Despite
+this, many current legacy code systems are written in OOP languages such as
+Java, and while books provide dozens of ways to write good OOP code, and ways
+to reduce the problems of legacy code, there does not seem to be any reason
+to believe that OOP is the ultimate solution to legacy code, nor that OOP code
+is inherently the best type of code.
+# TODO this will require more references and/or argumentation
+
+
+# TODO do we need to talk about code smells here? I'm not sure.
+#+begin_comment
+We now have a simple definition of good and bad code. It remains to
+be able to easily see if some piece of code is good or bad.
+# TODO maybe remove [easily?]
+This is not an easy question to answer, nor is there any reason to
+think there is an objective answer. What we need is a set of heuristics
+that can be applied, to give a rough idea of the code quality; some
+examples of what kind of code makes it difficult to see what it does
+and does not do.
+
+These heuristics exists, and they are called "code antipatterns," or "code smells."
+
+**** Code smells
+
+
+# TODO Ref to beck & fowler, working with legacy code
+
+# Many of the code smells they list, as well as the solutions to them, are
+# concerned about class-based object-oriented programming (OOP). OOP has
+# been the primary programming paradigm for decades,
+# TODO REF
 
   # what is good code?
     # maybe something about the semantic space of the program vs. the implementation space
@@ -412,6 +487,7 @@ Simply, a good piece of code makes it clear what it does, how it relates
 to the system at large, and how it can be changed or reused without
 compromising its behavior or the behavior of the system.
 
+#+end_comment
 
 Object-oriented is not the only way to write code. Functional programming (FP) is
 a programming paradigm that takes quite a different approach than OOP, and
@@ -434,7 +510,8 @@ contrast to the imperative paradigm, which places no such limitations on
 functions, other than scoping.
 # TODO Footnote: an imperative language could of course
 # provide purity, but it's not exactly common, nor is it a natural part of the
-# paradigm).
+# paradigm). Take Rust as an example of an imperative language limiting side effects & mutability
+
 
 # Then a deep dive into the most important parts
 
@@ -569,9 +646,6 @@ You also get some level of program correctness, by writing code
 using types that correspond to the program semantics. You're able
 to construct transformations between data structures and compose
 them together -- all type-checked by the compiler.
-
-# another smooth segue (zipping the previous two sections together...)
-# i.e. "Next it is argued why pure FP can help with the problems of legacy code"
 
 
 #+begin_comment
