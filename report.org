@@ -241,13 +241,72 @@ This makes it difficult to know what changes to make to the code to
 produce the desired change in system behavior, and if a change made is safe,
 i.e.\ that /no/ undesired change in system behavior results.
 
+
+*** Solutions
+# then we can move on -- how do we *use* these heuristics
+
+Reverse engineering of legacy code exposed
+https://doi.org/10.1145/225014.225045
+
+"Reverse engineering of large legacy software systems generally cannot meet its
+objectives because it cannot be cost-effective. [..] it is very costly to
+“understand” legacy code sufficiently well to permit changes to be made safely,
+because reverse engineering of legacy code is intractable in the usual
+computational complexity sense."
+
+As one of the main problems of legacy code is lack of knowledge, one
+of the main ways to attempt to solve it is to reverse engineer
+the existing system. This is usually done manually,
+# TODO REF
+but can also be done using automatic analysis of the code.
+
+# some short side-paths: modularization, automated code analyses
+
+# TODO subsection or paragraph?
+**** Code analysis
+One common way is to analyze the code to find ways to modularize
+it, to decouple the pieces from one another. This can be done
+by OOP stuff
+
+Another interesting route is finding a modularization by constructing
+a concept lattice based on where different global variables are used.
+This lattice can then be used to create descriptions on how to
+modularize the codebase.
+# REF: Assessing Modular Structure of Legacy Code Based on Mathematical
+#      Concept Analysis
+#      https://doi.org/10.1145/253228.253354
+
+# TODO Problems with these approaches, and to automation of this in general
+# TODO probably something about machine learning
+
+
+# the main course: manual reverse engineering
+
+# TODO subsection or paragraph?
+**** Manual reverse engineering
+this section is not even a section.
+
+The most common
+# TODO REF
+solution is simply to do it by hand. This
+requires that programmers look at, and comprehend, the codebase, and
+how the codebase relates to the semantics of the system. Writing tests
+should also be done to give greater confidence when changes are made.
+
+# REF The most common way - Do it by hand.
+
+# a quick exploration of the literature/background in this area, OOP etc.
+
+# finally a summary of the legacy code section, especially
+# the causes (code smells) followed by
+
 Not only is working with legacy code difficult and expensive, it may
 be the case that doing so will not solve the underlying problems,
 dooming the legacy system to a lifetime of being subject to the
 swearing of programmers.
 # TODO this last sentence must be worded better
 
-One question remain: is there anything special with legacy code,
+One question remains: is there anything special with legacy code,
 is /all/ successful code doomed to one day bear the "legacy" label,
 or is it possible to write code that avoids, or at least reduces,
 the problems associated with legacy code? In other words, what
@@ -354,66 +413,12 @@ to the system at large, and how it can be changed or reused without
 compromising its behavior or the behavior of the system.
 
 
-*** Solutions
-# then we can move on -- how do we *use* these heuristics
+Object-oriented is not the only way to write code. Functional programming (FP) is
+a programming paradigm that takes quite a different approach than OOP, and
+purely functional programming provides tools to assist the developer in writing
+what we have now defined to be "good" code. The next section provides an
+introduction to the area and its ideas.
 
-Reverse engineering of legacy code exposed
-https://doi.org/10.1145/225014.225045
-
-"Reverse engineering of large legacy software systems generally cannot meet its
-objectives because it cannot be cost-effective. [..] it is very costly to
-“understand” legacy code sufficiently well to permit changes to be made safely,
-because reverse engineering of legacy code is intractable in the usual
-computational complexity sense."
-
-As one of the main problems of legacy code is lack of knowledge, one
-of the main ways to attempt to solve it is to reverse engineer
-the existing system. This is usually done manually,
-# TODO REF
-but can also be done using automatic analysis of the code.
-
-# some short side-paths: modularization, automated code analyses
-
-# TODO subsection or paragraph?
-**** Code analysis
-One common way is to analyze the code to find ways to modularize
-it, to decouple the pieces from one another. This can be done
-by OOP stuff
-
-Another interesting route is finding a modularization by constructing
-a concept lattice based on where different global variables are used.
-This lattice can then be used to create descriptions on how to
-modularize the codebase.
-# REF: Assessing Modular Structure of Legacy Code Based on Mathematical
-#      Concept Analysis
-#      https://doi.org/10.1145/253228.253354
-
-# TODO Problems with these approaches, and to automation of this in general
-# TODO probably something about machine learning
-
-
-# the main course: manual reverse engineering
-
-# TODO subsection or paragraph?
-**** Manual reverse engineering
-this section is not even a section.
-
-The most common
-# TODO REF
-solution is simply to do it by hand. This
-requires that programmers look at, and comprehend, the codebase, and
-how the codebase relates to the semantics of the system. Writing tests
-should also be done to give greater confidence when changes are made.
-
-# REF The most common way - Do it by hand.
-
-# a quick exploration of the literature/background in this area, OOP etc.
-
-# finally a summary of the legacy code section, especially
-# the causes (code smells) followed by
-
-# a smooth segue (ala "there is, however, one paradigm/potential
-# solution that has not been examined...")
 
 ** Purely functional programming
 
