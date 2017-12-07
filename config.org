@@ -257,7 +257,7 @@ This is the definition:
 
 # TODO this one needs to be reformatted
 #+name: code:config-browser-type
-#+BEGIN_SRC purescript :tangle yes :prologue Imports/Config.purs
+#+BEGIN_SRC purescript :tangle yes :file Config.purs :prologue Imports/Config.purs
 newtype BrowserConfig =
   BrowserConfig
     { wrapRenderer :: RenderWrapper
