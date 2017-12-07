@@ -114,24 +114,9 @@ derive newtype instance ringBp :: Ring Bp
 p1 = Bp 123.0
 p2 = Bp 400.0
 
-p1 + p2 == Bp 523.0
+-- p1 + p2 == Bp 523.0
 #+END_SRC
 
-# TODO: needs a super basic lens primer somewhere (maybe just a footnote in the
-# first use of it), plus readBp might not be correct
-The Newtype instance also gives us access to the _Newtype lens isomorphism:
-
-#+name: code:units-pos-5
-#+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
-_Bp :: Iso' Bp Number
-_Bp = _Newtype
-
-_MBp :: Iso' Bp Number
-_MBp = _Newtype
-
-readBp :: String -> Maybe Bp
-readBp s = s ^? _Number <<< re _Bp
-#+END_SRC
 
 
 ** Chromosomes
