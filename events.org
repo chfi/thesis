@@ -97,7 +97,7 @@ Row types make it possible to express extensible records; they are essentially
 type-level maps from labels to types. For example, a record in Purescript:
 
 
-#+BEGIN_SRC purescript
+##+BEGIN_SRC purescript
 exRec :: Record ( x :: Number, title :: String )
 exRec = { x: 123.0, title: "hello" }
 #+END_SRC
@@ -107,7 +107,7 @@ with any record containing at least some given fields. Here is a function
 that works on any record with a field named `title` of type String:
 
 # TODO this one needs to be reformatted
-#+BEGIN_SRC purescript
+##+BEGIN_SRC purescript
 -- { label :: Type } is sugar for Record ( label :: Type )
 exRec2 :: { title :: String }
 exRec2 = { title: "another record" }
@@ -129,7 +129,7 @@ A variant with the label "either" must contain a Boolean.
 
 # TODO: update to use @ proxy syntax when 0.12 drops
 # TODO this one needs to be reformatted
-#+BEGIN_SRC purescript
+##+BEGIN_SRC purescript
 _either = SProxy :: SProxy "either"
 _or     = SProxy :: SProxy "or"
 _nope   = SProxy :: SProxy "nope"
@@ -221,13 +221,36 @@ transforms events from browsers to GGB events, the latter handles received
 events on browser tracks.
 
 *** TrackSource
+The definition in PS of a `TrackSource` can be seen in code block
+[[code:events-tracksource-def]]. It is simply a newtype wrapper over
+the type of arrays of JSON parsers to some given type `a`. A `Functor`
+instance is derived so that we can apply functions to the output
+of a `TrackSource`, and `Semigroup` and `Monoid` instances are
+defined so that multiple `TrackSource a`s can be combined into one.
 
-The configuration needed for a TrackSource is a name, the JSON structure
-for the event to be produced, and the JSON structure of the event produced
-by the underlying track (e.g. Biodalliance).
+#+name: code:events-tracksource-def
+#+BEGIN_SRC purescript :file Events.purs :prologue Imports/Events.purs
+newtype TrackSource a = TrackSource (Array (Json -> Maybe a))
 
-For this another library will be used, instead of purescript-foreign,
-namely purescript-argonaut.
+derive instance functorTrackSource :: Functor TrackSource
+
+instance semigroupTrackSource :: Semigroup (TrackSource a) where
+  append (TrackSource s1) (TrackSource s2) = TrackSource (s1 <> s2)
+
+instance monoidTrackSource :: Monoid (TrackSource a) where
+  mempty = TrackSource mempty
+#+END_SRC
+
+A `TrackSource` can be constructed by providing a parsing function.
+However, we want to let the user configure track sources, and not have
+to write them in PS. The configuration needed for a `TrackSource` is a
+name, the JSON structure for the event to be produced, and the JSON
+structure of the event produced by the underlying track (e.g.
+Biodalliance).
+
+For parsing all this JSON, the purescript-argonaut library was used,
+which the next section describes.
+# TODO REF/FOOTNOTE
 
 **** Json decoding with Argonaut
 
@@ -390,7 +413,7 @@ result of toPrims above; the JCursors themselves are unaltered.
 
 # TODO this one needs to be reformatted (Done?)
 #+name: code:events-validate-templates-1
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file Events.purs :prologue Imports/Events.purs
 -- Labelled version of Tuple JCursor String
 type Cursor = { cursor :: JCursor
               , name :: String
@@ -401,7 +424,7 @@ type ValueCursor = Cursor
 
 
 validateTemplate :: Array RawCursor
-                 -> Array ValueCursor
+                 -> ValueCursor
                  -> Either String ValueCursor
 validateTemplate rcs vc =
   if any (\rc -> vc.name == rc.name) rcs
@@ -416,24 +439,28 @@ value cursor, it's good, otherwise throw an error. To increase this to validate
 the array of cursors defining a finished event, we can make use of Either's
 Applicative instance, and traverse:
 
-# TODO this one needs to be reformatted
-# TODO this one is probably overkill
-#+name: code:events-validate-templates-2
+# TODO these two need to be reformatted
+# TODO these two are probably overkill
+#+name: code:events-traverse-type
 #+BEGIN_SRC purescript
 -- specialized to Either String and Array
 traverse :: forall a b.
 	    (a -> Either String b)
 	 -> Array a
 	 -> Either String (Array b)
+#+END_SRC
 
+#+name: code:events-validate-templates-3
+#+BEGIN_SRC purescript :file Events.purs :prologue Imports/Events.purs
 validateTemplates :: Array RawCursor
                   -> Array ValueCursor
                   -> Either String (Array ValueCursor)
 validateTemplates rcs = traverse (validateTemplate rcs)
 #+END_SRC
 
-The function tries to validate all given templates, and returns the first failure if there are any.
-Validation of a collection of things for free!
+The function tries to validate all given templates, and returns the
+first failure if there are any. Validation of a collection of things
+for free!
 
 *** TrackSink
 
@@ -507,7 +534,7 @@ a function from raw events to parsed events is returned, wrapped in a
 list and the TrackSource type, as seen in [[code:events-running-1]].
 
 # TODO this one needs to be reformatted
-# TODO maybe clean it up more
+# TODO maybe clean it up more, or delete it entirely; the details are unimportant.
 #+name: code:events-running-1
 #+BEGIN_SRC purescript
 makeTrackSource :: SourceConfig
