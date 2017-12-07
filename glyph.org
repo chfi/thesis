@@ -181,7 +181,7 @@ type representing a point in 2D space, and the `GlyphF` type which
 contains the commands in our Glyph DSL:
 
 #+name: code:glyph-ggb-1
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 type Point = { x :: Number, y :: Number }
 
 data GlyphF a =
@@ -202,7 +202,7 @@ implementation, and it is mechanical.
 # TODO the Functor instance in PS's implementation of Free is provided
 #      by the Yoneda lemma, so this doesn't quite apply
 #+name: code:glyph-ggb-2
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 derive instance functorGlyph :: Functor GlyphF
 #+END_SRC
 
@@ -246,7 +246,7 @@ come; there is some work left before we get there. First we wrap our `GlyphF`
 functor in `Free`, with a type synonym to make things cleaner:
 
 #+name: code:glyph-ggb-5
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 type Glyph = Free GlyphF
 #+END_SRC
 
@@ -262,9 +262,12 @@ Here we use `liftF` to lift two of the commands in `GlyphF` to `Free GlyphF`,
 the rest are exactly analogous and elided:
 
 #+name: code:glyph-ggb-7
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 circle :: Point -> Number -> Glyph Unit
 circle p r = liftF $ Circle p r unit
+
+line :: Point -> Point -> Glyph Unit
+line p1 p2 = liftF $ Line p1 p2 unit
 
 stroke :: String -> Glyph Unit
 stroke c = liftF $ Stroke c unit
@@ -275,16 +278,19 @@ stroke c = liftF $ Stroke c unit
 Since it's a monad, we also can use
 do-notation to create glyphs, after creating some helper functions:
 
-Now we have a number of functions which produce values in the type `Free GlyphF`.
-With them, we can use Purescript's do-notation, and all the other tools that
-come with the Monad typeclass. Here we create a simple glyph that consists of
-three primitives:
+Now we have a number of functions which produce values in the type
+`Free GlyphF`. With them, we can use Purescript's do-notation, and all
+the other tools that come with the Monad typeclass. As an example, in
+code block [[code:glyph-ggb-8]] we create a simple glyph consisting of
+a red `X` over a black circle.
 
 #+name: code:glyph-ggb-8
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 crossedOut :: Point -> Number -> Glyph Unit
 crossedOut p@{x,y} r = do
+  stroke "black"
   circle p r
+  stroke "red"
   line {x:x-r, y:y-r} {x:x+r, y:y+r}
   line {x:x-r, y:y+r} {x:x+r, y:y-r}
 #+END_SRC
@@ -329,50 +335,64 @@ For producing a String, the Writer type is a natural fit, and conveniently also
 has a MonadRec instance. The type of the natural transformation is then:
 
 #+name: code:glyph-log-3
-#+BEGIN_SRC purescript
-glyphLog :: GlyphF ~> Writer String
+#+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
+glyphLogN :: GlyphF ~> Writer String
 #+END_SRC
 
 The definition of the function is also simple enough. For each primitive, write an
 appropriate string, and return the contents of the functor:
 
 #+name: code:glyph-log-4
-#+BEGIN_SRC purescript
+# #+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 glyphLogN (Stroke c a)   = do
   tell $ "Set stroke style to " <> c
   pure a
 
-glyphLog (Circle p r a) = do
+glyphLogN (Circle p r a) = do
   tell $ "Drawing circle at ("
       <> show p.x <> ", "
       <> show p.y
       <> ") with radius "
       <> show r <> "."
   pure a
--- ..
 #+END_SRC
+
+
+# this one is just to make the code compile; not exported to latex/PDF
+#+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs :exports none
+glyphLogN (Line _ _ a) = pure a
+glyphLogN (Rect _ _ a) = pure a
+glyphLogN (Fill _ a) = pure a
+glyphLogN (Path _ a) = pure a
+#+END_SRC
+
 
 Running the interpreter consists of applying this natural transformation to the Free GlyphF,
 using foldFree, and then getting the resulting String from the Writer. The function `showGlyph` nearly
-writes itself at this point:
+writes itself at this point, as seen in code block [[code:glyph-log-5]].
 
-#+name: code:glyph-log-5
+#+name: code:glyph-execWriter
 #+BEGIN_SRC purescript
 execWriter :: forall w a. Writer w a -> w
+#+END_SRC
 
+#+name: code:glyph-log-5
+#+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 showGlyph :: forall a. Glyph a -> String
-showGlyph = execWriter <<< foldFree glyphLog
+showGlyph = execWriter <<< foldFree glyphLogN
 #+END_SRC
 
 For example, logging the process of drawing the previously defined `crossedOut` glyph
-at the point `{ x: 40.0, y: 10.0 }` with radius `3.0` would produce the following output:
+at the point `{ x: 40.0, y: 10.0 }` with radius `3.0` would produce the output seen
+in block [[code:glyph-log-6]].
 
 #+name: code:glyph-log-6
-#+BEGIN_SRC purescript
+#+BEGIN_VERBATIM
 Drawing circle at (40.0, 10.0) with radius 3.0
 Drawing line from (37.0, 7.0) to (43.0, 13.0)
 Drawing line from (37.0, 13.0) to (43.0, 7.0)
-#+END_SRC
+#+END_VERBATIM
 
 ** Drawing glyphs to canvas and SVG
 When drawing to canvas, we use Eff as the target for our natural transformation.
@@ -381,8 +401,16 @@ block [[code:glyph-draw-1]]. `glyphEffN` is then used in `renderGlyph`, in block
 [[code:glyph-draw-2]], to interpret an entire `Glyph` structure into a canvas
 instruction.
 
+Code can be found [[https://github.com/chfi/purescript-genetics-browser/blob/3370abca91d66363966447dc5948d6fa133cd579/src/Genetics/Browser/GlyphF/Canvas.purs][on Github]].
+
+#+name: code:glyph-canvas-imports
+#+BEGIN_SRC purescript :file GlyphCanvas.purs :prologue Imports/GlyphCanvas.purs
+import Graphics.Canvas as C
+import Graphics.Canvas (CANVAS, Context2D)
+#+END_SRC
+
 #+name: code:glyph-draw-1
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file GlyphCanvas.purs :prologue Imports/GlyphCanvas.purs
 glyphEffN :: forall eff.
              Context2D
           -> GlyphF
@@ -404,8 +432,18 @@ glyphEffN ctx (Circle p r a) = do
 -- ..
 #+END_SRC
 
+# Again, only to make the code compile
+#+BEGIN_SRC purescript :file GlyphCanvas.purs :prologue Imports/GlyphCanvas.purs :exports none
+glyphEffN _ (Line _ _ a) = pure a
+glyphEffN _ (Rect _ _ a) = pure a
+glyphEffN _ (Fill _ a) = pure a
+glyphEffN _ (Path _ a) = pure a
+#+END_SRC
+
+
+
 #+name: code:glyph-draw-2
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file GlyphCanvas.purs :prologue Imports/GlyphCanvas.purs
 renderGlyph :: forall eff.
                Context2D
             -> Glyph
@@ -416,6 +454,20 @@ renderGlyph = foldFree <<< glyphEffN
 # TODO expand on this (pure representation of SVG elements) (or remove)
 SVG on the other hand interprets `Glyphs` into the `SVG` type, a monad
 transformer stack defined in block [[code:glyph-draw-3]].
+
+
+
+#+name: code:glyph-svg-imports
+#+BEGIN_SRC purescript :file GlyphSVG.purs :prologue Imports/GlyphCanvas.purs
+import Graphics.SVG (SVG, SVGElement)
+import Graphics.SVG as SVG
+#+END_SRC
+
+#+BEGIN_SRC purescript :file GlyphSVG.purs :prologue Imports/GlyphCanvas.purs :exports none
+import DOM (DOM)
+import DOM.Node.Types (Element)
+import Control.Monad.State (runStateT)
+#+END_SRC
 
 #+name: code:glyph-draw-3
 #+BEGIN_SRC purescript
@@ -431,7 +483,7 @@ very similar to the HTML canvas interpreter in block [[code:glyph-draw-1]].
 
 # TODO this one needs to be reformatted
 #+name: code:glyph-draw-4
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file GlyphSVG.purs :prologue Imports/GlyphCanvas.purs
 interpSVGEff :: GlyphF ~> SVG
 interpSVGEff (Stroke c a)  = do
   SVG.setStrokeStyle c
@@ -442,11 +494,20 @@ interpSVGEff (Circle p r a) = do
 -- ..
 #+END_SRC
 
+
+# Again, only to make the code compile
+#+BEGIN_SRC purescript :file GlyphSVG.purs :prologue Imports/GlyphCanvas.purs :exports none
+interpSVGEff (Line _ _ a) = pure a
+interpSVGEff (Rect _ _ a) = pure a
+interpSVGEff (Fill _ a)   = pure a
+interpSVGEff (Path _ a)   = pure a
+#+END_SRC
+
 The interpreter is used in code block [[code:glyph-draw-5]], first to map
 `Glyphs` to pure SVG elements, then to render the SVG elements using the DOM.
 
 #+name: code:glyph-draw-5
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file GlyphSVG.purs :prologue Imports/GlyphCanvas.purs :exports none
 runSVGEff :: forall a.
              Glyph a
           -> Array SVGElement
@@ -522,7 +583,7 @@ With these definitions we can explore how bounding boxes form a monoid.
 The type corresponding to a glyph's position is `GlyphPosition` in
 block [[code:glyph-bounding-box-2]]
 #+name: code:glyph-bounding-box-2
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
 newtype GlyphPosition =
   GlyphPosition { min :: Number
                 , max :: Number
@@ -539,7 +600,7 @@ That is, we take the minimum or maximum of the respective values, to
 get whichever maximizes the area covered:
 
 #+name: code:glyph-bounding-box-3
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
 instance semigroupGlyphPosition
   :: Semigroup GlyphPosition where
     append (GlyphPosition p1)
@@ -571,7 +632,7 @@ Now the identity `GlyphPosition` is obvious -- the minimum sides are set to
 positive infinity, and the maximum sides are set to negative infinity:
 
 #+name: code:glyph-bounding-box-5
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
 instance monoidGlyphPosition
   :: Monoid GlyphPosition where
     mempty =
@@ -583,10 +644,10 @@ instance monoidGlyphPosition
 #+END_SRC
 
 Now, with our `Monoid` instance in hand, we can write another interpreter for Glyph,
-using Writer as our monad in the natural transformation:
+using Writer as our monad in the natural transformation, see code block [[code:glyph-bounding-box-6]].
 
 #+name: code:glyph-bounding-box-6
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
 glyphPosN :: GlyphF ~> Writer GlyphPosition
 glyphPosN (Stroke _ a) = pure a
 glyphPosN (Circle p r a) = do
@@ -596,8 +657,22 @@ glyphPosN (Circle p r a) = do
                        , maxY: p.y + (r * 1.5)
                        }
   pure a
--- and so on
+-- ..
+#+END_SRC
 
+# for the compiler
+#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
+glyphPosN (Line _ _ a) = pure a
+glyphPosN (Rect _ _ a) = pure a
+glyphPosN (Fill _ a)   = pure a
+glyphPosN (Path _ a)   = pure a
+#+END_SRC
+
+Finally, in block [[code:glyph-bounding-box-7]] this interpreter is used exactly as
+the previous Writer-based interpreters were.
+
+#+name: code:glyph-bounding-box-7
+#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
 glyphToGlyphPosition :: forall a.
                         Glyph a
                      -> GlyphPosition
@@ -618,6 +693,7 @@ First, some utility functions to generate and render GlyphPositions:
 # TODO remove most if not all of the boilerplate; keep enough to intro generative testing
 # TODO this is in Test.Glyph
 # TODO this one needs to be reformatted
+
 #+name: code:glyph-testing-1
 #+BEGIN_SRC purescript
 type ThreeGlyphs =
