@@ -92,7 +92,7 @@ instances of the BD browser:
 # TODO this should be inline, or at least not a full-on code block figure
 #+caption: The data type corresponding to BD browser instances.
 #+NAME: code:bdcy-bd-types-1
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle yes :file BDCY.purs :prologue Imports/BDCY.purs
 foreign import data Biodalliance :: Type
 #+END_SRC
 
@@ -115,6 +115,8 @@ foreign import initBDimpl
      BrowserConstructor
      (HTMLElement -> Eff (bd :: BD | eff) Biodalliance)
 #+END_SRC
+
+
 
 The output of the function is a continuation that takes an HTML element to
 place the BD browser in, and produces the effect to create and return the BD instance.
@@ -157,7 +159,7 @@ have types for the Cy.js elements, collections, and a newtype wrapper
 for events. Note how the CyCollection type is a type constructor:
 
 #+NAME: code:bdcy-cy-types-1
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle yes :file BDCY.purs :prologue Imports/BDCY.purs
 foreign import data Cytoscape :: Type
 
 -- | Cytoscape elements (Edges and Nodes)
@@ -165,6 +167,11 @@ foreign import data Element :: Type
 
 -- | A cytoscape collection of elements
 foreign import data CyCollection :: Type -> Type
+#+END_SRC
+
+
+#+BEGIN_SRC purescript :tangle yes :file BDCY.purs :prologue Imports/BDCY.purs :exports none
+foreign import data CY :: Effect
 #+END_SRC
 
 The Cy.js constructor is similar to BD's, except we don't need to pass any
@@ -181,6 +188,18 @@ foreign import cytoscapeImpl
      Cytoscape
 #+END_SRC
 
+
+# To simplify things, we use this definition when type-checking the report
+#+BEGIN_SRC purescript :tangle yes :file BDCY.purs :prologue Imports/BDCY.purs :exports none
+cytoscapeImpl
+  :: forall eff.
+     EffFn2 (cy :: CY | eff)
+     (Nullable HTMLElement)
+     (Nullable JArray)
+     Cytoscape
+cytoscapeImpl = unsafeCoerce unit
+#+END_SRC
+
 `Nullable` is a type for dealing with `null` in the FFI. We don't actually
 use `cytoscapeImpl`, instead we provide more idiomatic wrapper, so the user
 can use the more common and idiomatic `Maybe`:
@@ -188,7 +207,7 @@ can use the more common and idiomatic `Maybe`:
 # TODO this one needs to be reformatted
 # TODO explain runEffFn2 (or remove example)
 #+NAME: code:bdcy-cytoscape
-#+BEGIN_SRC purescript
+#+BEGIN_SRC purescript :tangle yes :file BDCY.purs :prologue Imports/BDCY.purs
 cytoscape :: forall eff.
              Maybe HTMLElement
           -> Maybe JArray
