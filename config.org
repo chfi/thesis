@@ -37,6 +37,7 @@ A very basic browser configuration could look like this:
 
 # TODO this one needs to be reformatted
 #+name: code:config-bd-example
+#+caption:
 #+BEGIN_SRC javascript
   var biodalliance = new Browser({
     prefix: '../',
@@ -91,6 +92,7 @@ wordy, and does not provide much:
 
 # TODO this one needs to be reformatted
 #+name: code:config-bd-init-1
+#+caption:
 #+BEGIN_SRC javascript
 if (opts.viewStart !== undefined &&
     typeof(opts.viewStart) !== 'number') {
@@ -104,6 +106,7 @@ Verbosity alone makes it is understandable that only a few of the many values
 set are checked like this. After various defaults are set, all other
 options from the configuration object are set on the browser object:
 #+name: code:config-bd-init-2
+#+caption:
 #+BEGIN_SRC javascript
 // 140 lines of setting default options
 for (var k in opts) {
@@ -124,6 +127,7 @@ Neat solutions in PS include mapping `Source` -> `SourceSansStyle`,
 Modelling type as (Source, Style), etc. (Isomorphic)
 # TODO this one needs to be reformatted
 #+name: code:config-bd-init-3
+#+caption:
 #+BEGIN_SRC javascript
 var sourcesAreEqual =
       sourcecompare.sourcesAreEqual;
@@ -153,7 +157,7 @@ handler that modifies some UI state is another possibility for interference
 when working with the UI.
 
 
-#+begin_comment:
+#+begin_comment
 **** Validation and transformations
 # WIP
 This style of code is commonly seen in code throughout BD, including
@@ -257,6 +261,7 @@ This is the definition:
 
 # TODO this one needs to be reformatted
 #+name: code:config-browser-type
+#+caption:
 #+BEGIN_SRC purescript :tangle yes :file Config.purs :prologue Imports/Config.purs
 newtype BrowserConfig =
   BrowserConfig
@@ -277,6 +282,7 @@ and validated. The parsing is done by the parseBrowserConfig function, which
 has the following type signature:
 
 #+name: code:config-parse-config-type-sig
+#+caption:
 #+BEGIN_SRC purescript :tangle no
 parseBrowserConfig :: Foreign -> F BrowserConfig
 #+END_SRC
@@ -300,6 +306,7 @@ must be parsed before any information can be extracted from them. `F` is a type
 synonym:
 
 #+name: code:config-F-type
+#+caption:
 #+BEGIN_SRC purescript :tangle no
 type F = Except (NonEmptyList ForeignError)
 
@@ -329,6 +336,7 @@ may appreciate the terseness in time).
 
 # TODO this one needs to be reformatted
 #+name: code:config-parse-config-1
+#+caption:
 #+BEGIN_SRC purescript :tangle no
 parseBrowserConfig :: Foreign -> F BrowserConfig
 parseBrowserConfig f = do
@@ -348,7 +356,7 @@ property is not a JS function, we fail, and tell the user what went wrong.
 # TODO move this section to a general error-handling section
 # TODO create error-handling section
 
-#+begin_comment:
+#+begin_comment
 
 # NOTE: I would move the rest of the section to a chaptor on error handling
 # because it is actually generic:
@@ -389,7 +397,7 @@ withExcept :: a.
 Another way to look at it is that `withExcept` is `map` but for the error type.
 
 
-#+end_comment:
+#+end_comment
 
 ** Tracks
 Tracks configurations are different for BD tracks and Cy.js graphs, though both

@@ -66,6 +66,7 @@ to render HTML to the browser. A component is a value of the (fairly complicated
 type Component (removed constraints etc. for clarity):
 
 #+name: code:ui-halogen-1
+#+caption:
 #+BEGIN_SRC purescript
 component ::
   Component   -- (1)
@@ -94,6 +95,7 @@ The "Query algebra" is the type describing the possible actions we can query
 the component to perform. The type is not complicated; in GGB we have:
 
 #+name: code:ui-algebras-1
+#+caption:
 #+BEGIN_SRC purescript
 data Query a
   = CreateBD (forall eff.
@@ -118,6 +120,7 @@ our Query DSL to the Halogen DSL (a free monad).
 
 # TODO this one needs to be reformatted
 #+name: code:ui-algebras-2
+#+caption:
 #+BEGIN_SRC purescript
 eval :: Query
      ~> HalogenM
@@ -136,6 +139,7 @@ which this component can use to communicate with its children, and
 components. For the main GGB component they are:
 
 #+name: code:ui-algebras-3
+#+caption:
 #+BEGIN_SRC purescript
 type ChildSlot = Either2 UIBD.Slot UICy.Slot
 
@@ -151,6 +155,7 @@ is a coproduct of the two child Query /functors/ (Coproduct2).
 
 # TODO This product/coproduct stuff is probably overkill
 #+name: code:ui-algebras-4
+#+caption:
 #+BEGIN_SRC purescript
 data Either a b =
   Left a | Right b
@@ -182,6 +187,7 @@ action to tell the child component to perform.
 
 
 #+name: code:ui-algebras-5
+#+caption:
 #+BEGIN_SRC purescript
 eval = case _ of
   CreateBD bd next -> do
@@ -197,6 +203,7 @@ function mapping ChildQuery constructors to concrete actions, by simply
 applying the `Unit` type to it.
 
 #+name: code:ui-algebras-6
+#+caption:
 #+BEGIN_SRC purescript
 type Action f = Unit -> f Unit
 action :: forall f. Action f -> f Unit
@@ -207,6 +214,7 @@ Finally, we return the next command. Next is `PropagateMessage`, which
 receives a Message (sent from the function handling messages from the children):
 
 #+name: code:ui-algebras-7
+#+caption:
 #+BEGIN_SRC purescript
 data Message
   = BDInstance Biodalliance
@@ -219,6 +227,7 @@ on that later).
 
 # TODO this one needs to be reformatted?
 #+name: code:ui-algebras-8
+#+caption:
 #+BEGIN_SRC purescript
   PropagateMessage msg next -> do
     case msg of
@@ -234,6 +243,7 @@ the same as `CreateBD`:
 # TODO this one is probably *also* overkill. more detail than necessary; doesn't actually give much
 # TODO this one needs to be reformatted
 #+name: code:ui-algebras-9
+#+caption:
 #+BEGIN_SRC purescript
   BDScroll dist next -> do
     _ <- H.query' CP.cp1 UIBD.Slot $ H.action (UIBD.Scroll dist)
@@ -257,6 +267,7 @@ type. In our case, we render to `HTML`, and so use the type `ParentHTML`,
 which contains all the types required to interact with the children.
 
 #+name: code:ui-algebras-10
+#+caption:
 #+BEGIN_SRC purescript
 render :: State
        -> ParentHTML
@@ -270,6 +281,7 @@ The function itself is simple, we use Arrays and some functions to describe
 the HTML tree, a simplified version follows:
 
 #+name: code:ui-algebras-11
+#+caption:
 #+BEGIN_SRC purescript
 render _ =
   HH.div_
@@ -302,6 +314,7 @@ in the case of the top-level component. These are the messages the BD and Cy.js
 components can produce, respectively:
 
 #+name: code:ui-messages-1
+#+caption:
 #+BEGIN_SRC purescript
 data UIBD.Message
   = SendBD Biodalliance
@@ -312,6 +325,7 @@ data UICy.Output
 
 The main component can produce these:
 #+name: code:ui-messages-2
+#+caption:
 #+BEGIN_SRC purescript
 data Message
   = BDInstance Biodalliance
@@ -326,6 +340,7 @@ The messages from the BD and Cy.js components are handled by the functions
 `handleBDMessage` and `handleCyMessage`:
 
 #+name: code:ui-messages-3
+#+caption:
 #+BEGIN_SRC purescript
 handleBDMessage :: UIBD.Message
                 -> Maybe (Query Unit)
@@ -362,6 +377,7 @@ and then does some stuff with Eff (e.g. be a genetics browser):
 # TODO: remove row blank when compiling with 0.12
 # TODO: explain runHalogenAff
 #+name: code:ui-main-1
+#+caption:
 #+BEGIN_SRC purescript
 main :: Foreign -> Eff _ Unit
 main fConfig = HA.runHalogenAff do
@@ -371,6 +387,7 @@ First we attempt to parse the provided configuration, logging all errors to
 config on failure, otherwise continuing:
 
 #+name: code:ui-main-2
+#+caption:
 #+BEGIN_SRC purescript
 case runExcept $ parseBrowserConfig fConfig of
   Left e -> liftEff $ do
@@ -385,6 +402,7 @@ the function which will later be used to create Biodalliance:
 
 # TODO this one needs to be reformatted
 #+name: code:ui-main-3
+#+caption:
 #+BEGIN_SRC purescript
 let {bdTracks, cyGraphs} = validateConfigs config.tracks
 
@@ -403,6 +421,7 @@ create the Buses to be used by the events system. Note that we bind the
 value of `runUI` to `io`:
 
 #+name: code:ui-main-4
+#+caption:
 #+BEGIN_SRC purescript
 io <- runUI component unit el'
 
@@ -418,6 +437,7 @@ BD TrackSink and TrackSource:
 
 # TODO this one needs to be reformatted
 #+name: code:ui-main-5
+#+caption:
 #+BEGIN_SRC purescript
 let bdTrackSink =   makeTrackSinks <<< _.bdEventSinks =<<
                       note "No BD event sinks configured" (config.events)
@@ -436,6 +456,7 @@ to create the BD instance:
 
 # TODO this one needs to be reformatted
 #+name: code:ui-main-6
+#+caption:
 #+BEGIN_SRC purescript
 io.subscribe $ CR.consumer $ case _ of
   BDInstance bd -> do
@@ -466,6 +487,7 @@ function `subscribeBDEvents`, defined thusly:
 
 # TODO this one needs to be reformatted
 #+name: code:ui-main-7
+#+caption:
 #+BEGIN_SRC purescript
 subscribeBDEvents :: forall r.
                      (TrackSource Event)

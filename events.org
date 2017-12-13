@@ -229,6 +229,7 @@ of a `TrackSource`, and `Semigroup` and `Monoid` instances are
 defined so that multiple `TrackSource a`s can be combined into one.
 
 #+name: code:events-tracksource-def
+#+caption:
 #+BEGIN_SRC purescript :file Events.purs :prologue Imports/Events.purs
 newtype TrackSource a = TrackSource (Array (Json -> Maybe a))
 
@@ -271,6 +272,7 @@ paths. Before looking at how the parsing works, here is an example of a
 legal SourceConfig:
 
 #+name: code:events-sourceconfig-1
+#+caption:
 #+BEGIN_SRC json
 {
   "eventName": "range",
@@ -289,6 +291,7 @@ This defines a source that parses objects/events like this one, the JS object
 passed to the event handler when clicking on a feature in BD:
 
 #+name: code:events-raw-event-1
+#+caption:
 #+BEGIN_SRC javascript
 {
   // ...
@@ -301,6 +304,7 @@ passed to the event handler when clicking on a feature in BD:
 
 Into a JS object that looks like
 #+name: code:events-parsed-event-1
+#+caption:
 #+BEGIN_SRC javascript
 {
   chr: "chr11",
@@ -325,6 +329,7 @@ Fortunately, Argonaut provides functions for dealing with exactly this. First,
 the JCursor type describes a path to a point in a JSON tree:
 
 #+name: code:events-jcursor-1
+#+caption:
 #+BEGIN_SRC purescript
 data JCursor =
   JIndex Int JCursor
@@ -335,6 +340,7 @@ data JCursor =
 It can be seen as a list of accessors. If we have an object in JS:
 
 #+name: code:events-jcursor-2
+#+caption:
 #+BEGIN_SRC javascript
 let thing = { x: [{a: 0},
                   {b: {c: true}}
@@ -344,6 +350,7 @@ let thing = { x: [{a: 0},
 We can grab the value at `c` with
 
 #+name: code:events-jcursor-3
+#+caption:
 #+BEGIN_SRC javascript
 let cIs = thing.x[1].b.c;
 #+END_SRC
@@ -351,6 +358,7 @@ let cIs = thing.x[1].b.c;
 With JCursor, this accessor chain `x[1].b.c` would look like:
 
 #+name: code:events-jcursor-4
+#+caption:
 #+BEGIN_SRC purescript
 (JField "x"
    (JIndex 1
@@ -363,6 +371,7 @@ will be needed. We create these JCursors from a JSON structure like the template
 above with the function toPrims, seen in [[code:events-jcursor-5]].
 
 #+name: code:events-jcursor-5
+#+caption:
 #+BEGIN_SRC purescript
 toPrims :: Json -> List (Tuple JCursor JsonPrim)
 #+END_SRC
@@ -380,6 +389,7 @@ In this case we do need to step into the JCursor structure, but only a single st
 after reversing it:
 
 #+name: code:events-jcursor-6
+#+caption:
 #+BEGIN_SRC purescript
 insideOut :: JCursor -> JCursor
 
@@ -413,6 +423,7 @@ result of toPrims above; the JCursors themselves are unaltered.
 
 # TODO this one needs to be reformatted (Done?)
 #+name: code:events-validate-templates-1
+#+caption:
 #+BEGIN_SRC purescript :file Events.purs :prologue Imports/Events.purs
 -- Labelled version of Tuple JCursor String
 type Cursor = { cursor :: JCursor
@@ -442,6 +453,7 @@ Applicative instance, and traverse:
 # TODO these two need to be reformatted
 # TODO these two are probably overkill
 #+name: code:events-traverse-type
+#+caption:
 #+BEGIN_SRC purescript
 -- specialized to Either String and Array
 traverse :: forall a b.
@@ -451,6 +463,7 @@ traverse :: forall a b.
 #+END_SRC
 
 #+name: code:events-validate-templates-3
+#+caption:
 #+BEGIN_SRC purescript :file Events.purs :prologue Imports/Events.purs
 validateTemplates :: Array RawCursor
                   -> Array ValueCursor
@@ -473,6 +486,7 @@ have the following types:
 # TODO this one needs to be reformatted
 
 #+name: code:events-tracksinks-1
+#+caption:
 #+BEGIN_SRC purescript
 newtype TrackSink a = TrackSink (StrMap (Json -> a))
 
@@ -485,6 +499,7 @@ similar; the only difference is what type of browser they work on:
 
 # TODO this one needs to be reformatted
 #+name: code:events-tracksinks-2
+#+caption:
 #+BEGIN_SRC purescript
 BDTrackSink = TrackSink
   (StrMap (Json -> Biodalliance -> Eff Unit)
@@ -501,6 +516,7 @@ In [[code:events-tracksinks-3]] a BD TrackSink is defined that scrolls the BD vi
 upon receiving an event.
 # TODO this one needs to be reformatted
 #+name: code:events-tracksinks-3
+#+caption:
 #+BEGIN_SRC javascript
 var bdConsumeLoc = function(json) {
     return function(bd) {
@@ -536,6 +552,7 @@ list and the TrackSource type, as seen in [[code:events-running-1]].
 # TODO this one needs to be reformatted
 # TODO maybe clean it up more, or delete it entirely; the details are unimportant.
 #+name: code:events-running-1
+#+caption:
 #+BEGIN_SRC purescript
 makeTrackSource :: SourceConfig
                 -> Either String (TrackSource Event)
@@ -557,6 +574,7 @@ the list of parsers into a single one.
 
 # TODO this one needs to be reformatted
 #+name: code:events-running-2
+#+caption:
 #+BEGIN_SRC purescript
 makeTrackSources :: Array SourceConfig
                  -> Either String (TrackSource Event)
@@ -584,6 +602,7 @@ Finally, a way to use a TrackSource, to parse a raw event, is required.
 Code block [[code:events-running-3]] shows the function that does so.
 # TODO this one needs to be reformatted
 #+name: code:events-running-3
+#+caption:
 #+BEGIN_SRC purescript
 runTrackSource :: TrackSource Event
                -> Json
@@ -604,6 +623,7 @@ the provided function, and wrap it in the TrackSink type:
 
 # TODO this one needs to be reformatted
 #+name: code:events-running-4
+#+caption:
 #+BEGIN_SRC purescript
 makeTrackSink :: SinkConfig
               ~> TrackSink
@@ -623,6 +643,7 @@ there are not multiple handlers for a given event:
 # TODO probably rewrite this code; `count` could be much cleaner,
 #      plus it'd be nicer to just use a case .. of instead of `when`
 #+name: code:events-running-5
+#+caption:
 #+BEGIN_SRC purescript
 makeTrackSinks :: forall a.
                   Array (SinkConfig a)
@@ -656,6 +677,7 @@ If it does, we apply it to the contents of the event. In code block
 # TODO this one needs to be reformatted
 # TODO maybe rewrite this as a one-liner
 #+name: code:events-running-6
+#+caption:
 #+BEGIN_SRC purescript
 runTrackSink :: forall a.
                 TrackSink a
@@ -679,6 +701,7 @@ provided `TrackSink` if the received event has a handler:
 # TODO this one needs to be reformatted
 # TODO and could be cleaned up
 #+name: code:events-running-7
+#+caption:
 #+BEGIN_SRC purescript
 forkTrackSink :: forall env.
                  TrackSink (env -> Eff Unit)

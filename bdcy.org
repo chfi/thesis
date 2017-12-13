@@ -129,6 +129,7 @@ returning an effect that attaches the callback.
 
 # TODO this one needs to be reformatted
 #+NAME: code:bdcy-bd-events-purs
+#+caption:
 #+BEGIN_SRC purescript
 newtype BDEvent = BDEvent Json
 
@@ -142,6 +143,7 @@ foreign import addFeatureListenerImpl
 
 # TODO this one needs to be reformatted
 #+NAME: code:bdcy-bd-events-purs-ffi
+#+caption:
 #+BEGIN_SRC javascript
 exports.addFeatureListenerImpl = function(bd, callback) {
     bd.addFeatureListener(function(ev, feature, hit, tier) {
@@ -159,6 +161,7 @@ have types for the Cy.js elements, collections, and a newtype wrapper
 for events. Note how the CyCollection type is a type constructor:
 
 #+NAME: code:bdcy-cy-types-1
+#+caption:
 #+BEGIN_SRC purescript :tangle yes :file BDCY.purs :prologue Imports/BDCY.purs
 foreign import data Cytoscape :: Type
 
@@ -179,6 +182,7 @@ functions to it, as we have Cy.js as a dependency. We can provide a HTML
 element and an array of JSON objects to be used as the initial graph:
 
 #+NAME: code:bdcy-cytoscapeImpl
+#+caption:
 #+BEGIN_SRC purescript
 foreign import cytoscapeImpl
   :: forall eff.
@@ -207,6 +211,7 @@ can use the more common and idiomatic `Maybe`:
 # TODO this one needs to be reformatted
 # TODO explain runEffFn2 (or remove example)
 #+NAME: code:bdcy-cytoscape
+#+caption:
 #+BEGIN_SRC purescript :tangle yes :file BDCY.purs :prologue Imports/BDCY.purs
 cytoscape :: forall eff.
              Maybe HTMLElement
@@ -222,6 +227,7 @@ added to the graph, retrieved from it, and deleted:
 
 # TODO this one needs to be reformatted
 #+NAME: code:bdcy-cytoscape-graph-1
+#+caption:
 #+BEGIN_SRC purescript
 -- | Add a Collection of elements to the graph
 graphAddCollection
@@ -245,6 +251,7 @@ The graph layout can be controlled with the `runLayout` function, which
 takes a `Layout` value to update the Cy.js browser's current layout:
 
 #+NAME: code:bdcy-cytoscape-layout-1
+#+caption:
 #+BEGIN_SRC purescript
 -- | Apply a layout to the graph
 runLayout :: forall eff.
@@ -259,6 +266,7 @@ we can both easily support all the layouts supported by Cy.js -- easily
 adding more if appropriate -- while staying type-safe.
 
 #+NAME: code:bdcy-cytoscape-layout-2
+#+caption:
 #+BEGIN_SRC purescript
 newtype Layout = Layout String
 
@@ -273,6 +281,7 @@ Cy.js produces events in JSON format, a newtype wrapper is used to keep things s
 (and improve readability of type signatures):
 
 #+NAME: code:bdcy-cytoscape-event-1
+#+caption:
 #+BEGIN_SRC purescript
 newtype CyEvent = CyEvent Json
 #+END_SRC
@@ -284,6 +293,7 @@ handler on click events. The function returns an effect that attaches
 the handler to the provided Cytoscape instance:
 
 #+NAME: code:bdcy-cytoscape-event-2
+#+caption:
 #+BEGIN_SRC purescript
 onEvent :: forall a.
            Cytoscape
@@ -293,6 +303,7 @@ onEvent :: forall a.
 #+END_SRC
 
 #+NAME: code:bdcy-cytoscape-event-3
+#+caption:
 #+BEGIN_SRC javascript
 exports.onEventImpl = function(cy, evs, callback) {
     cy.on(evs, function(e) {
@@ -315,6 +326,7 @@ must be implemented in terms of the FFI.
 the two `CyCollections`:
 
 #+NAME: code:bdcy-cytoscape-union-1
+#+caption:
 #+BEGIN_SRC javascript
 exports.union = function(a, b) {
     return a.union(b);
@@ -324,6 +336,7 @@ exports.union = function(a, b) {
 # TODO this one needs to be reformatted
 # TODO this one is probably also superfluous. This whole section should only be a page, if that.
 #+NAME: code:bdcy-cytoscape-union-2
+#+caption:
 #+BEGIN_SRC purescript
 foreign import union
   :: forall e.
@@ -340,6 +353,7 @@ Another common interaction with a collection is extracting a subcollection. With
 we can use the `filter` function for this:
 
 #+NAME: code:bdcy-cytoscape-filter-1
+#+caption:
 #+BEGIN_SRC purescript
 -- | Filter a collection with a predicate
 filter :: forall e.
@@ -351,6 +365,7 @@ filter :: forall e.
 The FFI definition of `filter` uses the Cy.js API:
 
 #+NAME: code:bdcy-cytoscape-filter-2
+#+caption:
 #+BEGIN_SRC javascript
 exports.filterImpl = function(pred, coll) {
     return coll.filter(pred);
@@ -362,6 +377,7 @@ given type to Boolean. Since it's a newtype, it can be provided to the FFI funct
 without unwrapping it.
 
 #+NAME: code:bdcy-cytoscape-predicate-1
+#+caption:
 #+BEGIN_SRC purescript
 newtype Predicate e = Predicate (e -> Boolean)
 #+END_SRC
@@ -370,6 +386,7 @@ The Cytoscape.js API provides some basic predicates on elements, nodes, and edge
 For example:
 
 #+NAME: code:bdcy-cytoscape-predicate-2
+#+caption:
 #+BEGIN_SRC purescript
 foreign import isNode :: Predicate Element
 foreign import isEdge :: Predicate Element
@@ -385,6 +402,7 @@ at our disposal.
 
 # TODO better example
 #+NAME: code:bdcy-cytoscape-predicate-3
+#+caption:
 #+BEGIN_SRC purescript
 hasName :: Predicate Json
 hasName = Predicate f
@@ -399,6 +417,7 @@ us combine `Predicates` using the normal Boolean logic combinators such as
 `&&` and `||`:
 
 #+NAME: code:bdcy-cytoscape-predicate-4
+#+caption:
 #+BEGIN_SRC purescript
 namedNodeOrEdge :: Predicate Element
 namedNodeOrEdge = (elemHasName && isNode) || isEdge
@@ -414,6 +433,7 @@ be subsets of the graph:
 
 # TODO this one needs to be reformatted
 #+NAME: code:bdcy-cytoscape-tests-1
+#+caption:
 #+BEGIN_SRC purescript
 let edges = filter isEdge eles
     nodes = filter isNode eles
@@ -424,7 +444,8 @@ when (not $ eles `contains` nodes) (fail "Graph doesn't contain its nodes")
 Conversely, the union of the edges and nodes should be equal to the
 original graph, and this should be commutative:
 
-#+NAME: code:bdcy-cytoscape-tests-1
+#+NAME: code:bdcy-cytoscape-tests-2
+#+caption:
 #+BEGIN_SRC purescript
 (edges <> nodes) `shouldEqual` eles
 (nodes <> edges) `shouldEqual` eles

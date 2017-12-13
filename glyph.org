@@ -52,6 +52,7 @@ radius (for rounding corners):
 
 # TODO this one needs to be reformatted Done?
 #+name: code:glyph-bd-1
+#+caption:
 #+BEGIN_SRC javascript
 function BoxGlyph(x, y,
                   width, height,
@@ -76,6 +77,7 @@ drawing actions on:
 
 # TODO this one needs to be reformatted Done?
 #+name: code:glyph-bd-2
+#+caption:
 #+BEGIN_SRC javascript
   BoxGlyph.prototype.draw = function(g) {
       var r = this._radius;
@@ -117,6 +119,7 @@ each Glyph having a `toSVG` method. `toSVG()` returns an SVG element
 representing the glyph in question.
 
 #+name: code:glyph-bd-3
+#+caption:
 #+BEGIN_SRC javascript
   BoxGlyph.prototype.toSVG = function() {
       var s = makeElementNS(NS_SVG, 'rect', null,
@@ -142,6 +145,7 @@ the bounding boxes of glyphs, to detect whether a user has clicked
 on a glyph:
 
 #+name: code:glyph-bd-4
+#+caption:
 #+BEGIN_SRC javascript
 BoxGlyph.prototype.min = function() {
     return this.x;
@@ -181,6 +185,7 @@ type representing a point in 2D space, and the `GlyphF` type which
 contains the commands in our Glyph DSL:
 
 #+name: code:glyph-ggb-1
+#+caption:
 #+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 type Point = { x :: Number, y :: Number }
 
@@ -202,6 +207,7 @@ implementation, and it is mechanical.
 # TODO the Functor instance in PS's implementation of Free is provided
 #      by the Yoneda lemma, so this doesn't quite apply
 #+name: code:glyph-ggb-2
+#+caption:
 #+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 derive instance functorGlyph :: Functor GlyphF
 #+END_SRC
@@ -211,6 +217,7 @@ The Free monad is named so because it is the
 In Haskell, the definition is very simple, thanks to non-strict evaluation:
 
 #+name: code:glyph-ggb-3
+#+caption:
 #+BEGIN_SRC haskell
 data Free f a = Pure a
               | Bind f (Free f a)
@@ -229,6 +236,7 @@ of some type `a`, we have a type that is isomorphic to a regular list:
 
 
 #+name: code:glyph-ggb-4
+#+caption:
 #+BEGIN_SRC haskell
   type List a = Free ((,) a) ()
 
@@ -246,6 +254,7 @@ come; there is some work left before we get there. First we wrap our `GlyphF`
 functor in `Free`, with a type synonym to make things cleaner:
 
 #+name: code:glyph-ggb-5
+#+caption:
 #+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 type Glyph = Free GlyphF
 #+END_SRC
@@ -254,6 +263,7 @@ Next we want to lift our `GlyphF` data constructors into functions. This is
 done using the `liftF` function, which has the following signature:
 
 #+name: code:glyph-ggb-6
+#+caption:
 #+BEGIN_SRC purescript
 liftF :: forall f a. f a ~> Free f a
 #+END_SRC
@@ -262,6 +272,7 @@ Here we use `liftF` to lift two of the commands in `GlyphF` to `Free GlyphF`,
 the rest are exactly analogous and elided:
 
 #+name: code:glyph-ggb-7
+#+caption:
 #+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 circle :: Point -> Number -> Glyph Unit
 circle p r = liftF $ Circle p r unit
@@ -285,6 +296,7 @@ code block [[code:glyph-ggb-8]] we create a simple glyph consisting of
 a red `X` over a black circle.
 
 #+name: code:glyph-ggb-8
+#+caption:
 #+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 crossedOut :: Point -> Number -> Glyph Unit
 crossedOut p@{x,y} r = do
@@ -311,6 +323,7 @@ for its type signature.
 
 # TODO this one needs to be reformatted
 #+name: code:glyph-log-1
+#+caption:
 #+BEGIN_SRC purescript
 foldFree :: forall f m.
             MonadRec m
@@ -324,6 +337,7 @@ The `MonadRec` constraint ensures that only monads supporting tail recursion can
 used. Without it stack safety would be a problem. The type operator ~> denotes a
 natural transformation, it has the same meaning as:
 #+name: code:glyph-log-2
+#+caption:
 #+BEGIN_SRC purescript
 forall a. f a -> g a
 #+END_SRC
@@ -335,6 +349,7 @@ For producing a String, the Writer type is a natural fit, and conveniently also
 has a MonadRec instance. The type of the natural transformation is then:
 
 #+name: code:glyph-log-3
+#+caption:
 #+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 glyphLogN :: GlyphF ~> Writer String
 #+END_SRC
@@ -343,7 +358,7 @@ The definition of the function is also simple enough. For each primitive, write 
 appropriate string, and return the contents of the functor:
 
 #+name: code:glyph-log-4
-# #+BEGIN_SRC purescript
+#+caption:
 #+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 glyphLogN (Stroke c a)   = do
   tell $ "Set stroke style to " <> c
@@ -373,11 +388,13 @@ using foldFree, and then getting the resulting String from the Writer. The funct
 writes itself at this point, as seen in code block [[code:glyph-log-5]].
 
 #+name: code:glyph-execWriter
+#+caption:
 #+BEGIN_SRC purescript
 execWriter :: forall w a. Writer w a -> w
 #+END_SRC
 
 #+name: code:glyph-log-5
+#+caption:
 #+BEGIN_SRC purescript :file Glyph.purs :prologue Imports/Glyph.purs
 showGlyph :: forall a. Glyph a -> String
 showGlyph = execWriter <<< foldFree glyphLogN
@@ -388,11 +405,12 @@ at the point `{ x: 40.0, y: 10.0 }` with radius `3.0` would produce the output s
 in block [[code:glyph-log-6]].
 
 #+name: code:glyph-log-6
-#+BEGIN_VERBATIM
+#+caption:
+#+BEGIN_SRC text
 Drawing circle at (40.0, 10.0) with radius 3.0
 Drawing line from (37.0, 7.0) to (43.0, 13.0)
 Drawing line from (37.0, 13.0) to (43.0, 7.0)
-#+END_VERBATIM
+#+END_SRC
 
 ** Drawing glyphs to canvas and SVG
 When drawing to canvas, we use Eff as the target for our natural transformation.
@@ -404,12 +422,14 @@ instruction.
 Code can be found [[https://github.com/chfi/purescript-genetics-browser/blob/3370abca91d66363966447dc5948d6fa133cd579/src/Genetics/Browser/GlyphF/Canvas.purs][on Github]].
 
 #+name: code:glyph-canvas-imports
+#+caption:
 #+BEGIN_SRC purescript :file GlyphCanvas.purs :prologue Imports/GlyphCanvas.purs
 import Graphics.Canvas as C
 import Graphics.Canvas (CANVAS, Context2D)
 #+END_SRC
 
 #+name: code:glyph-draw-1
+#+caption:
 #+BEGIN_SRC purescript :file GlyphCanvas.purs :prologue Imports/GlyphCanvas.purs
 glyphEffN :: forall eff.
              Context2D
@@ -443,6 +463,7 @@ glyphEffN _ (Path _ a) = pure a
 
 
 #+name: code:glyph-draw-2
+#+caption:
 #+BEGIN_SRC purescript :file GlyphCanvas.purs :prologue Imports/GlyphCanvas.purs
 renderGlyph :: forall eff.
                Context2D
@@ -458,6 +479,7 @@ transformer stack defined in block [[code:glyph-draw-3]].
 
 
 #+name: code:glyph-svg-imports
+#+caption:
 #+BEGIN_SRC purescript :file GlyphSVG.purs :prologue Imports/GlyphCanvas.purs
 import Graphics.SVG (SVG, SVGElement)
 import Graphics.SVG as SVG
@@ -470,6 +492,7 @@ import Control.Monad.State (runStateT)
 #+END_SRC
 
 #+name: code:glyph-draw-3
+#+caption:
 #+BEGIN_SRC purescript
 type SVG a =
   StateT SVGContext
@@ -483,6 +506,7 @@ very similar to the HTML canvas interpreter in block [[code:glyph-draw-1]].
 
 # TODO this one needs to be reformatted
 #+name: code:glyph-draw-4
+#+caption:
 #+BEGIN_SRC purescript :file GlyphSVG.purs :prologue Imports/GlyphCanvas.purs
 interpSVGEff :: GlyphF ~> SVG
 interpSVGEff (Stroke c a)  = do
@@ -507,6 +531,7 @@ The interpreter is used in code block [[code:glyph-draw-5]], first to map
 `Glyphs` to pure SVG elements, then to render the SVG elements using the DOM.
 
 #+name: code:glyph-draw-5
+#+caption:
 #+BEGIN_SRC purescript :file GlyphSVG.purs :prologue Imports/GlyphCanvas.purs :exports none
 runSVGEff :: forall a.
              Glyph a
@@ -531,6 +556,7 @@ code block [[code:glyph-bounding-box-1]]. Since `BoundingBox` is a
 record, it has the exact same runtime representation that BD expects.
 
 #+name: code:glyph-bounding-box-1
+#+caption:
 #+BEGIN_SRC purescript
 type BoundingBox =
   { min :: Unit -> Number
@@ -583,6 +609,7 @@ With these definitions we can explore how bounding boxes form a monoid.
 The type corresponding to a glyph's position is `GlyphPosition` in
 block [[code:glyph-bounding-box-2]]
 #+name: code:glyph-bounding-box-2
+#+caption:
 #+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
 newtype GlyphPosition =
   GlyphPosition { min :: Number
@@ -600,6 +627,7 @@ That is, we take the minimum or maximum of the respective values, to
 get whichever maximizes the area covered:
 
 #+name: code:glyph-bounding-box-3
+#+caption:
 #+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
 instance semigroupGlyphPosition
   :: Semigroup GlyphPosition where
@@ -623,6 +651,7 @@ we can cheat and use positive and negative infinity, which exist in JS. Then
 we have:
 
 #+name: code:glyph-bounding-box-4
+#+caption:
 #+BEGIN_SRC purescript
 forall x. Math.min x  infinity == x
 forall x. Math.max x -infinity == x
@@ -632,6 +661,7 @@ Now the identity `GlyphPosition` is obvious -- the minimum sides are set to
 positive infinity, and the maximum sides are set to negative infinity:
 
 #+name: code:glyph-bounding-box-5
+#+caption:
 #+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
 instance monoidGlyphPosition
   :: Monoid GlyphPosition where
@@ -647,6 +677,7 @@ Now, with our `Monoid` instance in hand, we can write another interpreter for Gl
 using Writer as our monad in the natural transformation, see code block [[code:glyph-bounding-box-6]].
 
 #+name: code:glyph-bounding-box-6
+#+caption:
 #+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
 glyphPosN :: GlyphF ~> Writer GlyphPosition
 glyphPosN (Stroke _ a) = pure a
@@ -672,6 +703,7 @@ Finally, in block [[code:glyph-bounding-box-7]] this interpreter is used exactly
 the previous Writer-based interpreters were.
 
 #+name: code:glyph-bounding-box-7
+#+caption:
 #+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
 glyphToGlyphPosition :: forall a.
                         Glyph a
@@ -695,6 +727,7 @@ First, some utility functions to generate and render GlyphPositions:
 # TODO this one needs to be reformatted
 
 #+name: code:glyph-testing-1
+#+caption:
 #+BEGIN_SRC purescript
 type ThreeGlyphs =
   { l :: GlyphPosition
@@ -731,6 +764,7 @@ describe a Property asserting that parentheses don't matter for equality:
 
 # TODO this one needs to be reformatted
 #+name: code:glyph-testing-2
+#+caption:
 #+BEGIN_SRC purescript
 prop_semigroup :: Property
 prop_semigroup =
@@ -742,6 +776,7 @@ In addition to that, monoids require that the identity element in fact
 be left and right identity. The Property:
 
 #+name: code:glyph-testing-3
+#+caption:
 #+BEGIN_SRC purescript
 prop_monoid :: Property
 prop_monoid =
@@ -773,6 +808,7 @@ it to a Foreign value. The main function in its entirety:
 
 # TODO this one needs to be reformatted
 #+name: code:glyph-together-1
+#+caption:
 #+BEGIN_SRC purescript
 writeGlyph' :: forall a c r.
                Maybe (Feature c r)
@@ -808,6 +844,7 @@ parsing externally provided data. In case of failure, we produce a
 
 # TODO this one needs to be reformatted
 #+name: code:glyph-together-2
+#+caption:
 #+BEGIN_SRC purescript
 writeGlyph :: forall a c r.
               Maybe (Feature c r)

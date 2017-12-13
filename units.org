@@ -60,6 +60,7 @@ hence the Bp and MBp newtypes:
 
 # TODO add link to lines in Units.purs
 #+name: code:units-pos-1
+#+caption:
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 newtype Bp = Bp Number
 newtype MBp = MBp Number
@@ -68,6 +69,7 @@ newtype MBp = MBp Number
 To work with these, we can use pattern matching:
 
 #+name: code:units-pos-2
+#+caption:
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 toBp :: Number -> Bp
 toBp x = Bp x
@@ -81,6 +83,7 @@ namely the `Newtype` typeclass. The compiler derives the instance, and
 we can then use the generic `wrap` and `unwrap` functions:
 
 #+name: code:units-pos-3
+#+caption:
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 derive instance newtypeBp :: Newtype Bp _
 derive instance newtypeMBp :: Newtype MBp _
@@ -101,6 +104,7 @@ working with Bp and MBp:
 # TODO this one needs to be reformatted
 # TODO all of these `derive newtype instance` are unnecessary in both code and report...
 #+name: code:units-pos-4
+#+caption:
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 derive newtype instance eqBp :: Eq Bp
 derive newtype instance ordBp :: Ord Bp
@@ -124,6 +128,7 @@ Biodalliance represents chromosome identifiers as strings. Like with Bp,
 a newtype wrapper helps keep track of things:
 
 #+name: code:units-chrs-1
+#+caption:
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 newtype Chr = Chr String
 derive instance newtypeChr :: Newtype Chr _
@@ -144,6 +149,7 @@ sake, we only care about mapping between basepairs and pixels. We represent
 this with another newtype wrapping Number:
 
 #+name: code:units-scale-1
+#+caption:
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 newtype BpPerPixel = BpPerPixel Number
 derive instance newtypeBpPerPixel
@@ -166,6 +172,7 @@ it covers.
 
 In Purescript, we represent this type as an algebraic data type (ADT).
 #+name: code:units-feature-1
+#+caption:
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 data Feature c r = Feature Chr c c r
 #+END_SRC
@@ -174,6 +181,7 @@ For convenience, we let the compiler derive how to compare two `Features`
 for equality and order:
 # TODO this one needs to be reformatted
 #+name: code:units-feature-2
+#+caption:
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 derive instance eqFeature :: (Eq c, Eq r) => Eq (Feature c r)
 derive instance ordFeature :: (Ord c, Ord r) => Ord (Feature c r)
@@ -183,6 +191,7 @@ There is also a smart constructor for creating `Features` only with
 coordinates that can be transformed to basepairs.
 
 #+name: code:units-feature-3
+#+caption:
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 feature :: forall c r.
            HCoordinate c
@@ -196,6 +205,7 @@ Since `Feature` has two type parameters, one for the coordinates and one for the
 data, and is covariant in both, we have a bifunctor instance:
 
 #+name: code:units-feature-4
+#+caption:
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 instance bifunctorFeature
   :: Bifunctor Feature where
