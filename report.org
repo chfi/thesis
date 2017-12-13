@@ -6,18 +6,28 @@
 
 # Define custom org-latex-class for exporting with correct headers
 #+NAME: setup-export-class
-#+BEGIN_SRC emacs-lisp :exports none :results silent
+#+BEGIN_SRC emacs-lisp :exports none :results none
   (add-to-list 'org-latex-classes
                '("thesis-report"
-                 "\\documentclass{article}
-  [DEFAULT-PACKAGES]
-  [EXTRA]"
+                 "\\documentclass[11pt]{report}"
   ("\\chapter{%s}" . "\\chapter*{%s}")
   ("\\section{%s}" . "\\section*{%s}")
   ("\\subsection{%s}" . "\\subsection*{%s}")
   ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
   ("\\paragraph{%s}" . "\\paragraph*{%s}")))
 #+END_SRC
+
+#+begin_comment
+#+BEGIN_SRC emacs-lisp :exports none :results silent
+  (add-to-list 'org-latex-classes
+               '("thesis-report" "\\documentclass[11pt]{report}"
+  ("\\part{%s}" . "\\part*{%s}")
+  ("\\chapter{%s}" . "\\chapter*{%s}")
+  ("\\section{%s}" . "\\section*{%s}")
+  ("\\subsection{%s}" . "\\subsection*{%s}")
+  ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+#+END_SRC
+#+end_comment
 
 #+BIND: org-export-filter-plain-text-functions (tmp-f-symbols)
 #+BEGIN_SRC emacs-lisp :exports results :results none
@@ -32,6 +42,7 @@
 
 
 #+LATEX_HEADER: \usepackage[numbers]{natbib}
+#+OPTIONS: H:6
 
 
 * Introduction
@@ -232,7 +243,11 @@ i.e.\ that /no/ undesired change in system behavior results.
 
 
 *** Solutions
-# then we can move on -- how do we *use* these heuristics
+
+Legacy code has been a recognized problem for decades, and people have
+been trying to solve it for as long.
+# TODO REF
+
 
 Reverse engineering of legacy code exposed
 https://doi.org/10.1145/225014.225045
@@ -440,7 +455,7 @@ and does not do.
 
 These heuristics exists, and they are called "code antipatterns," or "code smells."
 
-**** Code smells
+**** COMMENT Code smells
 
 
 # TODO Ref to beck & fowler, working with legacy code
@@ -837,36 +852,36 @@ basic framework to fit the examples to.
 ** Interfacing with existing JS
 # or: transforming JS APIs to PS APIs (kind of)
 
-#+INCLUDE: "./bdcy.org" :minlevel 2
+#+INCLUDE: "./bdcy.org"
 
 
 ** Safe application configuration
 # or: transforming user configuration to safe application options
 
-#+INCLUDE: "./config.org" :minlevel 2
+#+INCLUDE: "./config.org"
 
 
 ** Working with units
 # or: domain-based type checking of transformations
 #     (or something like that)
 
-#+INCLUDE: "./units.org" :minlevel 2
+#+INCLUDE: "./units.org"
 
 
 ** Transforming data for screen and space
 
-#+INCLUDE: "./glyph.org" :minlevel 2
+#+INCLUDE: "./glyph.org"
 
 
 ** Transforming events between tracks
 
-#+INCLUDE: "./events.org" :minlevel 2
+#+INCLUDE: "./events.org"
 
 
 ** The User Interface
 # or: transformations between user and application (or something like that)
 
-#+INCLUDE: "./ui.org" :minlevel 2
+#+INCLUDE: "./ui.org"
 
 
 ** Summary
