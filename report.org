@@ -103,11 +103,12 @@ to the purely functional programming paradigm.
 
 There is no formal definition of "legacy code", but \cite{feathers2004working}
 gives the definition "Legacy code is code that we've gotten from someone else."
-\citeauthor{Bennett1995} gives another definition, of legacy systems, which
-gives more of an idea of what the problem is: "large software systems that we don't know how to cope with but that are vital to
+\citeauthor{Bennett1995} provides a definition of legacy systems in general, which
+gives an idea of why it may be problematic: "large software systems that we don't know how to cope with but that are vital to
 our organization" \cite{Bennett1995}.
 Finally, \citeauthor{weide1995reverse} gives a definition closer to the
-spirit of the concept as experienced by programmers in the trenches:
+spirit of the concept as experienced by programmers working with
+legacy systems --- in the trenches, as it were:
 
 #+BEGIN_QUOTE
 [..] legacy code, i.e., programs in which too much has been invested
@@ -115,7 +116,7 @@ just to throw away but which have proved to be obscure, mysterious,
 and brittle in the face of maintenance.
 #+END_QUOTE
 
-In other words, legacy code is code that continues to be relevant, e.g.\ by
+In other words, legacy code is code that continues to be relevant, e.g. by
 providing a service that is important, and that requires modification,
 or will require modification. If there were never going to be any reason to
 modify the code, it would not be worth talking about, nor is it likely that
@@ -127,7 +128,7 @@ in the future require maintenance or new features \cite{lehman1980programs}.
      # tend to be, how expensive is their maintenance and where do most of
      # the costs fall
 
-For this very reason, legacy systems are prevalent in the world.
+For this reason, legacy systems are prevalent in the world.
 If a system works as it should, providing the service that is needed,
 and said service must continue to be provided, the safest thing to do
 is to leave it as is --- until it is decided, for whatever reason, that
@@ -147,7 +148,7 @@ caused by such factors. The code itself is often the problem \cite{Bisbal1999},
 and is what this thesis is concerned with.
 
 # TODO maybe move this paragraph, and maybe the previous one, to a more suitable position
-We define a "legacy codebase" to be the codebase of a legacy system,
+We define a "legacy codebase" as the codebase of a legacy system,
 where the problem of modifying the system is constrained by the code
 itself --- the underlying technology is not relevant. Likewise we do not look
 at dependencies, a problem solved by pure functional
@@ -227,7 +228,7 @@ even if a system is successfully reverse engineered and modified,
 even if a /new/ system is successfully developed that provides
 the same behavior as the legacy system but with a better design,
 it is highly likely that the new system, eventually, reaches
-a point where it too must be reverse engineered --- where the
+a point where it too must be reverse engineered --- i.e. when the
 new system becomes another legacy system.
 # TODO there's a more forceful and better way to end this paragraph...
 
@@ -247,88 +248,63 @@ i.e.\ that /no/ undesired change in system behavior results.
 Legacy code has been a recognized problem for decades, and people have
 been trying to solve it for as long.
 # TODO REF
-
-
-Reverse engineering of legacy code exposed
-https://doi.org/10.1145/225014.225045
-
-"Reverse engineering of large legacy software systems generally cannot meet its
-objectives because it cannot be cost-effective. [..] it is very costly to
-“understand” legacy code sufficiently well to permit changes to be made safely,
-because reverse engineering of legacy code is intractable in the usual
-computational complexity sense."
-
-As one of the main problems of legacy code is lack of knowledge, one
-of the main ways to attempt to solve it is to reverse engineer
-the existing system. This is usually done manually,
+This section will focus on automated or tool-assisted solutions;
+reverse-engineering a system by hand is the most widely used solution,
 # TODO REF
-but can also be done using automatic analysis of the code.
+and are too general to describe here. In short, write tests to increase
+the knowledge of the system, then perform changes to make it easier to
+work with.
 
-# some short side-paths: modularization, automated code analyses
-
-# TODO subsection or paragraph?
-**** Code analysis
-One common way is to analyze the code to find ways to modularize
-it, to decouple the pieces from one another. This can be done
-by OOP stuff
+# **** Automated
+Automated solutions mainly revolve around using various kinds of static
+analysis to attempt to increase the knowledge of the codebase. One example
+is breaking an entirely imperative codebase into OOP-style classes and
+objects, by analyzing which functions and variables are used together.
+# TODO REF
 
 Another interesting route is finding a modularization by constructing
 a concept lattice based on where different global variables are used.
 This lattice can then be used to create descriptions on how to
 modularize the codebase.
-# REF: Assessing Modular Structure of Legacy Code Based on Mathematical
-#      Concept Analysis
-#      https://doi.org/10.1145/253228.253354
+# TODO REF
+
+Tools can be simpler than breaking down the entire system into components,
+by for example searching for duplicated code.
+
+Another more general example is identifying reusable code
+
+Testing
+
+Extracting specifications
+
+Linters?
 
 # TODO Problems with these approaches, and to automation of this in general
 # TODO probably something about machine learning
 
 
-# the main course: manual reverse engineering
-
-# TODO subsection or paragraph?
-**** Manual reverse engineering
-this section is not even a section.
-
-The most common
-# TODO REF
-solution is simply to do it by hand. This
-requires that programmers look at, and comprehend, the codebase, and
-how the codebase relates to the semantics of the system. Writing tests
-should also be done to give greater confidence when changes are made.
-
-# REF The most common way - Do it by hand.
-
-# a quick exploration of the literature/background in this area, OOP etc.
-
-# finally a summary of the legacy code section, especially
-# the causes (code smells) followed by
-
-Not only is working with legacy code difficult and expensive, it may
-be the case that doing so will not solve the underlying problems,
-dooming the legacy system to a lifetime of being subject to the
-swearing of programmers.
-# TODO this last sentence must be worded better
-
-One question remains: is there anything special with legacy code,
-is /all/ successful code doomed to one day bear the "legacy" label,
-or is it possible to write code that avoids, or at least reduces,
-the problems associated with legacy code? In other words, what
-characterizes the source code of legacy systems, and could code
-be written in another way?
+# One question remains: is there anything special with legacy code,
+# is /all/ successful code doomed to one day bear the "legacy" label,
+# or is it possible to write code that avoids, or at least reduces,
+# the problems associated with legacy code? In other words, what
+# characterizes the source code of legacy systems, and could code
+# be written in another way?
 # TODO REFS need to show that it is in fact possible to write code
 # that avoids/reduces the problems. GNU, Linux, etc. would be good.
 
   # subsection outro: legacy code problems are caused by bad code being
   #   difficult to work with, extend, etc.
 
-Legacy code is difficult to work with; its dual would be code
-that is easy, even pleasant, to work with. Let us call that
-code "good", and the code that is characteristic of (but hardly
-unique to) the problems related to legacy code, "bad" code.
+# Legacy code is difficult to work with; its dual would be code
+# that is easy, even pleasant, to work with. Let us call that
+# code "good", and the code that is characteristic of (but hardly
+# unique to) the problems related to legacy code, "bad" code.
 
-The question then becomes, what makes code good or bad? This is
-what the next section attempts to answer.
+# The question then becomes, what makes code good or bad? This is
+# what the next section attempts to answer.
+
+# Outro by hooking into how to prevent legacy code,
+# or what are the coding practices that lead to legacy code (problems)
 
 
 *** Code quality
