@@ -82,8 +82,8 @@ Martin, Foreword to Working Effectively with Legacy Code
 * Background/Theory
 The prerequisite theory for the thesis project is introduced. A definition
 of "legacy code" is given, followed by relevant statistics, facts, and
-techniques concerning legacy code and working with it. Next, an introduction
-to the purely functional programming paradigm <> follows.
+techniques concerning legacy code and working with it. This is followed by an introduction
+to the purely functional programming paradigm.
 
 
 
@@ -441,68 +441,6 @@ to believe that OOP is the ultimate solution to legacy code, nor that OOP code
 is inherently the best type of code.
 # TODO this will require more references and/or argumentation
 
-
-# TODO do we need to talk about code smells here? I'm not sure.
-#+begin_comment
-We now have a simple definition of good and bad code. It remains to
-be able to easily see if some piece of code is good or bad.
-# TODO maybe remove [easily?]
-This is not an easy question to answer, nor is there any reason to
-think there is an objective answer. What we need is a set of heuristics
-that can be applied, to give a rough idea of the code quality; some
-examples of what kind of code makes it difficult to see what it does
-and does not do.
-
-These heuristics exists, and they are called "code antipatterns," or "code smells."
-
-**** COMMENT Code smells
-
-
-# TODO Ref to beck & fowler, working with legacy code
-
-# Many of the code smells they list, as well as the solutions to them, are
-# concerned about class-based object-oriented programming (OOP). OOP has
-# been the primary programming paradigm for decades,
-# TODO REF
-
-  # what is good code?
-    # maybe something about the semantic space of the program vs. the implementation space
-      # yeah; good code means it is "easier" to know what some change to the code does to the output,
-      # and conversely what change needs to be made to produce desired output
-      # transformations!
-
-  # list "our" code smells/heuristics
-    # code duplication - special case of shotgun surgery (in most cases)
-    # implicit state/mutability
-    # side effects
-    # primitive obsession
-    # shotgun surgery (but with better name)
-      # i.e. anything that leads to a change in a small part of the output
-        # requiring a disproportionately large change in the program code
-
-- Duplicated code - when a piece of code appears multiple times
-  in the codebase, it's a sign of a potential abstraction.
-  It also makes it difficult to change things, as the change needs
-  to be duplicated several times -- which also leads to more opportunities for mistakes to be made.
-
-
-- primitive obsession - Using primitive types to represent values that could
-  be better represented by composite types or wrapped types. This can
-  lead to values being used where they shouldn't be (e.g. providing a
-  Number representing a pixel to a function expecting a Number actually
-  representing the number of objects in an array). This also makes it
-  more difficult to understand what a variable or value is to the program.
-
-- shotgun surgery - When functionality is spread out in the codebase in such a way that
-  making a change at one place requires making a change at many other places.
-  Reduces code comprehension, as distant pieces of code are somehow interacting,
-  and makes it more difficult to modify the codebase successfully.
-
-Simply, a good piece of code makes it clear what it does, how it relates
-to the system at large, and how it can be changed or reused without
-compromising its behavior or the behavior of the system.
-
-#+end_comment
 
 Object-oriented is not the only way to write code. Functional programming (FP) is
 a programming paradigm that takes quite a different approach than OOP, and
