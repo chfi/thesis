@@ -441,7 +441,6 @@ functions, other than scoping.
 # provide purity, but it's not exactly common, nor is it a natural part of the
 # paradigm). Take Rust as an example of an imperative language limiting side effects & mutability
 
-
 # Then a deep dive into the most important parts
 
 *** Functional programming
@@ -619,7 +618,14 @@ and leave no state behind — it’s incredibly reusable.
 --- Joe Armstrong\cite{seibel2009coders}
 #+END_QUOTE
 
+The purpose of this thesis was to evaluate whether pure FP can be a tool for
+working with legacy codebases. This was done by extending BD and writing GGB blah blah.
 
+This chapter begins with arguments in favor of the hypothesis,
+enumerating some features of pure FP that appear advantageous for
+limiting the potential problems associated with legacy code. Next, the
+programming project that was used, __ is introduced, followed by how
+the hypothesis was evaluated in the context of this project.
 
 ** Functional programming for legacy codebases
 # section needs a better name. later.
@@ -646,10 +652,34 @@ use code smells only as shorthand for specific causes of this
     mutability -- obvious
 
 summary - by eliminating side effects & giving the programmer tools to know
-  what various parts of the system do,
-  pure FP appears to be usable to limit the problems that lead to legacy code problems
 
+  pure FP appears to be usable to limit the problems that lead to legacy code problems
 #+end_comment
+
+Purely functional programming has many tools and features that are likely
+to limit the problems of legacy code. This section begins by introducing
+the programming language used in the thesis project, and continues with
+providing examples of language features that are likely to reduce the
+legacy code-related problems and code patterns in general.
+
+*** Introduction to PureScript
+PureScript (PS) is a purely functional programming language in the style
+of Haskell, that compiles to JavaScript (JS).
+# TODO REFS
+PS is immutable by default, free of side-effects, and has an advanced
+strict static type system that gives the programmer many tools to increase
+productivity and program correctness.
+# TODO REFS
+
+# Continue by filling in these subsections wrt the above `Code quality` ideas
+
+*** Immutability
+
+*** Purity
+
+*** Type system
+**** Row types?
+
 
 ** Extending a Legacy System
 
@@ -665,31 +695,32 @@ be free of the code smells.
 #+end_comment
 
 
+In this section, the legacy system that was extended --- Biodalliance --- is described.
+The extent and nature of the changes, and more details of the resulting application,
+are also given.
+
 *** Biodalliance
 
 # Describe BD, its history, etc.
 
+Biodalliance (BD) is a HTML5 canvas-based genome browser written in JavaScript.
+# TODO REF
+# TODO its functions
+# TODO its age & size
+# TODO my earlier work on it
+# TODO why we want something like it
+
 
 *** Genetics Graph Browser
-# detail how the product is developed,
+# TODO detail how the product was developed,
 # and how it connects to & extends the BD legacy codebase
 
-# list the parts of BD/GGB where legacy-type problems were an issue
-  # i.e. the parts that are detailed in results (and why they were chosen)
+# TODO map the above FP features to overarching features in the product ?
 
 
+** Summary
 
-# NOTE actually we probably don't need the code smells in Method at all
-#+begin_comment
-
-** Code smells
-Then present the code smells (briefly if already detailed in Background)
-
-Followed by briefly detailing the components of GGB?
-  At least the general goal; it ties in with the
-  evaluation and the parts that make up Results.
-#+end_comment
-
+# Summarize how we evaluate the hypothesis with this
 
 * Results
 
