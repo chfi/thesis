@@ -229,12 +229,8 @@ even if a /new/ system is successfully developed that provides
 the same behavior as the legacy system but with a better design,
 it is highly likely that the new system, eventually, reaches
 a point where it too must be reverse engineered --- i.e. when the
-new system becomes another legacy system.
-# TODO there's a more forceful and better way to end this paragraph...
-
-  # to know why it is still a problem we need to know why it became a problem
-  # it "became" a problem when it "became", i.e. when its code was written
-  # thus: the problem is bad code.
+"new" system becomes another legacy system, and the cycle begins anew.
+# TODO we can drop a reference to samsara & nirvana here somewhere
 
 In short, the problem with legacy code is lack of knowledge in what
 the system does, and how the code relates to the system and its parts.
@@ -247,65 +243,91 @@ i.e.\ that /no/ undesired change in system behavior results.
 
 Legacy code has been a recognized problem for decades, and people have
 been trying to solve it for as long.
-# TODO REF
-This section will focus on automated or tool-assisted solutions;
-reverse-engineering a system by hand is the most widely used solution,
-# TODO REF
-and are too general to describe here. In short, write tests to increase
-the knowledge of the system, then perform changes to make it easier to
-work with.
+\cite{lehman1980programs}
+\cite{weide1995reverse}
+\cite{Mntyl2006}
+This section will present some general approaches and tools that have
+been applied when working with legacy systems. First, techniques that
+help with manual reverse-engineering --- the most widely used approach
+to solve legacy code problems --- are introduced, followed by a brief
+walk through some automated tools.
 
-# **** Automated
-Automated solutions mainly revolve around using various kinds of static
-analysis to attempt to increase the knowledge of the codebase. One example
-is breaking an entirely imperative codebase into OOP-style classes and
-objects, by analyzing which functions and variables are used together.
-# TODO REF
+**** Reverse engineering legacy systems
 
-Another interesting route is finding a modularization by constructing
+Reverse engineering a system can be very difficult and time-consuming,
+even with access to the source code \cite{weide1995reverse}. There are
+entire books dedicated to the subject of understanding a legacy codebase
+and working with it to transform it into something more easily understood
+and extended \cite{feathers2004working}.
+
+As previously mentioned, the
+greatest problems stem from insufficient knowledge of the system; from
+not knowing what code does, or what happens when a change is made.
+Thus, adding tests is one of the main tools for increasing understanding,
+as tests provide the programmer with feedback on their code changes.
+\cite{siebra2016anticipated}
+However, this feedback is only as good as the test suite; if a
+system behavior is not covered by the tests, the programmer has a blind
+spot in that area.
+Where and how to add tests is an art and science of its own, as the
+programmer must find what parts of the system need to be tested, and
+how to insert the tests into the codebase. This becomes more difficult
+when a program has many tightly-knit parts, global state, etc.
+# TODO REFs
+
+With a robust test suite, a programmer can modify the codebase to improve the code quality
+and architecture of the system, confident that their changes do not
+compromise the system's behavior.
+
+# TODO note that these are largely concerned with OOP->OOP or procedural->OOP
+
+
+**** Automated approaches
+
+Automated tools that assist with legacy systems are largely concerned
+with increasing the knowledge of the system, understanding how it works,
+extracting modules, etc. One example
+is extracting OOP abstractions such as classes from imperative code,
+e.g. by analyzing which functions and variables are used together.
+\cite{Etzkorn1997}
+\cite{Silva2017}
+
+# TODO this paragraph may be wrong :) read the paper
+Another interesting route is creating a "modularization proposal," i.e.
+a series of architectural changes to the codebase that lead to a
+more modular system while minimizing change each step,
+by constructing
 a concept lattice based on where different global variables are used.
 This lattice can then be used to create descriptions on how to
-modularize the codebase.
-# TODO REF
+modularize the codebase. \cite{lindig1997assessing}
 
-Tools can be simpler than breaking down the entire system into components,
-by for example searching for duplicated code.
+Another approach is using automated tools to detect potentially
+problematic parts of a codebase, such as overly complex controllers
+in GUI applications \cite{Lelli2016},
+or code that is simply more likely to be buggy, based on statistical
+analyses \cite{Ray2016}. These would help programmers find what parts
+of the codebase to target.
 
-Another more general example is identifying reusable code
+# TODO Linters?
 
-Testing
-
-Extracting specifications
-
-Linters?
-
-# TODO Problems with these approaches, and to automation of this in general
 # TODO probably something about machine learning
 
+Some ways that developers and researchers have attempted to fix
+legacy codebases have been introduced, however one question
+still remains: what is it with legacy code that makes it
+problematic? Is there some attribute of the code itself, or
+is /all/ code that successfully solves a problem doomed to
+become "legacy" code? I.e., is it possible to write code that
+is "legacy"-resistent?
 
-# One question remains: is there anything special with legacy code,
-# is /all/ successful code doomed to one day bear the "legacy" label,
-# or is it possible to write code that avoids, or at least reduces,
-# the problems associated with legacy code? In other words, what
-# characterizes the source code of legacy systems, and could code
-# be written in another way?
 # TODO REFS need to show that it is in fact possible to write code
 # that avoids/reduces the problems. GNU, Linux, etc. would be good.
 
-  # subsection outro: legacy code problems are caused by bad code being
-  #   difficult to work with, extend, etc.
-
-# Legacy code is difficult to work with; its dual would be code
-# that is easy, even pleasant, to work with. Let us call that
-# code "good", and the code that is characteristic of (but hardly
-# unique to) the problems related to legacy code, "bad" code.
-
-# The question then becomes, what makes code good or bad? This is
-# what the next section attempts to answer.
-
-# Outro by hooking into how to prevent legacy code,
-# or what are the coding practices that lead to legacy code (problems)
-
+We have identified that the problems seem to be related to
+understanding the code. From that viewpoint, the question becomes: is
+there a way to write code that is more easily understandible, and if
+so, what characterizes it? This is what the next section seeks to
+answer.
 
 *** Code quality
 
