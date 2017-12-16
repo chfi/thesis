@@ -329,7 +329,7 @@ there a way to write code that is more easily understandible, and if
 so, what characterizes it? This is what the next section seeks to
 answer.
 
-*** Code quality
+*** TODO Code quality
 
 #+begin_comment
 Knowing what code is safe to change & knowing what code *to* change
@@ -449,114 +449,103 @@ introduction to the area and its ideas.
 
 ** Purely functional programming
 
-# Quick intro to what pure FP is; an abstract, basically.
-   # transformations
 
-Functional programming as a paradigm focuses on functions in the mathematical
-sense, where functions, with some given input, always produces the same output.
-In purely functional programming, this concept taken to its limit, with
-functions not being able to perform side-effects, such as reading input from the
-user, or updating the user interface; more on these actions below. This is in
-contrast to the imperative paradigm, which places no such limitations on
-functions, other than scoping.
-# TODO Footnote: an imperative language could of course
-# provide purity, but it's not exactly common, nor is it a natural part of the
-# paradigm). Take Rust as an example of an imperative language limiting side effects & mutability
+This section introduces the purely functional programming (pure FP) paradigm,
+and its strengths. In short, pure FP enforces "referential transparency,"
+which means that any piece of code can be replaced with the value it evaluates
+to, wherever it appears in the source code. This makes it easier to understand
+the code, any function can be reduced, on a cognitive level, to a black box
+that can be passed around and used without having to think about its contents.
+\cite{hughes1989functional}
 
-# Then a deep dive into the most important parts
+Pure FP achieves this by using immutable data structures, eliminating side effects
+in code, and using a powerful type system to express effectful computations
+(e.g. code that interacts with the user).
+# TODO REFs?
+
 
 *** Functional programming
 # Where it (FP in general) came from (lambda calc)
    # transformations?
 The functional paradigm can be seen as a natural extension to the lambda
-calculus, a model of computation invented by Alonzo Church,
+calculus, a model of computation invented by Alonzo Church, where a
+small set of variable binding and substitution rules is used to express
+computations.
 # TODO REF
-while
-imperative programming is closely connected to the von Neumann-style of computer
-on which it runs, and is similar to the idea of a Turing machine.
-# TODO REF(TODO REF)
-Whereas a Turing machine models computation as manipulating symbols on an
-infinite tape of memory given a set of instructions,
-# TODO REF
-the lambda
-calculus models computation as function abstraction and application; the name
-derives from using \lambda to define functions.
-# TODO footnote about lambda/anonymous functions, maybe
 
-The Turing machine and lambda calculus models of computation are (probably) equivalent, by the Church-Turing thesis. Thus
-any program that can be run on a theoretical Turing machine can be transformed
-to "run" in the lambda calculus. However, while programming languages that
-are built on the idea of a Turing machine are notoriously difficult to develop
-for,
-# TODO REF/FOOTNOTE brainfuck, "turing-tarpits"
-and are generally interesting only as curiosities or for research,
+# On the other hand,
+# imperative programming is closely connected to the von Neumann-style of computer
+# on which it runs, and is similar to the idea of a Turing machine.
 # TODO REF
-languages based on lambda
-calculus are more wide-spread. Indeed, the pure functional language Haskell
-is at its theoretical core a typed lambda calculus, based on System-F\omega,
-which it compiles to as an intermediate language \cite{haskell2010}.
-# TODO REF https://ghc.haskell.org/trac/ghc/wiki/Commentary/Compiler/FC
+
+# TODO this paragraph could use some more work; give examples of Turing machine-based "languages" e.g. brainfuck
+The Turing machine and lambda calculus models of computation are equivalent
+\cite{turing_1937}. However, while the Turing machine model is largely
+an abstract concept that is useful for modeling computation, but less so
+in actually solving programming problems, there are several actively used
+languages that are, at their core, some type of lambda calculus. One
+example is the purely functional language Haskell. The Glasgow Haskell Compiler,
+the de facto standard Haskell implementation, compiles to a language based
+on System-F\omega, a typed lambda calculus, as an intermediate language
+\cite{haskell2010} \cite{ghcguide}.
+
+
+# TODO s/main/only/?
+The main tool in the lambda calculus is defining and applying functions;
+unsurprisingly, functions are the focus of FP. In this case, "function"
+is defined in its mathematical sense, as a mapping from inputs to outputs,
+rather than the sense of a function in e.g. the C programming language,
+where it is rather a series of commands for the computer to execute.
+
+In FP, then, if any function $f$ is given some input $x$ and produces some
+output $y$, it must /always/ be the case that $f(x) = y$. Thus, wherever
+$f(x)$ (for this given $x$) appears in the code, it can be replaced with $y$,
+without changing the program behavior whatsoever. Conversely, if we have
+that $g(a) = b$, but calling $g(a)$ prints a value to a console window,
+$g$ is /not/ a function in this sense, as replacing $g(a)$ with $b$ in
+the code would change the program behavior by not printing to the console.
+This characteristic is what is meant by "purity".
 
 
 *** Purity
 # What purity is and what it implies (ref transparency)
    # transformations!
 
-Pure FP provides something called "referential transparency", which means that
-changing a piece of code to the result of running that code does not change the
-program.
-# TODO REF
-This makes "equational reasoning" possible,
-# TODO REF
-letting the programmer
-reason about parts of the program code as separate from the rest of the program.
-It gives the programmer confidence in what a function does.
 
-# How pure FP achieves ref transparency, tying back to code smells/good code heuristics
-  # Static types - encoding effects in the types
-Functional programming is orthogonal from type systems, but powerful type
-systems are closely related to pure functional languages.
-# TODO REF.
-Haskell, being based on a typed lambda calculus, is a statically typed language,
 
-    # Intro to reading type sigs?
-    # Monadic IO
-and is an example of using a powerful type system
-# TODO define
- to capture effects that are
-performed by the program -- that is, letting a purely functional language
-express effects such as interacting with the real world
-# TODO like 2 refs).
+While it is possible to write pure functions in any language that supports
+functions, purely functional languages, such as Haskell have features that
+ensure that functions are in fact pure. Haskell in particular handles this
+through its powerful type system.
 
-Besides capturing effects, a powerful type system provides the programmer with
-tools to increase productivity,
+
+# Static types - encoding effects in the types
+# Functional programming is orthogonal from type systems, but powerful type
+# systems are closely related to pure functional languages.
+
+# Immutability - mutation as side effect
 # TODO REF
-decrease bugs,
-# TODO REF
-make refactoring easier,
-# TODO REF
-and improve the programming experience in multiple ways.
-# TODO ref & explanation, type-directed search
+# is immutability of data. In a purely functional language, functions cannot modify
+# data passed to them, as doing so would be to perform a side-effect -- passing the
+# same variable to two functions would not necessarily have the result expected
+# if one function can modify the input to the other. Using data structures that
+# are immutable by default makes reasoning about programs much easier as it removes
+# that possible side-effect, no matter the programming paradigm.
+
+# Intro to reading type sigs?
+# Monadic IO
 
 # NOTE this is maybe overkill, or could be moved to the PS syntax intro
-For example, Haskell and many(most?) other languages with similar type systems,
-do not have a `null` value, instead encoding the possibility of lacking a value
-in the type system. In Haskell, the type `Maybe` captures this possibility;
-if a function produces an `Int`, you can be sure that after calling the function
-you do indeed have an `Int`.
+# For example, Haskell and many(most?) other languages with similar type systems,
+# do not have a `null` value, instead encoding the possibility of lacking a value
+# in the type system. In Haskell, the type `Maybe` captures this possibility;
+# if a function produces an `Int`, you can be sure that after calling the function
+# you do indeed have an `Int`.
 
 # TODO maybe something about the saying "if it compiles, it works" and refactoring
     # Other functor-based effects (Maybe vs. null)
 
-  # Immutability - mutation as side effect
-A lower-level part of pure FP, which has seen increased use outside of FP
-# TODO REF
-is immutability of data. In a purely functional language, functions cannot modify
-data passed to them, as doing so would be to perform a side-effect -- passing the
-same variable to two functions would not necessarily have the result expected
-if one function can modify the input to the other. Using data structures that
-are immutable by default makes reasoning about programs much easier as it removes
-that possible side-effect, no matter the programming paradigm.
+# A lower-level part of pure FP, which has seen increased use outside of FP
 
 *** Advantages
 # Pure FP/a good lambda-calc based type system gives us even more
