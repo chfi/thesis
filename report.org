@@ -646,6 +646,7 @@ use code smells only as shorthand for specific causes of this
     code duplication --
       more similar pieces of code -> more places to look; less clarity of what to change & effects of change
       e.g. *why* are there multiple similar pieces of code? are they really the same? scope etc.
+      DRY principle
 
     primitive obsession -- less clear
     side effects -- obvious
@@ -835,7 +836,18 @@ basic framework to fit the examples to.
 # conceptually, how they were removed/avoided/bypassed
 
 
+
 * Discussion
+
+
+
+The resulting browser fills the specified requirements, and the
+codebase does as well. Purescript was not a magic bullet, and some
+problems were experienced during development, however the source code
+on the whole does not, arguably, suffer from the problems of legacy
+code as defined in this report.
+
+
 
 
 #+begin_comment
@@ -867,13 +879,64 @@ Concede that it is entirely possible to write "bad" code in PS
 also that pure FP and PS have their own antipatterns/code smells
   (though I'm not sure if they're comparable to imperative/OOP ones wrt.
    their effect on codebases)
+
+
+
+Sections:
+how does it fill the requirements? both browser & codebase (brief)
+what problems were encountered during development?
+why does it not suffer from legacy problems?
+  1. why do we think it does not
+  2. why do we think that the reason it does not is due to FP/PS
+
+learning PS during development -- something that will happen "IRL" as well
+
+
 #+end_comment
+
+
+The code from the previous chapter is examined to see if and how it
+stuck to the ideas of "good" code, including what FP features
+contributed. Problems experienced during development are presented,
+and some examples of how GGB will be extended in the future are given,
+together with estimates on how "easy" the addition of those parts to
+the codebase and system will be. The potential ways to extend the
+browser are also looked at from the view of BD, to examine how
+difficult it would be to extend BD without the support of GGB.
+
+** Did functional programming help?
+
+# TODO
+
+
+
+** Developmental difficulties
+
+# TODO halogen difficulties
+# TODO events stuff
+# TODO refactoring stuff
+# TODO too early abstractions
+
+** Future of GGB
+
+# TODO Native track?
+# TODO configuration, dhall
+
+
+** Functional programming and code quality
+
+# TODO FP encourages "better" code, but does not enforce it; however it often becomes more difficult to write bad than good code
+# TODO tendency to become difficult to read; very terse, implicit information in types (need better docs)
+
+
 
 
 * Conclusion
 
 
 #+begin_comment
+Encourage using PS with old JS projects
+
 Case-study nature as a limitation;
 will probably want to argue that the results are thanks in large part to the
 nature of pure FP and PS; not merely happenstance even though n=1.
@@ -886,6 +949,8 @@ C or something becomes even more difficult.
 Future work:
   Looking at open source projects; is functional OSS "better"?
 #+end_comment
+
+
 
 
 ** Limitations and Future Work
