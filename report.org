@@ -906,15 +906,11 @@ basic framework to fit the examples to.
 
 * Discussion
 
-
-
-The resulting browser fills the specified requirements, and the
+The resulting browser, GGB, fills the specified requirements, and the
 codebase does as well. Purescript was not a magic bullet, and some
 problems were experienced during development, however the source code
 on the whole does not, arguably, suffer from the problems of legacy
 code as defined in this report.
-
-
 
 
 #+begin_comment
@@ -971,12 +967,40 @@ the codebase and system will be. The potential ways to extend the
 browser are also looked at from the view of BD, to examine how
 difficult it would be to extend BD without the support of GGB.
 
-** Did functional programming help?
-
-# TODO
 
 
+# TODO maybe combine these two following sections
+** Purescript as a tool for working with legacy JS
+# TODO PS is an excellent tool for working with legacy JS projects;
+# at least when you have a small number of "injection points", e.g. glyphs in BD
 
+# TODO caveat: BD was relatively well modularized, and some previous
+# work had been done on BD to make it so; it was fairly easy to know what to do and where
+
+# TODO is it worthwhile to embed JS apps in a PS app
+
+# TODO maybe notes on PS FFI, row types, records. idk
+
+
+** Purely functional programming
+# ** Functional programming and code quality
+
+# TODO FP encourages "better" code, but does not enforce it; however
+# it often becomes more difficult to write bad than good code
+
+# TODO inverting the imperative idea of the callee controlling
+# effects is one of the most important parts
+
+# TODO tendency to become difficult to read; terse, implicit
+# information in types (need better docs).
+
+** Would JS have sufficed?
+# i.e. would GGB have been possible with JS only
+
+# TODO would the codebase be of similar quality, and would the progress timeline be the same
+
+
+# TODO maybe move this to a subsection under PS section
 ** Developmental difficulties
 
 # TODO halogen difficulties
@@ -984,17 +1008,13 @@ difficult it would be to extend BD without the support of GGB.
 # TODO refactoring stuff
 # TODO too early abstractions
 
+
 ** Future of GGB
 
 # TODO Native track?
 # TODO configuration, dhall
-
-
-** Functional programming and code quality
-
-# TODO FP encourages "better" code, but does not enforce it; however it often becomes more difficult to write bad than good code
-# TODO tendency to become difficult to read; very terse, implicit information in types (need better docs)
-
+# TODO cytoscape
+# TODO extrapolate from ease of refactoring that extensibility & maintenance will be easier
 
 
 
