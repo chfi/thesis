@@ -70,6 +70,12 @@ Martin, Foreword to Working Effectively with Legacy Code
 ** Objective
 # see if FP can solve legacy code by developing GGB
 
+# TODO briefly introduce GN2 and BD
+# TODO introduce problems w/ BD
+# TODO introduce GGB as solution to problems;
+# TODO purpose: explore FP as solution to JS legacy garbo
+
+
 ** Delimitations
 # case study
 
@@ -552,15 +558,15 @@ through its powerful type system.
   # Category theory as 70 years of docs, abstractions
 
 # WIP Category theory as 70 years of documentation in pure FP languages. (Abstractions, good ones!)
-As a type system gains features, the number of abstractions that can be expressed
-in it increases. Category Theory is a highly abstract branch of mathematics concerned
-with `categories` consisting of `objects` and `morphisms` between objects. It is
-a rich field of research, and has over 70 years of results -- and ideas and abstractions
-from it has been used in programming, especially pure FP. A classic example is
-Haskell's use of `monads`, an abstraction which captures the essence of sequential
-computation.
+# As a type system gains features, the number of abstractions that can be expressed
+# in it increases. Category Theory is a highly abstract branch of mathematics concerned
+# with `categories` consisting of `objects` and `morphisms` between objects. It is
+# a rich field of research, and has over 70 years of results -- and ideas and abstractions
+# from it has been used in programming, especially pure FP. A classic example is
+# Haskell's use of `monads`, an abstraction which captures the essence of sequential
+# computation.
 # TODO REF
-Haskell uses a monadic type for its IO system.
+# Haskell uses a monadic type for its IO system.
 # TODO REF
 
 If a programmer can express their problem in the language of category theory,
@@ -629,14 +635,18 @@ and leave no state behind — it’s incredibly reusable.
 --- Joe Armstrong\cite{seibel2009coders}
 #+END_QUOTE
 
+# TODO THIS
 The purpose of this thesis was to evaluate whether pure FP can be a tool for
-working with legacy codebases. This was done by extending BD and writing GGB blah blah.
+working with legacy codebases. ___
 
 This chapter begins with arguments in favor of the hypothesis,
 enumerating some features of pure FP that appear advantageous for
 limiting the potential problems associated with legacy code. Next, the
-programming project that was used, __ is introduced, followed by how
-the hypothesis was evaluated in the context of this project.
+programming project that is the core of the thesis, the Graph Genetics
+Browser (GGB) is introduced, followed by how the hypothesis was
+evaluated in the context of this project.
+
+
 
 ** Functional programming for legacy codebases
 # section needs a better name. later.
@@ -715,24 +725,70 @@ are also given.
 
 # Describe BD, its history, etc.
 
-Biodalliance (BD) is a HTML5 canvas-based genome browser written in JavaScript.
+Biodalliance (BD) is a HTML5-based genome browser written in JavaScript
+(JS).
 # TODO REF
-# TODO its functions
-# TODO its age & size
-# TODO my earlier work on it
-# TODO why we want something like it
+It is fast[ref], and can be configured to display various types of plots fairly easily,
+# TODO REF
+and supports a number of different data formats commonly used in bioinformatics.
+# TODO REF
+However, it has been in development for a long time
+# TODO REF
+and has shown itself to be difficult to extend.
+# TODO REF/footnote, GSOC
 
+# TODO context of wanting to use BD -- GN2
+# TODO Why BD?
+#      It's proven to work
+#      configurations & data exist
+#      supports many formats
+#      configurable
+#      fast
+
+# TODO Why not BD?
+#      JS is untyped
+#      JS provides no facilities for supporting the programmer
+#      big codebase
+#      legacy!!!
+
+# Outro: say that we decided to develop a new codebase that connects to BD but is independent -- GGB
 
 *** Genetics Graph Browser
-# TODO detail how the product was developed,
-# and how it connects to & extends the BD legacy codebase
 
-# TODO map the above FP features to overarching features in the product ?
+The Genetics Graph Browser (GGB) is the main product of this project.
+It was developed as both an extension to BD, as well as a stand-alone
+web application.
+
+GGB was written in PS, and various FP techniques and idioms were used
+in its development, some unique to PS, most applicable to many pure
+FP languages.
+
+# TODO add Main features -- i.e. the parts that are in Results
+
+The hypothesis was evaluated by identifying legacy code-type problems
+in BD, then "solving" them by implementing similar functionality
+in GGB, using FP techniques.
+
+# However, it was never the purpose to solve them in that way;
+# it's simply how the problems were "naturally" solved in PS.
 
 
 ** Summary
 
 # Summarize how we evaluate the hypothesis with this
+The hypothesis that functional programming techniques can help when
+working with an existing legacy code base, as well as lead to code
+that is less likely to exhibit legacy code problems in the future,
+was tested by developing an application in Purescript that both
+interfaces with an existing legacy genome browser, and is intended
+to be a stand-alone browser in the future.
+
+Identifying features whose implementation were already cause for concern in
+BD, or had the potential to be implemented in problematic ways in GGB,
+and if and how FP helped reduce or eliminate those problems, provides
+a lens through which it was possible to make some judgements as to
+the validity of the hypothesis.
+
 
 * Results
 
