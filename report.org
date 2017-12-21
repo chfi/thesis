@@ -788,24 +788,36 @@ This application is the Genetics Graph Browser, to which the next section is ded
 
 The Genetics Graph Browser was written in PS. It begun as a tool for
 constructing BD-compatible data structures for creating new ways to
-plot data, but soon grew to a web application that wraps BD and Cytoscape.js.
+plot data, but soon grew to a web application that wraps BD and
+Cytoscape.js.
 # TODO note that this will be detailed in Results (Glyph)
 
 # TODO give more details on GGB! give a basic overview of the project "as planned"
 # TODO add Main features -- i.e. the parts that are in Results
 
-Throughout its development, various legacy-type problems were encountered
-in BD, and avoided or solved in GGB. As GGB is written in PS, this was
-done using various "features" of FP, as listed above. In this way,
-the GGB project can be seen as a case study in working with legacy code
-using purely functional programming.
+Throughout its development, various legacy-type problems were
+encountered in BD, and avoided or solved in GGB. As GGB is written in
+PS, this was done using various "features" of FP, as listed above. In
+this way, the GGB project can be seen as a case study in working with
+legacy code using purely functional programming.
 
-The hypothesis of this thesis was then evaluated by examining if
-and how pure FP helped with these "legacy problems," both when
-fixing problems or improving how a problem was solved in BD, including
-the parts of GGB that interact with BD, as well as parts of
-GGB that are not related to BD, but solutions to which would
-likely end up exhibiting legacy-style problems.
+Besides wrapping BD and providing genome browser functionality, one of
+the goals of GGB is to support exploratory data analysis of both
+genome-based data as well as graph-based, semantic web data. Where BD
+provides the genome browser, Cytoscape.js (Cy.js), a graph theory tool
+written in JS \cite{franz2015cytoscape}, is wrapped to provide the
+graph-network functionality.
+
+GGB supports connecting BD and Cy.js data, letting the user configure
+interactions between the two browsers based on user interaction (e.g.
+updating the Cy.js graph upon clicking on a gene in BD).
+
+The hypothesis of this thesis was then evaluated by examining if and
+how pure FP helped with these "legacy problems," both when fixing
+problems or improving how a problem was solved in BD, including the
+parts of GGB that interact with BD, as well as parts of GGB that are
+not related to BD, but solutions to which would likely end up
+exhibiting legacy-style problems.
 
 # The hypothesis was evaluated by identifying legacy code-type problems
 # in BD, then "solving" them by implementing similar functionality
@@ -1013,6 +1025,12 @@ difficult it would be to extend BD without the support of GGB.
 
 # TODO maybe combine these two following sections
 ** Purescript as a tool for working with legacy JS
+
+PureScript was an excellent tool for developing GGB; in the author's
+opinion, it was no doubt the best choice. PS's FFI capabilities made
+it easy to wrap BD's native JS API, to then construct a more idiomatic
+typed PS API.
+
 # TODO PS is an excellent tool for working with legacy JS projects;
 # at least when you have a small number of "injection points", e.g. glyphs in BD
 
@@ -1049,6 +1067,10 @@ difficult it would be to extend BD without the support of GGB.
 # TODO events stuff
 # TODO refactoring stuff
 # TODO too early abstractions
+
+Another problem was lack of documentation. PS is a young language,
+and has a small but enthusiastic community. The language has moved
+fast, and so has many of the packages.
 
 
 ** Future of GGB
