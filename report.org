@@ -1028,8 +1028,12 @@ difficult it would be to extend BD without the support of GGB.
 
 PureScript was an excellent tool for developing GGB; in the author's
 opinion, it was no doubt the best choice. PS's FFI capabilities made
-it easy to wrap BD's native JS API, to then construct a more idiomatic
-typed PS API.
+it easy to wrap the native JS APIs of BD and Cy.js, then construct
+type-safe PS APIs. This minimizes the reach of JS code into the
+GGB codebase. Several times during development, when some part
+of the system started behaving strangely, it was due to the FFI almost
+every time. Debugging even untyped JS becomes doable when it is
+restricted to the very edges of the program.
 
 # TODO PS is an excellent tool for working with legacy JS projects;
 # at least when you have a small number of "injection points", e.g. glyphs in BD
@@ -1050,6 +1054,19 @@ typed PS API.
 
 # TODO inverting the imperative idea of the callee controlling
 # effects is one of the most important parts
+
+# TODO clarify this; could be written better
+As established, one of the biggest problems when trying to understand
+some piece of code is seeing what it truly does, i.e. what other
+parts of the codebase it calls, and what effects may be performed
+down the line. Pure FP inverts this, as all effects, from potential
+failure in a function to updating the browser DOM, are encapsulated
+in the type system. This makes it impossible to call an effectful
+function "accidentally". [fn:unsafe-purity]
+
+[fn:unsafe-purity] It is possible to bypass the type system's safety
+using the FFI or functions such as `unsafeCoerce`. This is not
+advised.
 
 # TODO tendency to become difficult to read; terse, implicit
 # information in types (need better docs).
