@@ -77,10 +77,14 @@ Martin, Foreword to Working Effectively with Legacy Code
 
 
 ** Delimitations
-# case study
 
-** "Background" [TODO: Rename]
-# BD etc., GSoC
+This thesis concerns a single programming project and a single programmer;
+it is a case study more than anything else, and so cannot be taken as
+definite evidence.
+# TODO this: However, it is hoped that
+
+** Background/Context/Motivation
+# GN2, BD etc., GSoC
 
 ** GeneNetwork 2/Affiliations
 
@@ -335,7 +339,7 @@ there a way to write code that is more easily understandible, and if
 so, what characterizes it? This is what the next section seeks to
 answer.
 
-*** TODO Code quality
+*** Code quality
 
 #+begin_comment
 Knowing what code is safe to change & knowing what code *to* change
