@@ -725,17 +725,15 @@ are also given.
 
 # Describe BD, its history, etc.
 
-Biodalliance (BD) is a HTML5-based genome browser written in JavaScript
-(JS).
-# TODO REF
-It is fast[ref], and can be configured to display various types of plots fairly easily,
-# TODO REF
-and supports a number of different data formats commonly used in bioinformatics.
-# TODO REF
-However, it has been in development for a long time
-# TODO REF
-and has shown itself to be difficult to extend.
-# TODO REF/footnote, GSOC
+Biodalliance (BD) is an open source (BSD licensed) HTML5-based genome
+browser written in JavaScript (JS) \cite{down2011dalliance}. It is
+fast, supports several data formats commonly used in bioinformatics,
+and the plots displayed can be configured and customized. Since it is
+HTML5-based, it can be embedded into any web page and does not require
+any special tools to be used. It also supports exporting images as
+SVG, which can be used as high quality figures in publications.
+
+# TODO example of difficulties: adding CSV sources; horizontal rulers; /new/ plot types
 
 # TODO context of wanting to use BD -- GN2
 # TODO Why BD?
@@ -745,29 +743,69 @@ and has shown itself to be difficult to extend.
 #      configurable
 #      fast
 
+# TODO make sure GN2 has already been introduced...
+# TODO maybe more on why we want these features
+For GN2 we want a genome browser that supports these features.
+We also want to be able to add new features, however BD has shown itself
+to be difficult to work with and extend, for reasons earlier defined
+as legacy code problems[fn:gsoc2016-footnote]. BD has been in development
+since 2010, and as of December 2017 consists of 17.5k lines of JS code
+(sans comments and whitespace) split into 61 files.
+# TODO footnote to BD github
+The codebase has grown organically over time, and has become complex,
+with single pieces of functionality (such as rendering data to the
+HTML5 canvas) being split into several large functions in different
+files, and less than clear flow of control.
+
+[fn:gsoc2016-footnote] The author previously worked on extending BD as
+part of Google Summer of Code 2016, and encountered some difficulties:
+https://chfi.se/posts/2016-08-22-gsoc-final.html
+
 # TODO Why not BD?
 #      JS is untyped
 #      JS provides no facilities for supporting the programmer
 #      big codebase
 #      legacy!!!
 
-# Outro: say that we decided to develop a new codebase that connects to BD but is independent -- GGB
+We want many of the features of BD, which have required much time and
+effort to be implemented. However, we also want new features, but the
+time and effort required to implement them in BD is much greater than
+necessary due to the legacy aspect of BD's codebase.
+
+# TODO idk about this wording
+The solution that was decided upon was to develop a new genome browser.
+This browser would allow embedding BD within it, and so be compatible
+with BD and support the desired features. However, it would be a
+separate application, and be independent of BD's baggage.
+This application is the Genetics Graph Browser, to which the next section is dedicated.
+
 
 *** Genetics Graph Browser
 
-The Genetics Graph Browser (GGB) is the main product of this project.
-It was developed as both an extension to BD, as well as a stand-alone
-web application.
+The Genetics Graph Browser was written in PS. It begun as a tool for
+constructing BD-compatible data structures for creating new ways to
+plot data, but soon grew to a web application that wraps BD and Cytoscape.js.
+# TODO note that this will be detailed in Results (Glyph)
 
-GGB was written in PS, and various FP techniques and idioms were used
-in its development, some unique to PS, most applicable to many pure
-FP languages.
-
+# TODO give more details on GGB! give a basic overview of the project "as planned"
 # TODO add Main features -- i.e. the parts that are in Results
 
-The hypothesis was evaluated by identifying legacy code-type problems
-in BD, then "solving" them by implementing similar functionality
-in GGB, using FP techniques.
+Throughout its development, various legacy-type problems were encountered
+in BD, and avoided or solved in GGB. As GGB is written in PS, this was
+done using various "features" of FP, as listed above. In this way,
+the GGB project can be seen as a case study in working with legacy code
+using purely functional programming.
+
+The hypothesis of this thesis was then evaluated by examining if
+and how pure FP helped with these "legacy problems," both when
+fixing problems or improving how a problem was solved in BD, including
+the parts of GGB that interact with BD, as well as parts of
+GGB that are not related to BD, but solutions to which would
+likely end up exhibiting legacy-style problems.
+
+# The hypothesis was evaluated by identifying legacy code-type problems
+# in BD, then "solving" them by implementing similar functionality
+# in GGB, using FP techniques.
 
 # However, it was never the purpose to solve them in that way;
 # it's simply how the problems were "naturally" solved in PS.
@@ -776,7 +814,7 @@ in GGB, using FP techniques.
 ** Summary
 
 # Summarize how we evaluate the hypothesis with this
-The hypothesis that functional programming techniques can help when
+The hypothesis, that functional programming techniques can help when
 working with an existing legacy code base, as well as lead to code
 that is less likely to exhibit legacy code problems in the future,
 was tested by developing an application in Purescript that both
