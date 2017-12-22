@@ -651,27 +651,12 @@ problems
 then frame hypothesis
 
 finally present BD & GGB; describe project
-
-
 #+end_comment
 
-# TODO this quote should fit in somewhere in the Method section
-#+BEGIN_QUOTE
-I think the lack of reusability comes in object-oriented languages,
-not functional languages. Because the problem with object-oriented
-languages is they’ve got all this implicit environment that they carry
-around with them. You wanted a banana but what you got was a gorilla
-holding the banana and the entire jungle.
 
-If you have referentially transparent code, if you have pure functions
-— all the data comes in its input arguments and everything goes out
-and leave no state behind — it’s incredibly reusable.
---- Joe Armstrong\cite{seibel2009coders}
-#+END_QUOTE
-
-# TODO THIS
 The purpose of this thesis was to evaluate whether pure FP can be a tool for
-working with legacy codebases. ___
+working with legacy codebases, and if pure FP tends to lead to code
+that is less likely to exhibit legacy problems.
 
 This chapter begins with arguments in favor of the hypothesis,
 enumerating some features of pure FP that appear advantageous for
@@ -679,7 +664,6 @@ limiting the potential problems associated with legacy code. Next, the
 programming project that is the core of the thesis, the Graph Genetics
 Browser (GGB) is introduced, followed by how the hypothesis was
 evaluated in the context of this project.
-
 
 
 ** Functional programming for legacy codebases
@@ -712,8 +696,25 @@ summary - by eliminating side effects & giving the programmer tools to know
   pure FP appears to be usable to limit the problems that lead to legacy code problems
 #+end_comment
 
+# TODO reorder these paragraphs & quote
 Purely functional programming has many tools and features that are likely
-to limit the problems of legacy code. This section begins by introducing
+to limit the problems of legacy code.
+
+# TODO this quote should fit in somewhere in the Method section
+#+BEGIN_QUOTE
+I think the lack of reusability comes in object-oriented languages,
+not functional languages. Because the problem with object-oriented
+languages is they’ve got all this implicit environment that they carry
+around with them. You wanted a banana but what you got was a gorilla
+holding the banana and the entire jungle.
+
+If you have referentially transparent code, if you have pure functions
+— all the data comes in its input arguments and everything goes out
+and leave no state behind — it’s incredibly reusable.
+--- Joe Armstrong\cite{seibel2009coders}
+#+END_QUOTE
+
+This section begins by introducing
 the programming language used in the thesis project, and continues with
 providing examples of language features that are likely to reduce the
 legacy code-related problems and code patterns in general.
@@ -730,11 +731,47 @@ productivity and program correctness.
 # Continue by filling in these subsections wrt the above `Code quality` ideas
 
 *** Immutability
+Some data being "immutable" means it does not change. PS being "immutable
+by default" means that all values that one work with when writing PS code
+are immutable --- nothing can change[fn:immutable-caveat]. Instead, if
+a function e.g. sorts a list, it creates a new sorted list, rather than
+modify the existing list. This ensures that all other parts of the program
+that uses the input list continue to function as they did before the sorting
+function was called. This would not have to be the case if the list changed
+in memory. The programmer never has to think about copying values;
+PS takes care of it.
+
+Immutability by default reduces the reach of code by eliminating one
+prominent side-effect. It provides the programmer with absolute
+certainty that:
+
+# TODO reword these I think
+1. inputs to a function are unchanged in that function;
+2. calling a function on some value does not change that value.
+
+
+Mutation is one common side-effect in imperative programming, but far
+from the only one. The next section considers effectful programming
+in general.
+
+[fn:immutable-caveat] There are some mutable data structures in PS, e.g.
+arrays that support in-place mutation for efficiency. These are separate
+from the immutable versions; transforming between the two must be done
+explicitly. As mutation is an effect, it too is captured by the type system
+and must be done in the `Eff` type; see # TODO add ref to Purity section!!
+
 
 *** Purity
 
+# TODO purity as without side-effect
+# TODO brief intro to purity in types
+# TODO mutation as effect; ST monad, STArray
+
 *** Type system
-**** Row types?
+
+# TODO more on purity in types?
+# TODO CT abstractions in types --- monoid etc.
+# TODO parametric polymorphism, free theorems, HKTs
 
 
 ** Extending a Legacy System
