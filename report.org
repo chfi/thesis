@@ -59,16 +59,46 @@ Martin, Foreword to Working Effectively with Legacy Code
 \cite{feathers2004working}
 #+END_QUOTE
 
-# v. quick intro to legacy code
+# TODO redo this probably; opinionated & without citations~~
+Problems related to and caused by legacy code are ubiquitous. Maintenance
+of legacy systems costs billions of US dollars every year, and as time
+goes on, the number of legacy systems in production will continue growing,
+as what is considered modern today is likely to become "legacy" tomorrow.
+In fact, one does not need to go back far in time to find "legacy" code,
+as any code that is difficult to understand, and it is difficult to make
+changes to such that the effects of the changes on the system are predictable,
+can be considered "legacy" code.
 
-# overview of the problems caused by legacy code
+Many solutions have been proposed and tried, yet legacy code continues
+to be a problem. In fact, it will likely continue to be a problem
+--- not until a way to "repair" legacy code is found, but a way to
+write code that does not /become/ legacy code is found\cite{weide1995reverse}.
 
-# v. quick intro to FP
+# TODO add more on FP?
+This thesis is concerned with evaluating purely functional programming
+as one potential solution to and preventative measure against legacy
+code problems. This was done by developing a web application in PureScript
+that both embeds an existing JavaScript application, as well as provides
+novel functionality. The process, and resulting code, were evaluated
+# TODO probably expand & give brief definition of signs here!
+by looking for signs of legacy code problems, as defined in the Method
+chapter.
 
-# overview of the problems solved by FP
 
 ** Objective
 # see if FP can solve legacy code by developing GGB
+
+# TODO reword these
+The objective of the thesis consists of evaluating purely functional
+programming as a tool to:
+
+1. work with and extend an existing legacy system;
+2. develop a "legacy-resistent" application.
+
+# TODO move Method/Extending a Legacy System/Biodalliance here?
+The legacy system in question is Biodalliance, a genome browser written
+in JavaScript.
+
 
 # TODO briefly introduce GN2 and BD
 # TODO introduce problems w/ BD
