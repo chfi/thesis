@@ -762,13 +762,14 @@ and must be done in the `Eff` type; see # TODO add ref to Purity section!!
 
 
 *** Purity
-
+# TODO 150 words
 # TODO purity as without side-effect
 # TODO brief intro to purity in types
 # TODO mutation as effect; ST monad, STArray
 
 *** Type system
 
+# TODO 150 words
 # TODO more on purity in types?
 # TODO CT abstractions in types --- monoid etc.
 # TODO parametric polymorphism, free theorems, HKTs
@@ -1096,17 +1097,77 @@ difficult it would be to extend BD without the support of GGB.
 PureScript was an excellent tool for developing GGB; in the author's
 opinion, it was no doubt the best choice. PS's FFI capabilities made
 it easy to wrap the native JS APIs of BD and Cy.js, then construct
-type-safe PS APIs. This minimizes the reach of JS code into the
-GGB codebase. Several times during development, when some part
-of the system started behaving strangely, it was due to the FFI almost
-every time. Debugging even untyped JS becomes doable when it is
+type-safe PS APIs. This minimizes the reach of JS code into the GGB
+codebase. Several times during development, when some part of the
+system started behaving strangely, it was due to the FFI almost every
+time. Even JS code, which due to its untyped dynamic nature
+tends to lead to bugs in unexpected places, becomes easy to debug when
 restricted to the very edges of the program.
 
-# TODO PS is an excellent tool for working with legacy JS projects;
-# at least when you have a small number of "injection points", e.g. glyphs in BD
+However, it is possible that BD was uncharacteristically simple to
+hook into with another application. While the JS API that is exposed
+by BD is minimalistic, the "incisions" that had to be made into BD's
+source code to make it possible for GGB to add some given functionality,
+were few and quite small.
 
-# TODO caveat: BD was relatively well modularized, and some previous
-# work had been done on BD to make it so; it was fairly easy to know what to do and where
+As an example, adding support for external renderers (something
+done before this project as a part of GSoC 2016[fn:gsoc2016-renderers]),
+while a large undertaking in terms of the time required to understand
+what had to be done, and rewriting functions to better understand
+the rendering system as a whole, very few changes were made to the
+control flow of the rendering system. That is, few, if any, changes
+that may have led to undesired changes of system behavior, were required.
+
+[fn:gsoc2016-renderers] The process is detailed in the blog post
+at this URL: https://chfi.se/posts/2016-07-26-gsoc-render-complete.html
+
+On the GGB side, this can be seen in the fact that the entire `Glyph`
+system of defining new ways of displaying data is mapped to BD by
+one relatively small function, seen in code block [[code:glyph-together-1]].
+
+`Glyph` is also an excellent argument for PS and GGB being extensible
+and easy to maintain. For example, if a more precise way of checking
+whether a glyph covers a given point on the canvas (something currently
+done by providing axis-aligned bounding boxes) is desired, it is simple
+to create a new interpreter that maps glyphs to some other more exact
+collision shape.
+
+# TODO add this example if it ends up looking good (later anyway)
+#+begin_comment
+#+name: code:discussion-glyph-collision-example
+#+caption:
+#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
+
+probably actually want
+
+glyphCoverN :: GlyphF
+            ~> Writer (Disj (Tuple Number Number -> Boolean))
+
+not super readable but lol
+
+
+not this:
+glyphCoverN :: GlyphF a -> Const (Tuple Number Number -> Boolean) a
+glyphCoverN (Stroke _ a) = pure a
+glyphCoverN (Circle p r a) = do
+  tell $ GlyphPosition { min: p.x - (r * 1.5)
+                       , max: p.x + (r * 1.5)
+                       , minY: p.y - (r * 1.5)
+                       , maxY: p.y + (r * 1.5)
+                       }
+  pure a
+-- ..
+#+END_SRC
+
+#+end_comment
+
+Another potential change that is easily facilitated by `Glyph`'s
+construction using the `Free` monad would be to add support for new
+ways of rendering the browser, e.g. using WebGL. Write another
+interpreter that maps glyphs to whatever the rendering system
+requires, and suddenly all existing glyphs (and, by extension, all
+functions that e.g. work on collections of glyphs) are compatible with
+this new rendering system.
 
 # TODO is it worthwhile to embed JS apps in a PS app
 
@@ -1143,8 +1204,9 @@ advised.
 
 # TODO would the codebase be of similar quality, and would the progress timeline be the same
 
-
 # TODO maybe move this to a subsection under PS section
+
+
 ** Developmental difficulties
 
 # TODO halogen difficulties
