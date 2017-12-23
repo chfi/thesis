@@ -752,7 +752,7 @@ certainty that:
 
 Mutation is one common side-effect in imperative programming, but far
 from the only one. The next section considers effectful programming
-in general.
+in genera
 
 [fn:immutable-caveat] There are some mutable data structures in PS, e.g.
 arrays that support in-place mutation for efficiency. These are separate
@@ -760,19 +760,78 @@ from the immutable versions; transforming between the two must be done
 explicitly. As mutation is an effect, it too is captured by the type system
 and must be done in the `Eff` type; see # TODO add ref to Purity section!!
 
-
+# TODO not sure about the order of these two sections; purity & types are closely connected
 *** Purity
-# TODO 150 words
-# TODO purity as without side-effect
-# TODO brief intro to purity in types
-# TODO mutation as effect; ST monad, STArray
+
+A purely functional programming language does not only prevent the
+side-effect of mutating data in a function; it prohibits functions
+from causing /any/ side-effect[fn:side-effect-caveat]. In pure FP
+a function is in truth a function; for a given input it must produce
+the same output each and every time it is called. The output includes
+all effects the function causes; some examples of effects are now given.
+
+[fn:side-effect-caveat] In PureScript, functions can be made impure
+by improper use of the FFI, or by using "unsafe" functions such
+as `unsafeCoerce`. This is not encouraged.
+
+A /partial/ function is one that is not defined on all its inputs,
+e.g. a function that tries to access an out of bounds index on
+an array, whose type is given in block [[code:method-unsafe-index]].
+If the given index is outside the array, the function explodes,
+for example with an exception. Hardly what the type says it will
+do, so `unsafeIndex` is not truly a function.
+
+#+name: code:method-unsafe-index
+#+caption:
+#+BEGIN_SRC purescript :exports none
+unsafeIndex :: forall a. Array a -> Int -> a
+#+END_SRC
+
+Another effect is working with implicit state; another, retrieving
+data from an external source, or updating the user interface. All of
+these effects can be useful, possibly vital, for our programs, so it
+would not be desirable to discard them in the name of purity.
+Fortunately, PS provides tools to encode effects in the types of
+functions, allowing us to write pure yet effectful functions. The next
+section gives more details.
+
 
 *** Type system
 
-# TODO 150 words
+PS has a powerful type system that makes it possible to describe
+much more of the semantics of the program in a way that the compiler
+can describe and check for us.
+
+# TODO simplify this maybe
+For example, the effect of partiality can be captured in the type system
+with the `Maybe` type, defined in code block [[code:method-maybe]]. A value
+of type `Maybe Int` can contain either some `Int` wrapped in a `Just`,
+or `Nothing`. When writing functions that take a `Maybe` as input, the
+PS compiler will ensure that both possibilities are accounted for by
+failing with an error if something is missing.
+
+#+name: code:method-maybe
+#+caption:
+#+BEGIN_SRC purescript :exports none
+data Maybe a
+  = Just a
+  | Nothing
+#+END_SRC
+
+With `Maybe` it is possible to write a safe, pure version of `index`,
+see block [[code:method-safe-index]]. The effect of potential failure
+is captured in the function returning `Maybe a` rather than `a`.
+
+#+name: code:method-safe-index
+#+caption:
+#+BEGIN_SRC purescript :exports none
+index :: forall a. Array a -> Int -> Maybe a
+#+END_SRC
+
 # TODO more on purity in types?
 # TODO CT abstractions in types --- monoid etc.
 # TODO parametric polymorphism, free theorems, HKTs
+# TODO mutation as effect; ST monad, STArray
 
 
 ** Extending a Legacy System
@@ -1136,7 +1195,7 @@ collision shape.
 #+begin_comment
 #+name: code:discussion-glyph-collision-example
 #+caption:
-#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
+#+BEGIN_SRC purescript :exports none
 
 probably actually want
 
