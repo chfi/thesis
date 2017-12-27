@@ -798,17 +798,17 @@ section gives more details.
 
 *** Type system
 
-PS has a powerful type system that makes it possible to describe
-much more of the semantics of the program in a way that the compiler
-can describe and check for us.
+PS has a powerful type system that makes it possible to describe much
+more of the semantics of the program in a way that the compiler can
+describe and check for us.
 
 # TODO simplify this maybe
-For example, the effect of partiality can be captured in the type system
-with the `Maybe` type, defined in code block [[code:method-maybe]]. A value
-of type `Maybe Int` can contain either some `Int` wrapped in a `Just`,
-or `Nothing`. When writing functions that take a `Maybe` as input, the
-PS compiler will ensure that both possibilities are accounted for by
-failing with an error if something is missing.
+For example, the effect of partiality can be captured in the type
+system with the `Maybe` type, defined in code block [[code:method-maybe]].
+A value of type `Maybe Int` can contain either some `Int` wrapped in a
+`Just`, or `Nothing`. When writing functions that take a `Maybe` as
+input, the PS compiler will ensure that both possibilities are
+accounted for by failing with an error if something is missing.
 
 #+name: code:method-maybe
 #+caption:
@@ -828,14 +828,79 @@ is captured in the function returning `Maybe a` rather than `a`.
 index :: forall a. Array a -> Int -> Maybe a
 #+END_SRC
 
+# TODO footnote on removing effect rows in 0.12...
+In PS, another type is used to encapsulate so-called native effects,
+such as printing to the console, updating the UI, etc. This is the
+`Eff` type; e.g. if we have a value of type `Eff Int`, we have an
+effectful computation that returns an `Int`. It could read from
+standard input, perform a fetch from a server, etc. Another effect
+covered by `Eff` is local mutation, such as in-place mutation of an
+array.
+
+
 # TODO more on purity in types?
 # TODO CT abstractions in types --- monoid etc.
-# TODO parametric polymorphism, free theorems, HKTs
-# TODO mutation as effect; ST monad, STArray
+
+The type system assists in more than purity. For example, PS supports
+two powerful forms of polymorphism, typeclasses and parametric
+polymorphism.
+
+# TODO this paragraph is bad
+# TODO REF
+Typeclasses provide ad-hoc polymorphism on types, letting us write
+functions on types that satisfy some "constraint" rather than
+specifying concrete types. One example is the `Functor` typeclass,
+given in code block [[code:method-functor]]. Any function that takes as
+argument a type with the `Functor` constraint can use the `map`
+function on that argument; conversely, that function can be applied to
+any type with a `Functor` instance.
+
+#+name: code:method-functor
+#+caption:
+#+BEGIN_SRC purescript :exports none
+class Functor f where
+  map :: forall a b. (a -> b) -> f a -> f b
+#+END_SRC
+
+Often typeclasses are used to work with algebraic and
+category-theoretic abstractions, which provide a powerful way to write
+code that is both general and can be used to write code such that the
+compiler can check the semantics of our program in a way that is
+relevant to the actual program behavior.
+# TODO ref to use of Free monad, monoids, etc. in Results/Glyph section
+
+Parametric polymorphism is reminiscent of generics in languages such
+as Java, but more powerful. Consider again the function in block
+[[code:method-safe-index]]. The type says that it works on `forall a.
+Array a`; meaning it accepts any array, no matter what it contains.
+This is what it means for a function to be "parametrically
+polymorphic". Besides reducing code duplication by not having to write
+one indexing function for `Array Int`, another for `Array Boolean`
+etc., parametric polymorphism also provides some additional knowledge
+about the function, by enforcing that the function cannot do anything
+with some of its arguments other than pass them around. By looking at
+the type signature for `index`, we /know/ that the output (if it is
+not `Nothing`) must come from the given array, as the function cannot
+create values of type `a` from thin air.
+
+A more extreme example is given in code block
+[[code:method-identity-fun]]. This is the type of the identity function;
+the identity function is in fact the only function with this type.
+This is because it is parametrically polymorphic --- the only thing
+`id` can do with its argument is return it, there is literally nothing
+else that can be done.
+
+#+name: code:method-identity-fun
+#+caption:
+#+BEGIN_SRC purescript :exports none
+id :: forall a. a -> a
+#+END_SRC
+
+There is much more to PS' type system, but this covers most of what is
+used in the thesis project.
 
 
 ** Extending a Legacy System
-
 
 #+begin_comment
 present BD as legacy code project; including examples of previous work on extending it etc.
@@ -848,9 +913,9 @@ be free of the code smells.
 #+end_comment
 
 
-In this section, the legacy system that was extended --- Biodalliance --- is described.
-The extent and nature of the changes, and more details of the resulting application,
-are also given.
+In this section, the legacy system that was extended --- Biodalliance
+--- is described. The extent and nature of the changes, and more
+details of the resulting application, are also given.
 
 *** Biodalliance
 
@@ -865,14 +930,6 @@ any special tools to be used. It also supports exporting images as
 SVG, which can be used as high quality figures in publications.
 
 # TODO example of difficulties: adding CSV sources; horizontal rulers; /new/ plot types
-
-# TODO context of wanting to use BD -- GN2
-# TODO Why BD?
-#      It's proven to work
-#      configurations & data exist
-#      supports many formats
-#      configurable
-#      fast
 
 # TODO make sure GN2 has already been introduced...
 # TODO maybe more on why we want these features
@@ -892,11 +949,6 @@ files, and less than clear flow of control.
 part of Google Summer of Code 2016, and encountered some difficulties:
 https://chfi.se/posts/2016-08-22-gsoc-final.html
 
-# TODO Why not BD?
-#      JS is untyped
-#      JS provides no facilities for supporting the programmer
-#      big codebase
-#      legacy!!!
 
 We want many of the features of BD, which have required much time and
 effort to be implemented. However, we also want new features, but the
@@ -904,19 +956,20 @@ time and effort required to implement them in BD is much greater than
 necessary due to the legacy aspect of BD's codebase.
 
 # TODO idk about this wording
-The solution that was decided upon was to develop a new genome browser.
-This browser would allow embedding BD within it, and so be compatible
-with BD and support the desired features. However, it would be a
-separate application, and be independent of BD's baggage.
-This application is the Genetics Graph Browser, to which the next section is dedicated.
+The solution that was decided upon was to develop a new genome
+browser. This browser would allow embedding BD within it, and so be
+compatible with BD and support the desired features. However, it would
+be a separate application, and be independent of BD's baggage. This
+application is the Genetics Graph Browser, to which the next section
+is dedicated.
 
 
 *** Genetics Graph Browser
 
 The Genetics Graph Browser was written in PS. It begun as a tool for
 constructing BD-compatible data structures for creating new ways to
-plot data, but soon grew to a web application that wraps BD and
-Cytoscape.js.
+plot data, but soon grew to a web application that embeds BD and
+Cy.js, and provides communication between the two.
 # TODO note that this will be detailed in Results (Glyph)
 
 # TODO give more details on GGB! give a basic overview of the project "as planned"
@@ -924,10 +977,20 @@ Cytoscape.js.
 
 Throughout its development, various legacy-type problems were
 encountered in BD, and avoided or solved in GGB. As GGB is written in
-PS, this was done using various "features" of FP, as listed above. In
+PS, this was done using various "features" of FP, from the sections above. In
 this way, the GGB project can be seen as a case study in working with
 legacy code using purely functional programming.
 
+# TODO this is not great
+The main features of GGB include:
++ Working with JS APIs
++ Configuration
++ Units and types
++ Rendering data to the screen
++ Communication between BD and Cy.js
++ Creating a purely functional UI containing a legacy JS app
+
+# TODO Cy.js should already be introduced
 Besides wrapping BD and providing genome browser functionality, one of
 the goals of GGB is to support exploratory data analysis of both
 genome-based data as well as graph-based, semantic web data. Where BD
@@ -946,12 +1009,10 @@ parts of GGB that interact with BD, as well as parts of GGB that are
 not related to BD, but solutions to which would likely end up
 exhibiting legacy-style problems.
 
-# The hypothesis was evaluated by identifying legacy code-type problems
-# in BD, then "solving" them by implementing similar functionality
-# in GGB, using FP techniques.
-
-# However, it was never the purpose to solve them in that way;
-# it's simply how the problems were "naturally" solved in PS.
+PS was chosen as the language for the project for its support for
+interoperation with JS --- PS can simply call JS functions and vice
+versa. However, PS also enforces a purely functional programming
+style, making it ideal for evaluating the hypothesis.
 
 
 ** Summary
@@ -963,6 +1024,8 @@ that is less likely to exhibit legacy code problems in the future,
 was tested by developing an application in Purescript that both
 interfaces with an existing legacy genome browser, and is intended
 to be a stand-alone browser in the future.
+
+# TODO summarize how the various FP features are expected to help
 
 Identifying features whose implementation were already cause for concern in
 BD, or had the potential to be implemented in problematic ways in GGB,
