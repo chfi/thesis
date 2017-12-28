@@ -253,10 +253,10 @@ relates to the underlying code. Legacy codebases often lack
 documentation and tests, without which a new programmer on the project
 has few, if any, tools at their disposal to understand the codebase as
 it is, since they do not have any knowledge of how and why the code
-came to be as it is. Even if there is a design or system specification
---- which is far from certain --- it is not necessarily accurate. The
-code may very well have grown beyond the initial specification, and
-the specification need not have been updated in step with the code.
+came to be as it is. Even if a design or system specification exists,
+it is not necessarily accurate. The code may very well have grown
+beyond the initial specification, and the specification need not have
+been updated in step with the code.
 
 For these reasons, one of the main problems of working with legacy
 code is understanding it in the first place \cite{feathers2004working}
@@ -1292,62 +1292,156 @@ functions that e.g. work on collections of glyphs) are compatible with
 this new rendering system.
 
 # TODO is it worthwhile to embed JS apps in a PS app
-
-# TODO maybe notes on PS FFI, row types, records. idk
+In short, embedding a legacy JS app in a PS app was in this case 
+an efficient way of adding achieving the developmental goals of
+the project, as interfacing with BD required little overhead.
+It helped that work had already been done in that area; other
+projects may or may not present difficulties for the approach
+taken here.
 
 
 ** Purely functional programming
 # ** Functional programming and code quality
 
-# TODO FP encourages "better" code, but does not enforce it; however
-# it often becomes more difficult to write bad than good code
+Recall that our definition of "good code" is code which is easy
+to understand when looked at. Our heuristics for good code include
+functions that do not have far-reaching or otherwise difficult to
+predict side-effects; conversely, it is also good to be able to
+see at a glance what the purpose of some given function is. 
 
-# TODO inverting the imperative idea of the callee controlling
-# effects is one of the most important parts
+Let us first examine how pure FP has led to functions and code that
+more clearly presents their purpose. 
 
-# TODO clarify this; could be written better
-As established, one of the biggest problems when trying to understand
-some piece of code is seeing what it truly does, i.e. what other
-parts of the codebase it calls, and what effects may be performed
-down the line. Pure FP inverts this, as all effects, from potential
-failure in a function to updating the browser DOM, are encapsulated
-in the type system. This makes it impossible to call an effectful
-function "accidentally". [fn:unsafe-purity]
+*Configuration* in GGB is
+done by parsing a foreign JS object into a record; this record is
+then used to initialize the browser itself. 
 
-[fn:unsafe-purity] It is possible to bypass the type system's safety
-using the FFI or functions such as `unsafeCoerce`. This is not
-advised.
+*Code reuse* is increased by features such as typeclasses and parametric
+polymorphism. The use of a `Free` monad DSL in the `Glyph` parts
+is a good example of this. 
 
-# TODO tendency to become difficult to read; terse, implicit
-# information in types (need better docs).
+*Fewer logic problems* thanks to representing values in types that
+correspond to their actual units as semantically relevant to the
+program behavior, rather than their runtime representation.
 
-** Would JS have sufficed?
-# i.e. would GGB have been possible with JS only
+*Abstractions* such as `Semigroup`, `Functor`, etc. provide the programmer
+with information about what a function does. Code blocks [[code:discussion-concrete-types]]
+and [[code:discussion-constraints]] show the type signatures for two
+functions, `mystery1` and `mystery2`. The function implementations are 
+in fact the same, but the information given in the types is not.
 
-# TODO would the codebase be of similar quality, and would the progress timeline be the same
+If we look only at `mystery1`, the type give us some idea
+of what the function does, but not much. Does it return the first list
+in the array? The last? Maybe it creates a list containing the maximum
+value of each list in the array. Because the function knows so much
+about the types it works on, there is a lot that it can do.
 
-# TODO maybe move this to a subsection under PS section
+# TODO this could be improved...
+On the other hand, see the type of `mystery2`. The only tools at our
+disposal are those from the `Foldable` and `Monoid` typeclasses:
+from `Foldable`, we know we can walk through the collection, applying a binary function
+on the current and next value; from `Monoid`, we have a binary operation
+that combines two of the values in the collection, and we can create an
+empty value. Code block [[code:discussion-fold]] shows the implementation.
 
+#+name: code:discussion-concrete-types
+#+caption: A concretely typed 
+#+BEGIN_SRC purescript :exports none
+mystery1 :: Array (List Int)
+         -> List Int
+#+END_SRC
+
+#+name: code:discussion-constraints
+#+caption:
+#+BEGIN_SRC purescript :exports none
+mystery2 :: forall f m.
+            Foldable f
+         => Monoid m
+         -> f m
+         -> m
+#+END_SRC
+
+# TODO add description of Foldable typeclass?
+#+name: code:discussion-fold
+#+caption:
+#+BEGIN_SRC purescript :exports none
+mystery2 = fold
+mystery1 = mystery2
+#+END_SRC
+
+Next, the impact of pure FP on understanding the consequences of
+calling functions. 
+One of the reasons that it can be difficlt to see what the effects
+of calling some function in an impure language such as JS is that
+the function can not only do more or less whatever it wants with
+whatever it has at its disposal (which is not necessarily easy to
+discover, either), but it can also call other functions with arbitrary
+effects, and so on, and so on. The programmer must walk the entire
+path of function calls to discover what happens.
+
+Pure FP inverts this, as all effects, be it potential failure in a
+function, or updating the browser DOM, or mutating a mutable array,
+are encapsulated in the type system. This makes it impossible to
+call an effectful function from a pure function. The upshot of this inversion is that code cannot cause far-reaching
+consequences; there is none of the "spooky action at a distance" that
+is one of the main problems when trying to comprehend legacy code.
 
 ** Developmental difficulties
 
-# TODO halogen difficulties
-# TODO events stuff
-# TODO refactoring stuff
-# TODO too early abstractions
+There was not much of a design specification for GGB at the start,
+and as the author did not have previous experience with developing
+a large pure FP application, there were many design and implementation 
+dead-ends on the way to the current state of the product, as it was
+difficult to decide on the architecture of the application, and
+sometimes how to approach and solve smaller problems. Deciding on
+some abstraction too early was a mistake repeatedly made, leading
+to refactoring to a more specific implementation. [fn:author-apology]
+Often, once the problem was solved, a more general solution showed
+itself, and another refactoring was made. Thanks to the type system,
+even large refactorings were quite easy, as the compiler largely
+ensured that the code at the end of the refactoring effort behaved the
+same as before.
 
-Another problem was lack of documentation. PS is a young language,
-and has a small but enthusiastic community. The language has moved
-fast, and so has many of the packages.
+[fn:author-apology] Admittedly, the author tended to attempt to use
+newly learned (but not necessarily understood) concepts and abstractions
+throughout the project. 
+
+Pure FP is a very different beast from imperative programming, not only
+when it comes to larger-scale program design. Many of the techniques 
+used in this project require considerably more knowledge to understand
+than similar solutions in imperative languages. Using typeclass constraints
+(`Semigroup` etc.) require the programmer to know their meaning, which
+can become overwhelming when a function uses half a dozen or more constraints. [fn:abstraction-apology]
+Highly abstract code also tends to become small and terse, which can
+also be a problem, especially for newcomers to the language and paradigm.
+
+# TODO maybe could do with a better example (one with more methods, filterable?)
+[fn:abstraction-apology] On the other hand, one only needs to learn how
+`Semigroup` works once.
+
+This is not to imply that these abstractions etc. must be used to write good
+PS code, nor that they are required to gain any of the benefits of
+pure FP. They can in fact be ignored, while still reaping most of
+the benefits, as immutability, purity, and type-safety are still
+provided.
+
+However, it can be difficult to ignore, as one inevitably stumbles
+upon them when reading library code --- something that is likely
+to occur, as many libraries suffer from having too little documentation.
+This is a symptom of PS being such a young language, rather than
+some inherent problem with it. Fortunately this problem is mitigated
+by PS having a very enthusiastic and welcoming community, filled
+with people glad to help newcomers with their problems.
 
 
-** Future of GGB
+** Summary
 
-# TODO Native track?
-# TODO configuration, dhall
-# TODO cytoscape
-# TODO extrapolate from ease of refactoring that extensibility & maintenance will be easier
-
+# TODO s/GGB was developed/GGB were developed/ ? idk
+Pure FP was in many ways a boon in the development of GGB. While
+there were problems during development, their impact was limited
+by the support of the type system and purity; nor is it likely
+that other problems would not have occurred if GGB was developed
+using in imperative language and idioms.
 
 
 * Conclusion
@@ -1373,6 +1467,18 @@ Future work:
 
 
 ** Limitations and Future Work
+
+
+** Future of GGB
+
+GGB will continue to evolve beyond what has been described in this
+report, 
+
+# TODO Native track?
+# TODO configuration, dhall
+# TODO cytoscape
+# TODO extrapolate from ease of refactoring that extensibility & maintenance will be easier
+
 
 
 # Bibliography
