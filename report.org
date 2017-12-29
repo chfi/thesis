@@ -762,7 +762,8 @@ certainty that:
 
 Mutation is one common side-effect in imperative programming, but far
 from the only one. The next section considers effectful programming
-in genera
+in general.
+
 
 [fn:immutable-caveat] There are some mutable data structures in PS, e.g.
 arrays that support in-place mutation for efficiency. These are separate
@@ -780,9 +781,11 @@ a function is in truth a function; for a given input it must produce
 the same output each and every time it is called. The output includes
 all effects the function causes; some examples of effects are now given.
 
+
 [fn:side-effect-caveat] In PureScript, functions can be made impure
 by improper use of the FFI, or by using "unsafe" functions such
 as `unsafeCoerce`. This is not encouraged.
+
 
 A /partial/ function is one that is not defined on all its inputs,
 e.g. a function that tries to access an out of bounds index on
@@ -954,6 +957,7 @@ The codebase has grown organically over time, and has become complex,
 with single pieces of functionality (such as rendering data to the
 HTML5 canvas) being split into several large functions in different
 files, and less than clear flow of control.
+
 
 [fn:gsoc2016-footnote] The author previously worked on extending BD as
 part of Google Summer of Code 2016, and encountered some difficulties:
@@ -1250,8 +1254,10 @@ the rendering system as a whole, very few changes were made to the
 control flow of the rendering system. That is, few, if any, changes
 that may have led to undesired changes of system behavior, were required.
 
+
 [fn:gsoc2016-renderers] The process is detailed in the blog post
 at this URL: https://chfi.se/posts/2016-07-26-gsoc-render-complete.html
+
 
 On the GGB side, this can be seen in the fact that the entire `Glyph`
 system of defining new ways of displaying data is mapped to BD by
@@ -1413,9 +1419,11 @@ even large refactorings were quite easy, as the compiler largely
 ensured that the code at the end of the refactoring effort behaved the
 same as before.
 
+
 [fn:author-apology] Admittedly, the author tended to attempt to use
 newly learned (but not necessarily understood) concepts and abstractions
 throughout the project.
+
 
 Pure FP is a very different beast from imperative programming, not only
 when it comes to larger-scale program design. Many of the techniques
@@ -1426,9 +1434,11 @@ can become overwhelming when a function uses half a dozen or more constraints. [
 Highly abstract code also tends to become small and terse, which can
 also be a problem, especially for newcomers to the language and paradigm.
 
+
 # TODO maybe could do with a better example (one with more methods, filterable?)
 [fn:abstraction-apology] On the other hand, one only needs to learn how
 `Semigroup` works once.
+
 
 This is not to imply that these abstractions etc. must be used to write good
 PS code, nor that they are required to gain any of the benefits of
