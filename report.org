@@ -1474,16 +1474,99 @@ Future work:
   Looking at open source projects; is functional OSS "better"?
 #+end_comment
 
+# ** Pure FP and legacy systems
 
+
+# TODO 1. Pure FP as tool for working w/ legacy systems; move relevant
+# parts from discussion
+
+Pure FP was a good tool for GGB and BD, however other legacy systems
+may be more difficult to use the techniques presented in this thesis.
+For example, it may not be possible to find single points of entry a
+lá the glyphs in BD's rendering system, or it may simply not be
+feasible to embed the application due to its function, language, etc.
+
+Even then, it is possible to write pure code, and take advantage of
+its benefits. Pure functions can be written in practically any
+language, and they provide the same benefit as shown in this report.
+Abstractions such as provided by the `Monoid` and `Functor`
+typeclasses can also be represented in other languages. Doing this
+will lead to code that
+
+
+Why use PS, then?
+
+What one misses out on by using an impure language is the enforced
+purity and encapsulated effects; that is, the compilator cannot help
+as much. Sometimes other tools can be configured to enforce purity in
+an impure language, e.g. Bodil Stokke's `cleanjs` configuration for
+ESLint, a JS linter[fn:cleanjs-link].
+
+
+[fn:cleanjs-link] `cleanjs` can be found at its GitHub repository: https://github.com/bodil/eslint-config-cleans
+
+
+However, without a type system
+akin to that of PS, the compilator simply cannot provide much assistance.
+That is, one gains the advantages of code that is less likely to have far-reaching
+and difficult to predict consequences, but it is still up to the
+programmer to keep the program semantics in their head, and ensure
+that the program is correct.
+
+Conversely, there are fewer ways for the programmer to understand
+the code. Tests are still required.
+
+# TODO 2. Pure FP as tool for producing code that does not become
+# legacy in the problematic way; move relevant parts, again
+It also seems likely that pure FP in general produces code that
+ is less prone to legacy-style problems
+
+# TODO challenges of pure FP -- learning curve
+
+# in short: pure FP presents its own set of problems, however those
+# problems largely concern the knowledge of the developers, and in
+# general are "up front," while leading to fewer problems down the
+# line, especially wrt legacy problems. This, too, inverts the "normal"
+# expectations of programming.
 
 
 ** Limitations and Future Work
+
+This project was only that, a single project. It is impossible to draw
+conclusions that are in any way definite with a sample size of 1;
+hopefully larger, more quantitative studies are undertaken in the
+future.
+
+More generally, there has been little research comparing programming
+languages, and even less research on the user experience of languages,
+i.e. on what actually makes a good language # TODO REF SPJ.
+That is another avenue for future research.
+
+This is an area of research that it is difficult to do studies in,
+as while there are plenty of legacy systems to go around, maintaining
+one is expensive enough without experimenting with new approaches,
+or spending additional money on the overhead of performing studies.
+When one considers that to get enough data to learn something
+concrete, experiments such as this one would have to be done on
+many legacy systems, it seems unlikely that such research will be done.
+
+Another way would be to analyze open source software projects. The
+data already exists in the form of source control repositories,
+commit logs, and other logs. There would be other difficulties,
+such as controlling for e.g. community culture and
+other differences between languages used. Nevertheless, some studies
+have been done in this area recently\cite{Ray2014}, and the future may be promising.
 
 
 ** Future of GGB
 
 GGB will continue to evolve beyond what has been described in this
-report, 
+report, including more developed genome/graph exploratory
+interactivity and a genome browser written in PS which would replicate
+some of the functionality of BD.
+
+Given that the project has undergone many refactoring efforts throughout
+its development already,
 
 # TODO Native track?
 # TODO configuration, dhall
