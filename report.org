@@ -106,17 +106,27 @@ in JavaScript.
 # TODO purpose: explore FP as solution to JS legacy garbo
 
 
-** Delimitations
+# ** Context
+
+GeneNetwork 2 (GN2) is a web-based database and toolset for doing genetics online.
+# TODO REF
+
+One of the features we want GN2 to have is a genome browser.
+Biodalliance (BD) is a genome browser written in JS.
+
+This thesis concerns
+
+
+# ** Delimitations
 
 This thesis concerns a single programming project and a single programmer;
-it is a case study more than anything else, and so cannot be taken as
-definite evidence.
+it can be seen as a case study.
 # TODO this: However, it is hoped that
 
-** Background/Context/Motivation
+# ** Background/Context/Motivation
 # GN2, BD etc., GSoC
 
-** GeneNetwork 2/Affiliations
+** Affiliations
 
 
 * Background/Theory
@@ -1292,7 +1302,7 @@ functions that e.g. work on collections of glyphs) are compatible with
 this new rendering system.
 
 # TODO is it worthwhile to embed JS apps in a PS app
-In short, embedding a legacy JS app in a PS app was in this case 
+In short, embedding a legacy JS app in a PS app was in this case
 an efficient way of adding achieving the developmental goals of
 the project, as interfacing with BD required little overhead.
 It helped that work had already been done in that area; other
@@ -1307,45 +1317,46 @@ Recall that our definition of "good code" is code which is easy
 to understand when looked at. Our heuristics for good code include
 functions that do not have far-reaching or otherwise difficult to
 predict side-effects; conversely, it is also good to be able to
-see at a glance what the purpose of some given function is. 
+see at a glance what the purpose of some given function is.
 
 Let us first examine how pure FP has led to functions and code that
-more clearly presents their purpose. 
+more clearly presents their purpose.
 
-*Configuration* in GGB is
-done by parsing a foreign JS object into a record; this record is
-then used to initialize the browser itself. 
+*Configuration* in GGB is done by parsing a foreign JS object into a
+record; this record is then used to initialize the browser itself.
 
-*Code reuse* is increased by features such as typeclasses and parametric
-polymorphism. The use of a `Free` monad DSL in the `Glyph` parts
-is a good example of this. 
+*Code reuse* is increased by features such as typeclasses and
+parametric polymorphism. The use of a `Free` monad DSL in the `Glyph`
+parts is a good example of this.
 
 *Fewer logic problems* thanks to representing values in types that
 correspond to their actual units as semantically relevant to the
 program behavior, rather than their runtime representation.
 
-*Abstractions* such as `Semigroup`, `Functor`, etc. provide the programmer
-with information about what a function does. Code blocks [[code:discussion-concrete-types]]
-and [[code:discussion-constraints]] show the type signatures for two
-functions, `mystery1` and `mystery2`. The function implementations are 
-in fact the same, but the information given in the types is not.
+*Abstractions* such as `Semigroup`, `Functor`, etc. provide the
+programmer with information about what a function does. Code blocks
+[[code:discussion-concrete-types]] and [[code:discussion-constraints]] show
+the type signatures for two functions, `mystery1` and `mystery2`. The
+function implementations are in fact the same, but the information
+given in the types is not.
 
-If we look only at `mystery1`, the type give us some idea
-of what the function does, but not much. Does it return the first list
-in the array? The last? Maybe it creates a list containing the maximum
-value of each list in the array. Because the function knows so much
-about the types it works on, there is a lot that it can do.
+If we look only at `mystery1`, the type give us some idea of what the
+function does, but not much. Does it return the first list in the
+array? The last? Maybe it creates a list containing the maximum value
+of each list in the array. Because the function knows so much about
+the types it works on, there is a lot that it can do.
 
 # TODO this could be improved...
 On the other hand, see the type of `mystery2`. The only tools at our
-disposal are those from the `Foldable` and `Monoid` typeclasses:
-from `Foldable`, we know we can walk through the collection, applying a binary function
-on the current and next value; from `Monoid`, we have a binary operation
-that combines two of the values in the collection, and we can create an
-empty value. Code block [[code:discussion-fold]] shows the implementation.
+disposal are those from the `Foldable` and `Monoid` typeclasses: from
+`Foldable`, we know we can walk through the collection, applying a
+binary function on the current and next value; from `Monoid`, we have
+a binary operation that combines two of the values in the collection,
+and we can create an empty value. Code block [[code:discussion-fold]]
+shows the implementation.
 
 #+name: code:discussion-concrete-types
-#+caption: A concretely typed 
+#+caption: A concretely typed
 #+BEGIN_SRC purescript :exports none
 mystery1 :: Array (List Int)
          -> List Int
@@ -1370,27 +1381,27 @@ mystery1 = mystery2
 #+END_SRC
 
 Next, the impact of pure FP on understanding the consequences of
-calling functions. 
-One of the reasons that it can be difficlt to see what the effects
-of calling some function in an impure language such as JS is that
-the function can not only do more or less whatever it wants with
-whatever it has at its disposal (which is not necessarily easy to
-discover, either), but it can also call other functions with arbitrary
-effects, and so on, and so on. The programmer must walk the entire
-path of function calls to discover what happens.
+calling functions. One of the reasons that it can be difficult to see
+what the effects of calling some function in an impure language such
+as JS is that the function can not only do more or less whatever it
+wants with whatever it has at its disposal (which is not necessarily
+easy to discover, either), but it can also call other functions with
+arbitrary effects, and so on, and so on. The programmer must walk the
+entire path of function calls to discover what happens.
 
 Pure FP inverts this, as all effects, be it potential failure in a
 function, or updating the browser DOM, or mutating a mutable array,
-are encapsulated in the type system. This makes it impossible to
-call an effectful function from a pure function. The upshot of this inversion is that code cannot cause far-reaching
-consequences; there is none of the "spooky action at a distance" that
-is one of the main problems when trying to comprehend legacy code.
+are encapsulated in the type system. This makes it impossible to call
+an effectful function from a pure function. The upshot of this
+inversion is that code cannot cause far-reaching consequences; there
+is none of the "spooky action at a distance" that is one of the main
+problems when trying to comprehend legacy code.
 
 ** Developmental difficulties
 
 There was not much of a design specification for GGB at the start,
 and as the author did not have previous experience with developing
-a large pure FP application, there were many design and implementation 
+a large pure FP application, there were many design and implementation
 dead-ends on the way to the current state of the product, as it was
 difficult to decide on the architecture of the application, and
 sometimes how to approach and solve smaller problems. Deciding on
@@ -1404,10 +1415,10 @@ same as before.
 
 [fn:author-apology] Admittedly, the author tended to attempt to use
 newly learned (but not necessarily understood) concepts and abstractions
-throughout the project. 
+throughout the project.
 
 Pure FP is a very different beast from imperative programming, not only
-when it comes to larger-scale program design. Many of the techniques 
+when it comes to larger-scale program design. Many of the techniques
 used in this project require considerably more knowledge to understand
 than similar solutions in imperative languages. Using typeclass constraints
 (`Semigroup` etc.) require the programmer to know their meaning, which
