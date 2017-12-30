@@ -1484,11 +1484,6 @@ Future work:
   Looking at open source projects; is functional OSS "better"?
 #+end_comment
 
-# ** Pure FP and legacy systems
-
-
-# TODO 1. Pure FP as tool for working w/ legacy systems; move relevant
-# parts from discussion
 
 Pure FP was a good tool for GGB and BD, however other legacy systems
 may be more difficult to use the techniques presented in this thesis.
@@ -1504,40 +1499,33 @@ typeclasses can also be represented in other languages. Doing this
 will lead to code that
 
 
-Why use PS, then?
-
-What one misses out on by using an impure language is the enforced
-purity and encapsulated effects; that is, the compilator cannot help
-as much. Sometimes other tools can be configured to enforce purity in
-an impure language, e.g. Bodil Stokke's `cleanjs` configuration for
-ESLint, a JS linter[fn:cleanjs-link].
+Why use a language such as PS, then? What one misses out on by using
+an impure language is the enforced purity and encapsulated effects;
+that is, the compilator cannot help as much. Sometimes other tools can
+be configured to enforce purity in an impure language, e.g. Bodil
+Stokke's `cleanjs` configuration for ESLint, a JS
+linter[fn:cleanjs-link].
 
 
 [fn:cleanjs-link] `cleanjs` can be found at its GitHub repository: https://github.com/bodil/eslint-config-cleans
 
 
-However, without a type system
-akin to that of PS, the compilator simply cannot provide much assistance.
-That is, one gains the advantages of code that is less likely to have far-reaching
-and difficult to predict consequences, but it is still up to the
+However, without a type system akin to that of PS, the compilator
+simply cannot provide much assistance. That is, one gains the
+advantages of code that is less likely to have far-reaching and
+difficult to predict consequences, but it is still up to the
 programmer to keep the program semantics in their head, and ensure
-that the program is correct.
+that the program is correct. Conversely, there are fewer tools to
+assist the programmer in understanding the code and how it relates
+to the system.
 
-Conversely, there are fewer ways for the programmer to understand
-the code. Tests are still required.
 
-# TODO 2. Pure FP as tool for producing code that does not become
-# legacy in the problematic way; move relevant parts, again
-It also seems likely that pure FP in general produces code that
- is less prone to legacy-style problems
-
-# TODO challenges of pure FP -- learning curve
-
-# in short: pure FP presents its own set of problems, however those
-# problems largely concern the knowledge of the developers, and in
-# general are "up front," while leading to fewer problems down the
-# line, especially wrt legacy problems. This, too, inverts the "normal"
-# expectations of programming.
+To summarize, pure FP has its own set of problems, however those
+problems largely concern the knowledge of techniques, idioms, etc.,
+rather than the knowledge of systems developed with it. These
+can be seen as "up front" problems, which can be solved with developer
+training. If it is the case that pure FP reduces legacy code problems,
+this is a much smaller investment than maintaining a legacy system.
 
 
 ** Limitations and Future Work
@@ -1549,41 +1537,36 @@ future.
 
 More generally, there has been little research comparing programming
 languages, and even less research on the user experience of languages,
-i.e. on what actually makes a good language # TODO REF SPJ.
-That is another avenue for future research.
+i.e. on what actually makes a good language\cite[p.~252]{seibel2009coders}. That is
+another avenue for future research.
 
-This is an area of research that it is difficult to do studies in,
-as while there are plenty of legacy systems to go around, maintaining
-one is expensive enough without experimenting with new approaches,
-or spending additional money on the overhead of performing studies.
-When one considers that to get enough data to learn something
-concrete, experiments such as this one would have to be done on
-many legacy systems, it seems unlikely that such research will be done.
+This is an area of research that it is difficult to do studies in, as
+while there are plenty of legacy systems to go around, maintaining one
+is expensive enough without experimenting with new approaches, or
+spending additional money on the overhead of performing studies. When
+one considers that to get enough data to learn something concrete,
+experiments such as this one would have to be done on many legacy
+systems, it seems unlikely that such research will be done.
 
 Another way would be to analyze open source software projects. The
-data already exists in the form of source control repositories,
-commit logs, and other logs. There would be other difficulties,
-such as controlling for e.g. community culture and
-other differences between languages used. Nevertheless, some studies
-have been done in this area recently\cite{Ray2014}, and the future may be promising.
+data already exists in the form of source control repositories, commit
+logs, etc. There would be other difficulties, such as controlling for
+e.g. community culture and other differences between languages used.
+Nevertheless, some studies have been done in this area
+recently\cite{Ray2014}, and the future may be promising.
 
 
 ** Future of GGB
 
 GGB will continue to evolve beyond what has been described in this
-report, including more developed genome/graph exploratory
-interactivity and a genome browser written in PS which would replicate
-some of the functionality of BD.
+report, including more tools for interactive exploration of
+genome/graph data, and a genome browser written in PS which would
+replicate some of the functionality of BD.
 
-Given that the project has undergone many refactoring efforts throughout
-its development already,
-
-# TODO Native track?
-# TODO configuration, dhall
-# TODO cytoscape
-# TODO extrapolate from ease of refactoring that extensibility & maintenance will be easier
-
-
+Based on the development process thus far, including the fact that
+several large refactoring efforts have been successfully undertaken,
+it appears likely that GGB's codebase is flexible enough that adding
+these features will not be too difficult.
 
 # Bibliography
 
