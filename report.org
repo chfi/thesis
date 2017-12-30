@@ -70,63 +70,56 @@ changes to such that the effects of the changes on the system are predictable,
 can be considered "legacy" code.
 
 Many solutions have been proposed and tried, yet legacy code continues
-to be a problem. In fact, it will likely continue to be a problem
---- not until a way to "repair" legacy code is found, but a way to
-write code that does not /become/ legacy code is found\cite{weide1995reverse}.
+to be a problem. In fact, it will likely continue to be a problem ---
+not until a way to "repair" legacy code is found, but a way to write
+code that does not /become/ legacy code is
+found\cite{weide1995reverse}.
 
 # TODO add more on FP?
 This thesis is concerned with evaluating purely functional programming
 as one potential solution to and preventative measure against legacy
-code problems. This was done by developing a web application in PureScript
-that both embeds an existing JavaScript application, as well as provides
-novel functionality. The process, and resulting code, were evaluated
+code problems. This was done by developing a web application in
+PureScript that both embeds an existing JavaScript application, as
+well as provides novel functionality. The process, and resulting code,
+were evaluated
 # TODO probably expand & give brief definition of signs here!
 by looking for signs of legacy code problems, as defined in the Method
 chapter.
 
 
-** Objective
+** Purpose
 # see if FP can solve legacy code by developing GGB
 
 # TODO reword these
-The objective of the thesis consists of evaluating purely functional
+The purpose of the thesis is to evaluate purely functional
 programming as a tool to:
 
-1. work with and extend an existing legacy system;
-2. develop a "legacy-resistent" application.
+1. work with and extend an existing legacy system
+2. develop a "legacy-resistent" application
 
-# TODO move Method/Extending a Legacy System/Biodalliance here?
-The legacy system in question is Biodalliance, a genome browser written
-in JavaScript.
+To do this, a legacy system is required, namely Biodalliance (BD), a
+genome browser written in JavaScript (JS). GeneNetwork 2 (GN2) is a
+web-based database and toolset for doing genetics online. One feature
+yet to be implemented in GN2 is an interactive genome browser, like
+BD. However, BD lacks some desired functionality, and previous
+attempts to embed it have been hindered due to its legacy nature.
 
+Instead, a new browser --- the Graph Genetics Browser (GGB) --- is
+developed. GGB embeds the BD browser, so that the functionality of BD
+is gained while providing a framework for a new browser without the
+legacy baggage of BD. As initial new functionality, the Cytoscape.js (Cy.js)
+graph network browser is also embedded.
 
-# TODO briefly introduce GN2 and BD
-# TODO introduce problems w/ BD
-# TODO introduce GGB as solution to problems;
-# TODO purpose: explore FP as solution to JS legacy garbo
-
-
-# ** Context
-
-GeneNetwork 2 (GN2) is a web-based database and toolset for doing genetics online.
-# TODO REF
-
-One of the features we want GN2 to have is a genome browser.
-Biodalliance (BD) is a genome browser written in JS.
-
-This thesis concerns
-
-
-# ** Delimitations
-
-This thesis concerns a single programming project and a single programmer;
-it can be seen as a case study.
-# TODO this: However, it is hoped that
-
-# ** Background/Context/Motivation
-# GN2, BD etc., GSoC
+The development of GGB provides an opportunity to evaluate the
+hypothesis that purely functional programming can assist when working
+with legacy systems, as well as lead to code that is less likely to
+exhibit legacy problems. This is done by identifying some general
+causes of legacy problems, and looking at the resulting codebase. Of
+course, this thesis concerns a single programming project and a single
+programmer; it can be seen as a case study.
 
 ** Affiliations
+
 
 
 * Background/Theory
