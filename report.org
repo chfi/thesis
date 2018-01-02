@@ -87,28 +87,40 @@ by looking for signs of legacy code problems, as defined in the Method
 chapter.
 
 
-** Purpose
+** Context
 # see if FP can solve legacy code by developing GGB
 
+GeneNetwork 2 (GN2) is a web-based database and toolset for doing
+genetics online\cite{mulligan2017genenetwork}, developed at University
+of Tennessee Health Science Center. One feature yet to be implemented
+in GN2 is an interactive genome browser.
+
+Biodalliance (BD) is one such genome browser, which is written in JavaScript (JS)
+and can be embedded in web pages\cite{down2011dalliance}. However, BD
+is several years old, and has accumulated a lot of code and features,
+which have led to difficulties when adding new functionality that is
+desired in GN2.
+
+The Graph Genetics Browser (GGB) was developed to solve these
+problems, by embedding BD and wrapping the desired features of BD in a
+new interface, as well as providing the groundwork for a new genome
+browser independent of BD. The development of GGB served to evaluate
+the hypothesis, which is described in the next section.
+
+** Purpose
+
 # TODO reword these
-The purpose of the thesis is to evaluate purely functional
+The purpose of the thesis was to evaluate purely functional
 programming as a tool to:
 
 1. work with and extend an existing legacy system
 2. develop a "legacy-resistent" application
 
-To do this, a legacy system is required, namely Biodalliance (BD), a
-genome browser written in JavaScript (JS). GeneNetwork 2 (GN2) is a
-web-based database and toolset for doing genetics online. One feature
-yet to be implemented in GN2 is an interactive genome browser, like
-BD. However, BD lacks some desired functionality, and previous
-attempts to embed it have been hindered due to its legacy nature.
-
-Instead, a new browser --- the Graph Genetics Browser (GGB) --- is
-developed. GGB embeds the BD browser, so that the functionality of BD
-is gained while providing a framework for a new browser without the
-legacy baggage of BD. As initial new functionality, the Cytoscape.js (Cy.js)
-graph network browser is also embedded.
+The legacy system in question was BD, the new application GGB. GGB
+embeds the BD browser, so that the functionality of BD is gained while
+providing a framework for a new browser without the legacy baggage of
+BD. As initial new functionality, the Cytoscape.js (Cy.js) graph
+network browser is also embedded.
 
 The development of GGB provides an opportunity to evaluate the
 hypothesis that purely functional programming can assist when working
@@ -118,15 +130,13 @@ causes of legacy problems, and looking at the resulting codebase. Of
 course, this thesis concerns a single programming project and a single
 programmer; it can be seen as a case study.
 
-** Affiliations
-
-
 
 * Background/Theory
-The prerequisite theory for the thesis project is introduced. A definition
-of "legacy code" is given, followed by relevant statistics, facts, and
-techniques concerning legacy code and working with it. This is followed by an introduction
-to the purely functional programming paradigm.
+The prerequisite theory for the thesis project is introduced. A
+definition of "legacy code" is given, followed by relevant statistics,
+facts, and techniques concerning legacy code and working with it. This
+is followed by an introduction to the purely functional programming
+paradigm.
 
 
 
