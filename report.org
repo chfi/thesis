@@ -1,6 +1,6 @@
 # -*- eval: (let () (org-babel-goto-named-src-block "setup-export-class") (org-babel-execute-src-block)); -*-
 
-#+TITLE: TODO thesis name
+#+TITLE: Extending Legacy Software with Functional Programming
 #+AUTHOR: Christian Fischer
 #+EMAIL: christian@chfi.se
 
