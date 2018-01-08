@@ -1,6 +1,26 @@
 # -*- eval: (let () (org-babel-goto-named-src-block "setup-export-class") (org-babel-execute-src-block)); -*-
 
 #+TITLE: Extending Legacy Software with Functional Programming
+
+
+
+
+
+# subtitle: Using PureScript to Improve Legacy JavaScript
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #+AUTHOR: Christian Fischer
 #+EMAIL: christian@chfi.se
 
@@ -44,10 +64,14 @@
 #+LATEX_HEADER: \usepackage[numbers]{natbib}
 #+OPTIONS: H:6
 
+* Abstract
+
+
+* Acknowledgements
+
 
 * Introduction
 
-# TODO Have this here or in Background/Theory?
 #+BEGIN_QUOTE
 Legacy code. The phrase strikes disgust in the hearts of programmers.
 It conjures images of slogging through a murky swamp of tangled
@@ -60,67 +84,64 @@ Martin, Foreword to Working Effectively with Legacy Code
 #+END_QUOTE
 
 # TODO redo this probably; opinionated & without citations~~
-Problems related to and caused by legacy code are ubiquitous. Maintenance
-of legacy systems costs billions of US dollars every year, and as time
-goes on, the number of legacy systems in production will continue growing,
-as what is considered modern today is likely to become "legacy" tomorrow.
-In fact, one does not need to go back far in time to find "legacy" code,
-as any code that is difficult to understand, and it is difficult to make
-changes to such that the effects of the changes on the system are predictable,
-can be considered "legacy" code.
+Problems related to and caused by /legacy code/ are ubiquitous.
+Maintenance of legacy systems costs billions of US dollars every year,
+and as time goes on, the number of legacy systems in production will
+continue growing, as what is considered modern today is likely to
+become "legacy" tomorrow. In fact, one does not need to go back far in
+time to find "legacy" code, as any code that is difficult to
+understand, and it is difficult to make changes to such that the
+effects of the changes on the system are predictable, can be
+considered "legacy" code\cite{Bennett1995}.
 
 Many solutions have been proposed and tried, yet legacy code continues
-to be a problem. In fact, it will likely continue to be a problem ---
-not until a way to "repair" legacy code is found, but a way to write
-code that does not /become/ legacy code is
+to be a problem. It will continue to be a problem, and be solved not
+not when a way to "repair" legacy code is found, but when a way to
+write code that does not /become/ legacy code is
 found\cite{weide1995reverse}.
 
-# TODO add more on FP?
 This thesis is concerned with evaluating purely functional programming
 as one potential solution to and preventative measure against legacy
 code problems. This was done by developing a web application in
-PureScript that both embeds an existing JavaScript application, as
-well as provides novel functionality. The process, and resulting code,
-were evaluated
-# TODO probably expand & give brief definition of signs here!
-by looking for signs of legacy code problems, as defined in the Method
-chapter.
+PureScript (PS) that both embeds an existing JavaScript (JS)
+application, as well as provides novel functionality. The process, and
+resulting code, were evaluated by looking for signs of legacy code
+problems, as defined in the Method chapter.
 
 
 ** Context
-# see if FP can solve legacy code by developing GGB
 
 GeneNetwork 2 (GN2) is a web-based database and toolset for doing
 genetics online\cite{mulligan2017genenetwork}, developed at University
 of Tennessee Health Science Center. One feature yet to be implemented
 in GN2 is an interactive genome browser.
 
-Biodalliance (BD) is one such genome browser, which is written in JavaScript (JS)
-and can be embedded in web pages\cite{down2011dalliance}. However, BD
-is several years old, and has accumulated a lot of code and features,
-which have led to difficulties when adding new functionality that is
-desired in GN2.
+Biodalliance (BD) is one such genome browser, which is written in
+JavaScript (JS) and can be embedded in web
+pages\cite{down2011dalliance}. However, BD is several years old, and
+has accumulated a lot of code and features, which have led to
+difficulties when adding new functionality that is desired in GN2.
 
-The Graph Genetics Browser (GGB) was developed to solve these
-problems, by embedding BD and wrapping the desired features of BD in a
-new interface, as well as providing the groundwork for a new genome
-browser independent of BD. The development of GGB served to evaluate
-the hypothesis, which is described in the next section.
+The Graph Genetics Browser (GGB) was developed as part of this thesis
+to solve these problems, by embedding BD and wrapping the desired
+features of BD in a new interface, as well as providing the groundwork
+for a new genome browser independent of BD. The development of GGB
+served to evaluate the hypothesis, described next.
 
-** Purpose
+** Objective
 
-# TODO reword these
-The purpose of the thesis was to evaluate purely functional
+The objective of this thesis is to evaluate the use of purely functional
 programming as a tool to:
 
-1. work with and extend an existing legacy system
-2. develop a "legacy-resistent" application
+1. Work with and extend an existing legacy system
+2. Develop an application unlikely to develop problems associated with legacy systems
 
-The legacy system in question was BD, the new application GGB. GGB
-embeds the BD browser, so that the functionality of BD is gained while
+The legacy system in question was BD, the new application GGB. A BD browser
+is embedded in GGB, so that the functionality of BD is gained while
 providing a framework for a new browser without the legacy baggage of
 BD. As initial new functionality, the Cytoscape.js (Cy.js) graph
-network browser is also embedded.
+network browser is also embedded, with support for some interaction
+between Cy.js and BD, managed by GGB.
 
 The development of GGB provides an opportunity to evaluate the
 hypothesis that purely functional programming can assist when working
@@ -130,8 +151,62 @@ causes of legacy problems, and looking at the resulting codebase. Of
 course, this thesis concerns a single programming project and a single
 programmer; it can be seen as a case study.
 
+** Report Structure
 
-* Background/Theory
+This report begins with presenting, in the Theory chapter, the concept
+of legacy code, why and how it is a problem, and how the problems
+presented by legacy code have been attempted to be solved previously.
+The problems are distilled into heuristics for code quality, as tools
+to classify whether some code is or is not likely to exhibit legacy
+problems.
+
+Those heuristics match well with code written in a purely functional
+style, which is what the second half of the chapter is concerned with.
+The purely functional programming (pure FP) paradigm is introduced,
+together with some characteristics and advantages of said paradigm.
+
+The Method chapter begins by connecting the dots of legacy code and
+pure FP. The purely functional language PureScript (PS) is introduced,
+and some of the important characteristics of pure FP are explored in
+PS, together with their advantages as concerning the earlier defined
+heuristics.
+
+Next, the process of the thesis project is presented. Biodalliance is
+introduced as a legacy system, and the Graph Genetics Browser as an
+application extending said system, as well as how this project
+fulfilled the thesis objective and provided the data necessary to
+evaluate the hypothesis.
+
+The following Results chapter first presents the resulting browser,
+then goes into some detail on the implementation of various parts
+of the browser. These subsections serve to provide solid examples
+of how pure FP can solve problems associated with legacy code, and
+produce code that is less likely to exhibit similar problems in the
+future.
+
+In the Discussion, it is found that GGB and its codebase meets the
+requirements. Then we go into more detail examining the suitability
+of PS for working with legacy JS, and which characteristics of BD
+made it more or less suitable for this process. Next a closer
+examination is made of what parts of pure FP helped with legacy
+problems, and the chapter ends with a walk through of some of the
+developmental difficulties encountered during the project.
+
+The report concludes, having found that pure FP was a good tool
+especially for GGB and BD. Some other ways of gaining the advantages
+of pure FP, without using PS or another pure FP language, are given.
+This is followed by the limitations of the project, especially its
+nature as a case study, and some ideas for future studies. Lastly
+the future of the Graph Genetics Browser is presented.
+
+# ** Summary (?)
+# TODO summarize intro & structure of report
+With the hypothesis (pure FP as a viable tool for working with legacy code)
+and an overview of the project in hand, the next chapter dives into
+the concepts of legacy code and pure FP.
+
+
+* Theory
 The prerequisite theory for the thesis project is introduced. A
 definition of "legacy code" is given, followed by relevant statistics,
 facts, and techniques concerning legacy code and working with it. This
@@ -139,29 +214,28 @@ is followed by an introduction to the purely functional programming
 paradigm.
 
 
-
-** Legacy code
+** Legacy Code
 # TODO subsections here could use different names
 # Section abstract
+This section begins with defining legacy code, and presenting
+statistics concerning its prevalence and costs. Why it is a problem,
+some attempted solutions, and the causes in code of those problems,
+follow. The section ends with defining code quality with respect to
+legacy code.
 
 
 *** Definition
 
-# What legacy code is - definition
-# Wikipedia defines "legacy system":
-# "In computing, a legacy system is an old method, technology, computer system, or
-# application program, 'of, relating to, or being a previous or outdated computer
-# system.' [..] This can also imply that the system is out of date or in need of
-# replacement."
-
-There is no formal definition of "legacy code", but \cite{feathers2004working}
-gives the definition "Legacy code is code that we've gotten from someone else."
-\citeauthor{Bennett1995} provides a definition of legacy systems in general, which
-gives an idea of why it may be problematic: "large software systems that we don't know how to cope with but that are vital to
-our organization" \cite{Bennett1995}.
-Finally, \citeauthor{weide1995reverse} gives a definition closer to the
-spirit of the concept as experienced by programmers working with
-legacy systems --- in the trenches, as it were:
+There is no formal definition of "legacy code", but
+\cite{feathers2004working} gives the definition "Legacy code is code
+that we've gotten from someone else." \citeauthor{Bennett1995}
+provides a definition of legacy systems in general, which gives an
+idea of why it may be problematic: "large software systems that we
+don't know how to cope with but that are vital to our organization"
+\cite{Bennett1995}. Finally, \citeauthor{weide1995reverse} gives a
+definition closer to the spirit of the concept as experienced by
+programmers working with legacy systems --- in the trenches, as it
+were:
 
 #+BEGIN_QUOTE
 [..] legacy code, i.e., programs in which too much has been invested
@@ -176,11 +250,6 @@ modify the code, it would not be worth talking about, nor is it likely that
 a system that provides a continually valuable service will not at some point
 in the future require maintenance or new features \cite{lehman1980programs}.
 
-# TODO could maybe do with a bit more
-# WIP statistics on legacy systems; how pervasive are they, how old do they
-     # tend to be, how expensive is their maintenance and where do most of
-     # the costs fall
-
 For this reason, legacy systems are prevalent in the world.
 If a system works as it should, providing the service that is needed,
 and said service must continue to be provided, the safest thing to do
@@ -192,9 +261,6 @@ nearly 60% budgeted for operations and maintenance of agency systems,
 with a study by the U.S. Government Accountability Office finding that
 some federal agencies use systems that are up to 50 years old \cite{gao2016legacy}.
 
-# TODO Footnote The Danger of Legacy Systems https://web.archive.org/web/20120323165836/http://www.mousesecurity.com/?p=220
-
-
 Many of these federal agency systems consist of old hardware, old operating
 systems, etc., however the problems of a legacy system do not need to be
 caused by such factors. The code itself is often the problem \cite{Bisbal1999},
@@ -203,20 +269,15 @@ and is what this thesis is concerned with.
 # TODO maybe move this paragraph, and maybe the previous one, to a more suitable position
 We define a "legacy codebase" as the codebase of a legacy system,
 where the problem of modifying the system is constrained by the code
-itself --- the underlying technology is not relevant. Likewise we do not look
-at dependencies, a problem solved by pure functional
-package managers such as Nix \cite{dolstra2004nix} and Guix \cite{courtes2013functional}.
+itself --- the underlying technology is not relevant. Likewise we do
+not look at dependencies, a problem solved by pure functional package
+managers such as Nix \cite{dolstra2004nix} and Guix
+\cite{courtes2013functional}.
 
 Why would changes need to be made to a legacy codebase? When the
 behavior of the system needs to be changed. \cite{feathers2004working}
 identifies four general reasons:
 
-# TODO Maybe add examples?
-# - security fixes
-# - bug fixes
-# - changes to external dependencies
-# - changed features
-# - new features (e.g. electronic healthcare records)
   1. Adding a feature
   2. Fixing a bug
   3. Improving the design
@@ -301,11 +362,11 @@ been trying to solve it for as long.
 \cite{Mntyl2006}
 This section will present some general approaches and tools that have
 been applied when working with legacy systems. First, techniques that
-help with manual reverse-engineering --- the most widely used approach
-to solve legacy code problems --- are introduced, followed by a brief
-walk through some automated tools.
+help with manual reverse-engineering, which is the most widely used
+approach when working with legacy code, are introduced, followed by a
+brief walk through some automated tools.
 
-**** Reverse engineering legacy systems
+**** Reverse Engineering Legacy Systems
 
 Reverse engineering a system can be very difficult and time-consuming,
 even with access to the source code \cite{weide1995reverse}. There are
@@ -319,9 +380,11 @@ not knowing what code does, or what happens when a change is made.
 Thus, adding tests is one of the main tools for increasing understanding,
 as tests provide the programmer with feedback on their code changes.
 \cite{siebra2016anticipated}
+
 However, this feedback is only as good as the test suite; if a
 system behavior is not covered by the tests, the programmer has a blind
 spot in that area.
+
 Where and how to add tests is an art and science of its own, as the
 programmer must find what parts of the system need to be tested, and
 how to insert the tests into the codebase. This becomes more difficult
@@ -335,7 +398,7 @@ compromise the system's behavior.
 # TODO note that these are largely concerned with OOP->OOP or procedural->OOP
 
 
-**** Automated approaches
+**** Automated Approaches
 
 Automated tools that assist with legacy systems are largely concerned
 with increasing the knowledge of the system, understanding how it works,
@@ -361,10 +424,6 @@ or code that is simply more likely to be buggy, based on statistical
 analyses \cite{Ray2016}. These would help programmers find what parts
 of the codebase to target.
 
-# TODO Linters?
-
-# TODO probably something about machine learning
-
 Some ways that developers and researchers have attempted to fix
 legacy codebases have been introduced, however one question
 still remains: what is it with legacy code that makes it
@@ -384,14 +443,6 @@ answer.
 
 *** Code quality
 
-#+begin_comment
-Knowing what code is safe to change & knowing what code *to* change
-  -> Good code is code that tells the programmer what it does,
-     but also what it does *not* do.
-
-Describe code smells wrt. that
-#+end_comment
-
 The problems of legacy code revolve around knowing what different
 parts of the codebase do; what changes in code lead to what changes
 in behavior, and what changes in code do not lead to changes in
@@ -408,7 +459,7 @@ on the system behavior.
 These definitions only beg further questions, however, and require
 deeper investigation.
 
-**** Knowing what a piece of code does
+*Knowing what a piece of code does*
      means knowing what data it requires to do whatever it is it does,
 i.e. what other code it depends on, and knowing what effects it has
 on the system behavior.
@@ -448,29 +499,12 @@ whole due to unanticipated long-range "weird interactions" among
 supposedly independent parts. \cite{weide1995reverse}
 #+END_QUOTE
 
-# TODO add appropriately convoluted example (with misleading function names)
-#+begin_comment
-#+BEGIN_SRC c
-int globalValue = 0;
-
-int rq(int x) {
-   globalValue++;
-   return x + globalValue;
-}
-
-int rt(int x) {
-   return x + 1;
-}
-#+END_SRC
-#+end_comment
-
-
-**** Knowing what a piece of code does not do
 # TODO this needs to be reworded & expanded.
 #      my point is regarding that knowing that some function F
 #      is one place to change the code to produce the desired system change,
 #      does *not* imply knowing that said modification *only* produces the desired behavior change.
 #      Probably best to bake together this and the previous subsubsection/paragraph
+*Knowing what a piece of code does not do*
      is, for the above reasons, difficult in many languages. In fact,
 while these two questions may appear very similar, it is often not the
 case that knowing the answer to one of them lets the programmer deduce
@@ -478,7 +512,7 @@ the answer to the other.
 # idk if this is right
 
 
-**** Good code
+*Good code*
      must then, somehow, communicate as much information to the programmer
 as possible. At the same time, throwing too much information at the programmer
 will not help.
@@ -492,7 +526,6 @@ to believe that OOP is the ultimate solution to legacy code, nor that OOP code
 is inherently the best type of code.
 # TODO this will require more references and/or argumentation
 
-
 Object-oriented is not the only way to write code. Functional programming (FP) is
 a programming paradigm that takes quite a different approach than OOP, and
 purely functional programming provides tools to assist the developer in writing
@@ -500,7 +533,24 @@ what we have now defined to be "good" code. The next section provides an
 introduction to the area and its ideas.
 
 
-** Purely functional programming
+*** Summary
+
+Legacy systems are an ubiquitous problem, costing enormous amounts of
+money in maintenance and development costs. The definition can be
+summed up as a system which is difficult to understand, and some
+heuristics have been defined for identifying code that is or is not
+likely to be difficult to understand. "Good" code is taken to be code
+that is easy for a programmer to identify what it does with respect to
+the system behavior, and what it does not do; "bad," then, is the
+obvious antonym.
+
+This definition of good code coincides with many of the characteristics
+of code written in a purely functional style, which the next section
+is concerned with.
+
+
+
+** Purely Functional Programming
 
 
 This section introduces the purely functional programming (pure FP) paradigm,
@@ -517,7 +567,7 @@ in code, and using a powerful type system to express effectful computations
 # TODO REFs?
 
 
-*** Functional programming
+*** Functional Programming
 # Where it (FP in general) came from (lambda calc)
    # transformations?
 The functional paradigm can be seen as a natural extension to the lambda
@@ -526,27 +576,23 @@ small set of variable binding and substitution rules is used to express
 computations.
 # TODO REF
 
-# On the other hand,
-# imperative programming is closely connected to the von Neumann-style of computer
-# on which it runs, and is similar to the idea of a Turing machine.
-# TODO REF
-
 # TODO this paragraph could use some more work; give examples of Turing machine-based "languages" e.g. brainfuck
-The Turing machine and lambda calculus models of computation are equivalent
-\cite{turing_1937}. However, while the Turing machine model is largely
-an abstract concept that is useful for modeling computation, but less so
-in actually solving programming problems, there are several actively used
-languages that are, at their core, some type of lambda calculus. One
-example is the purely functional language Haskell. The Glasgow Haskell Compiler,
-the de facto standard Haskell implementation, compiles to a language based
-on System-F\omega, a typed lambda calculus, as an intermediate language
+The Turing machine and lambda calculus models of computation are
+equivalent \cite{turing_1937}. However, while the Turing machine model
+is largely an abstract concept that is useful for modeling
+computation, but less so in actually solving programming problems,
+there are several actively used languages that are, at their core,
+some type of lambda calculus. One example is the purely functional
+language Haskell. The Glasgow Haskell Compiler, the de facto standard
+Haskell implementation, compiles to a language based on
+System-F\omega, a typed lambda calculus, as an intermediate language
 \cite{haskell2010} \cite{ghcguide}.
 
 
 # TODO s/main/only/?
 The main tool in the lambda calculus is defining and applying functions;
 unsurprisingly, functions are the focus of FP. In this case, "function"
-is defined in its mathematical sense, as a mapping from inputs to outputs,
+is defined in the mathematical sense, as a mapping from inputs to outputs,
 rather than the sense of a function in e.g. the C programming language,
 where it is rather a series of commands for the computer to execute.
 
@@ -557,19 +603,34 @@ without changing the program behavior whatsoever. Conversely, if we have
 that $g(a) = b$, but calling $g(a)$ prints a value to a console window,
 $g$ is /not/ a function in this sense, as replacing $g(a)$ with $b$ in
 the code would change the program behavior by not printing to the console.
-This characteristic is what is meant by "purity".
-
 
 *** Purity
+This characteristic, that a function always produces the same output
+given some input, including effects, is what defines a "pure"
+function. Pure functions are referentially transparent, and can thus
+be seen as black boxes. Conversely, an impure function, i.e. a
+function with side-effects, cannot be referentially transparent.
+
+An "effect" does not have to be something like interacting with the
+user, or making an HTTP request. It also includes in-place mutation of data,
+querying the OS for a random number, throwing an exception --- the list
+goes on. In a pure FP language such as Haskell, these effects are
+encoded in the language's type system, making it possible to write
+programs in fact actually /do/ things, while enjoying the advantages
+that pure FP provides.
+
+# *** Referential Transparency
 # What purity is and what it implies (ref transparency)
    # transformations!
 
+# Code that is "referentially transparent" can be
 
+# While it is possible to write pure functions in any language that supports
+# functions, purely functional languages, such as Haskell have features that
+# ensure that functions are in fact pure. Haskell in particular handles this
+# through its powerful type system.
 
-While it is possible to write pure functions in any language that supports
-functions, purely functional languages, such as Haskell have features that
-ensure that functions are in fact pure. Haskell in particular handles this
-through its powerful type system.
+# This ensures that code
 
 
 # Static types - encoding effects in the types
@@ -616,10 +677,36 @@ through its powerful type system.
 # Haskell uses a monadic type for its IO system.
 # TODO REF
 
-If a programmer can express their problem in the language of category theory,
-they gain access to 70 years of documentation concerning their problem. If the
-abstractions used can be expressed in the type system, the compiler can help
-prove that the program is correct.
+The advantages of pure FP are largely concerned with having the compiler
+enforce program correctness. By encoding effects in types that are checked
+by the compiler, the programmer is prevented from writing code that has
+side-effects.
+
+More generally, while writing a program in a pure functional language,
+the programmer is encouraged by the language and environment to write
+code that is reusable and easy to reason about \cite{hughes1989functional}.
+
+Using a language with a powerful type system, it is also possible to
+write code in such a way that the semantics of the program is, to some
+extent, expressed in the types. This allows the compiler to enforce
+/semantic/ program correctness. The programmer can construct
+transformations between data structures and compose them to produce
+a program, and said program is type-checked to ensure some degree
+of correctness.
+
+Another boon bestowed by a powerful type system such as Haskell's, is
+that if a programmer can express their problem in the language of
+category theory, they gain access to 70 years of documentation
+concerning their problem. This may appear unlikely, but in fact
+category theory appears to provide tools to naturally express many
+problems encountered in software development. One example is
+constructing and combining 2D vector diagrams\cite{yorgey2012monoids};
+another, defining UIs in a declarative
+manner\cite{freeman2017Comonads}.
+
+If the abstractions used can be expressed in
+the type system, the compiler can help prove that the program is
+correct.
 
 # maybe footnote: for example, everything is an adjunction(TODO REF) and a monoid(TODO REF)
 
@@ -631,45 +718,34 @@ prove that the program is correct.
 # something like "Just a few words, such as (a -> b), should not only tell us what
 # the code does, but also tell the compiler what the code should do"
 
-While writing a program in a pure functional language, the programmer
-is encouraged by the language and environment to write code that is
-reusable and easy to reason about [REF Why functional programming matters].
-You also get some level of program correctness, by writing code
-using types that correspond to the program semantics. You're able
-to construct transformations between data structures and compose
-them together -- all type-checked by the compiler.
 
 
-#+begin_comment
-summary of the Background chapter
+** Summary
 
-briefly describe the concepts of legacy code and FP;
-  but leave the details of how they interact for the Method section
+Legacy code is largely a problem of understandable code, which in turn
+is closely related to the effects a piece of code performs when run.
 
-outro by asking that question -- how do they interact? esp. from an FP viewpoint
-#+end_comment
+This introduction of pure FP has shown that one of the main features
+is to eliminate side-effects of functions. A pure function must, by
+definition, tell the compiler --- and the programmer --- what it does.
+As important, a pure function cannot do anything else. Pure FP when
+combined with a powerful type system such as that of Haskell has
+many more benefits, providing the programmer with tools to express
+the semantics of the program in such a way that the compiler can
+ensure some level of correctness.
+
+It does not seem a stretch to expect these features of pure FP to
+provide assistance when working with, or preventing, the problems of
+legacy code. The next chapter goes into detail how this hypothesis was
+tested.
 
 
 * Method
 
-#+begin_comment
-Introduces the method
-  i.e. how I went about evaluating pure FP by way of PS as a tool for extending
-       legacy code bases and minimizing potential future (legacy) problems of a new code base
 
-First introduce pure FP as a potential tool for legacy code,
-looking at specific features and how they correspond to (solving/preventing)
-problems
-
-then frame hypothesis
-
-finally present BD & GGB; describe project
-#+end_comment
-
-
-The purpose of this thesis was to evaluate whether pure FP can be a tool for
-working with legacy codebases, and if pure FP tends to lead to code
-that is less likely to exhibit legacy problems.
+The purpose of this thesis was to evaluate whether pure FP can be a
+tool for working with legacy codebases, and if pure FP tends to lead
+to code that is less likely to exhibit legacy problems.
 
 This chapter begins with arguments in favor of the hypothesis,
 enumerating some features of pure FP that appear advantageous for
@@ -679,39 +755,16 @@ Browser (GGB) is introduced, followed by how the hypothesis was
 evaluated in the context of this project.
 
 
-** Functional programming for legacy codebases
+** Functional Programming and Legacy Codebases
 # section needs a better name. later.
 
-#+begin_comment
-intro - the various parts of FP we're going to make use of,
-  and how they help wrt. the problems related to legacy code
-
-
-Static types
-Abstractions
-  Semigroup & monoid
-Generative testing (esp. checking typeclass laws)
-more..
-
-wrt. assisting the programmer in knowing what code does and does not do
-use code smells only as shorthand for specific causes of this
-    code duplication --
-      more similar pieces of code -> more places to look; less clarity of what to change & effects of change
-      e.g. *why* are there multiple similar pieces of code? are they really the same? scope etc.
-      DRY principle
-
-    primitive obsession -- less clear
-    side effects -- obvious
-    mutability -- obvious
-
-summary - by eliminating side effects & giving the programmer tools to know
-
-  pure FP appears to be usable to limit the problems that lead to legacy code problems
-#+end_comment
 
 # TODO reorder these paragraphs & quote
-Purely functional programming has many tools and features that are likely
-to limit the problems of legacy code.
+As was shown in the previous chapter, pure FP has many tools and
+features that are likely to limit the problems of legacy code.
+This is not the first time this has been considered, as can be
+seen in the following quote by Joe Armstrong, one of the creators
+of the Erlang language:
 
 # TODO this quote should fit in somewhere in the Method section
 #+BEGIN_QUOTE
@@ -727,21 +780,25 @@ and leave no state behind — it’s incredibly reusable.
 --- Joe Armstrong\cite{seibel2009coders}
 #+END_QUOTE
 
-This section begins by introducing
-the programming language used in the thesis project, and continues with
-providing examples of language features that are likely to reduce the
-legacy code-related problems and code patterns in general.
+This section begins by introducing PureScript, the programming
+language used in the thesis project. It continues with providing
+examples of language features that are likely to reduce the legacy
+code-related problems and code patterns in general.
 
-*** Introduction to PureScript
-PureScript (PS) is a purely functional programming language in the style
-of Haskell, that compiles to JavaScript (JS).
-# TODO REFS
-PS is immutable by default, free of side-effects, and has an advanced
-strict static type system that gives the programmer many tools to increase
-productivity and program correctness.
-# TODO REFS
+*** PureScript
+PureScript (PS) is a purely functional programming language in the
+style of Haskell, that compiles to JavaScript (JS) [fn:purescript]. PS
+is immutable by default, pure, and has an advanced static type system
+that gives the programmer many tools to increase productivity and
+program correctness. Each of these features will be examined further
+in the following sections.
 
-# Continue by filling in these subsections wrt the above `Code quality` ideas
+
+
+[fn:purescript] http://www.purescript.org
+
+
+
 
 *** Immutability
 Some data being "immutable" means it does not change. PS being "immutable
@@ -759,8 +816,8 @@ prominent side-effect. It provides the programmer with absolute
 certainty that:
 
 # TODO reword these I think
-1. inputs to a function are unchanged in that function;
-2. calling a function on some value does not change that value.
+1. Inputs to a function are unchanged in that function
+2. Calling a function on some value does not change that value
 
 
 Mutation is one common side-effect in imperative programming, but far
@@ -779,10 +836,8 @@ and must be done in the `Eff` type; see # TODO add ref to Purity section!!
 
 A purely functional programming language does not only prevent the
 side-effect of mutating data in a function; it prohibits functions
-from causing /any/ side-effect[fn:side-effect-caveat]. In pure FP
-a function is in truth a function; for a given input it must produce
-the same output each and every time it is called. The output includes
-all effects the function causes; some examples of effects are now given.
+from causing /any/ side-effect[fn:side-effect-caveat]. Some examples
+of effects follow.
 
 
 [fn:side-effect-caveat] In PureScript, functions can be made impure
@@ -792,14 +847,14 @@ as `unsafeCoerce`. This is not encouraged.
 
 A /partial/ function is one that is not defined on all its inputs,
 e.g. a function that tries to access an out of bounds index on
-an array, whose type is given in block [[code:method-unsafe-index]].
+an array, whose type is given in listing  [[code:method-unsafe-index]].
 If the given index is outside the array, the function explodes,
 for example with an exception. Hardly what the type says it will
 do, so `unsafeIndex` is not truly a function.
 
 #+name: code:method-unsafe-index
-#+caption:
-#+BEGIN_SRC purescript :exports none
+#+caption: Type of unsafe array indexing function
+#+BEGIN_SRC purescript
 unsafeIndex :: forall a. Array a -> Int -> a
 #+END_SRC
 
@@ -812,7 +867,7 @@ functions, allowing us to write pure yet effectful functions. The next
 section gives more details.
 
 
-*** Type system
+*** Static Types
 
 PS has a powerful type system that makes it possible to describe much
 more of the semantics of the program in a way that the compiler can
@@ -820,60 +875,37 @@ describe and check for us.
 
 # TODO simplify this maybe
 For example, the effect of partiality can be captured in the type
-system with the `Maybe` type, defined in code block [[code:method-maybe]].
+system with the `Maybe` type, defined in listing [[code:method-maybe]].
 A value of type `Maybe Int` can contain either some `Int` wrapped in a
 `Just`, or `Nothing`. When writing functions that take a `Maybe` as
 input, the PS compiler will ensure that both possibilities are
 accounted for by failing with an error if something is missing.
 
 #+name: code:method-maybe
-#+caption:
-#+BEGIN_SRC purescript :exports none
+#+caption: The Maybe data type
+#+BEGIN_SRC purescript
 data Maybe a
   = Just a
   | Nothing
 #+END_SRC
 
 With `Maybe` it is possible to write a safe, pure version of `index`,
-see block [[code:method-safe-index]]. The effect of potential failure
+see listing [[code:method-safe-index]]. The effect of potential failure
 is captured in the function returning `Maybe a` rather than `a`.
 
 #+name: code:method-safe-index
-#+caption:
-#+BEGIN_SRC purescript :exports none
+#+caption: Type for safe array indexing function
+#+BEGIN_SRC purescript
 index :: forall a. Array a -> Int -> Maybe a
 #+END_SRC
 
 # TODO footnote on removing effect rows in 0.12...
 In PS, another type is used to encapsulate so-called native effects,
 such as printing to the console, updating the UI, etc. This is the
-`Eff` type; e.g. if we have a value of type `Eff Int`, we have an
-effectful computation that returns an `Int`. It could read from
-standard input, perform a fetch from a server, etc. Another effect
-covered by `Eff` is local mutation, such as in-place mutation of an
-array.
-
-
-# TODO more on purity in types?
-# TODO CT abstractions in types --- monoid etc.
-
-The type system assists in more than purity. For example, PS supports
-two powerful forms of polymorphism, typeclasses and parametric
-polymorphism.
-
-# TODO this paragraph is bad
-# TODO REF
-Typeclasses provide ad-hoc polymorphism on types, letting us write
-functions on types that satisfy some "constraint" rather than
-specifying concrete types. One example is the `Functor` typeclass,
-given in code block [[code:method-functor]]. Any function that takes as
-argument a type with the `Functor` constraint can use the `map`
-function on that argument; conversely, that function can be applied to
-any type with a `Functor` instance.
 
 #+name: code:method-functor
-#+caption:
-#+BEGIN_SRC purescript :exports none
+#+caption: Functor typeclass definition
+#+BEGIN_SRC purescript
 class Functor f where
   map :: forall a b. (a -> b) -> f a -> f b
 #+END_SRC
@@ -886,7 +918,7 @@ relevant to the actual program behavior.
 # TODO ref to use of Free monad, monoids, etc. in Results/Glyph section
 
 Parametric polymorphism is reminiscent of generics in languages such
-as Java, but more powerful. Consider again the function in block
+as Java, but more powerful. Consider again the function in listing
 [[code:method-safe-index]]. The type says that it works on `forall a.
 Array a`; meaning it accepts any array, no matter what it contains.
 This is what it means for a function to be "parametrically
@@ -899,7 +931,7 @@ the type signature for `index`, we /know/ that the output (if it is
 not `Nothing`) must come from the given array, as the function cannot
 create values of type `a` from thin air.
 
-A more extreme example is given in code block
+A more extreme example is given in listing
 [[code:method-identity-fun]]. This is the type of the identity function;
 the identity function is in fact the only function with this type.
 This is because it is parametrically polymorphic --- the only thing
@@ -907,31 +939,32 @@ This is because it is parametrically polymorphic --- the only thing
 else that can be done.
 
 #+name: code:method-identity-fun
-#+caption:
-#+BEGIN_SRC purescript :exports none
+#+caption: The identity function
+#+BEGIN_SRC purescript
 id :: forall a. a -> a
 #+END_SRC
 
 There is much more to PS' type system, but this covers most of what is
 used in the thesis project.
+# TODO add ref!!
+
+
+*** Summary
+
+PureScript is an excellent example of a purely functional language,
+providing all of the features examined in the Theory chapter. As it
+compiles to JS and has good support for interoperating with JS, it
+is a natural candidate for investigating the viability of pure FP
+as applied to a legacy codebase written in JS. The next section
+presents the chosen legacy system, and how it will be extended.
 
 
 ** Extending a Legacy System
 
-#+begin_comment
-present BD as legacy code project; including examples of previous work on extending it etc.
-present GGB as both extending & a new platform, with intro to purescript
 
-Evaluation of the hypothesis as comparing the resulting code (or a subset of it)
-to the code smells and the respective code in BD (where applicable).
-If correct -- or at least not obviously incorrect -- the resulting code should
-be free of the code smells.
-#+end_comment
-
-
-In this section, the legacy system that was extended --- Biodalliance
---- is described. The extent and nature of the changes, and more
-details of the resulting application, are also given.
+In this section, Biodalliance, the legacy system that was extended, is
+described. The extent and nature of the changes, and more details of
+the resulting application, are also given.
 
 *** Biodalliance
 
@@ -945,21 +978,16 @@ HTML5-based, it can be embedded into any web page and does not require
 any special tools to be used. It also supports exporting images as
 SVG, which can be used as high quality figures in publications.
 
-# TODO example of difficulties: adding CSV sources; horizontal rulers; /new/ plot types
-
-# TODO make sure GN2 has already been introduced...
-# TODO maybe more on why we want these features
-For GN2 we want a genome browser that supports these features.
-We also want to be able to add new features, however BD has shown itself
-to be difficult to work with and extend, for reasons earlier defined
-as legacy code problems[fn:gsoc2016-footnote]. BD has been in development
+For GN2 we want a genome browser that supports these features. We also
+want to be able to add new features, however BD has shown itself to be
+difficult to work with and extend, for reasons earlier defined as
+legacy code problems[fn:gsoc2016-footnote]. BD has been in development
 since 2010, and as of December 2017 consists of 17.5k lines of JS code
-(sans comments and whitespace) split into 61 files.
-# TODO footnote to BD github
-The codebase has grown organically over time, and has become complex,
-with single pieces of functionality (such as rendering data to the
-HTML5 canvas) being split into several large functions in different
-files, and less than clear flow of control.
+(sans comments and whitespace) split into 61 files[fn:bd-github]. The
+codebase has grown organically over time, and has become complex, with
+single pieces of functionality (such as rendering data to the HTML5
+canvas) being split into several large functions in different files,
+and less than clear flow of control.
 
 
 [fn:gsoc2016-footnote] The author previously worked on extending BD as
@@ -967,10 +995,15 @@ part of Google Summer of Code 2016, and encountered some difficulties:
 https://chfi.se/posts/2016-08-22-gsoc-final.html
 
 
-We want many of the features of BD, which have required much time and
-effort to be implemented. However, we also want new features, but the
-time and effort required to implement them in BD is much greater than
-necessary due to the legacy aspect of BD's codebase.
+[fn:bd-github] Biodalliance's source code can be found on GitHub:
+https://github.com/dasmoth/dalliance
+
+
+We want many of the features of BD, such as its support for many file
+formats, which have required much time and effort to be implemented.
+However, we also want new features, but the time and effort required
+to implement them in BD is much greater than necessary due to the
+legacy aspect of BD's codebase.
 
 # TODO idk about this wording
 The solution that was decided upon was to develop a new genome
@@ -1038,121 +1071,84 @@ style, making it ideal for evaluating the hypothesis.
 The hypothesis, that functional programming techniques can help when
 working with an existing legacy code base, as well as lead to code
 that is less likely to exhibit legacy code problems in the future,
-was tested by developing an application in Purescript that both
+was tested by developing an application in PureScript that both
 interfaces with an existing legacy genome browser, and is intended
 to be a stand-alone browser in the future.
 
 # TODO summarize how the various FP features are expected to help
 
-Identifying features whose implementation were already cause for concern in
-BD, or had the potential to be implemented in problematic ways in GGB,
-and if and how FP helped reduce or eliminate those problems, provides
-a lens through which it was possible to make some judgements as to
-the validity of the hypothesis.
+Identifying features whose implementation were already cause for
+concern in BD, or had the potential to be implemented in problematic
+ways in GGB, and if and how FP helped reduce or eliminate those
+problems, provides a lens through which it was possible to make some
+judgements as to the validity of the hypothesis.
 
 
 * Results
 
-#+begin_comment
-The results are presented
 
-First an introduction of the "completed" GGB -- its features and scope
-
-Then a walk through the code:
-  each section corresponds to one module or part of the GGB, and looks like:
-    problems in BD wrt. legacy code (code smells) are presented
-    the code in GGB is presented as one way of solving those problems
-    (or, present each section as a transformation)
-
-The sections:
-
-  bdcy:   extracting a minimal usable interface from JS APIs
-          enforcing safety with types
-          mapping JS functions to law-abiding abstractions (Semigroup, Monoid)
-      smells:
-
-  config: configuring the browser in a type-safe manner
-          validating at launch with type-checking and helpful error messages
-          mapping GGB config to BD and Cy.js configuration
-      smells:
-
-  units:  type-checking domain-specific operations
-          more assistance from the compiler in ensuring semantics of program
-          compiler-checked documentation
-      smells:
-
-  glyph:  using pure FP abstractions to create an extensible transformation pipeline
-            for working with various display and input methods
-          semigroups and monoids + generative testing = verification
-          creating a language that "compiles" to BD-compatible data structures
-            but also is extensible
-      smells:
-
-  events: transforming events between "disjoint" JS apps with configuration for free
-          exploiting JSON's tree structure for a kind-of type-safe system
-      smells:
-
-  ui:     fitting BD and Cy.js into a type-safe UI library;
-            tying it all together
-          type-safe and extensible, with error-checking from many of the previous sections
-      smells:
-
-
-End with summing up where the various code smells showed up in BD,
-and how they were solved with FP/PS in GGB.
-#+end_comment
-
+In this chapter, the resulting product, that is, GGB, is presented.
+After a brief overview of the browser itself, the rest of the chapter
+consists of deeper dives into some of the parts of the code that is
+most relevant to the thesis objective.
 
 
 ** The Completed Product
 
-#+begin_comment
-A brief section serving to provide the reader with an image or two to
-anchor the rest of the results section to, and prepare them with a
-basic framework to fit the examples to.
-#+end_comment
+GGB, at the end of the thesis project, can be configured to display
+genome-based data tracks in an embedded BD browser, and show
+graph-based data in an embedded Cy.js browser. Configuration of these
+browsers is done by providing a single configuration object to GGB,
+which GGB verifies and uses to instantiate the embedded browsers.
+There is also basic support for configurable interactions between the
+browsers, making it possible for each browser to react to events in
+the other. Finally, the insides of GGB has modules for easily creating
+new ways to display data in BD, and works with genome-based data in
+a unit-conscious manner.
+
+The source code for GGB can be found on GitHub:
+https://github.com/chfi/purescript-genetics-browser
+
+# TODO add picture lol
 
 # Present the finished browser!
 
-  # What it looks like
 
-  # How it's used -- show basic functionality with screenshots
-
-  # Figure to refer to concepts such as "tracks", "feature", "glyph" etc.
+  # Link to source code!
 
 # Outro
 
 
-** Interfacing with existing JS
+** Interfaces Between PureScript and JavaScript
 # or: transforming JS APIs to PS APIs (kind of)
 
 #+INCLUDE: "./bdcy.org"
 
 
-** Safe application configuration
+** Safe Application Configuration
 # or: transforming user configuration to safe application options
 
 #+INCLUDE: "./config.org"
 
 
-** Working with units
+** Working With Units
 # or: domain-based type checking of transformations
 #     (or something like that)
 
 #+INCLUDE: "./units.org"
 
 
-** Transforming data for screen and space
+** Transforming Data for Screen and Space
 
 #+INCLUDE: "./glyph.org"
 
 
-** Transforming events between tracks
+** Transforming Events
 
 #+INCLUDE: "./events.org"
 
 
-** The User Interface
+** User Interface
 # or: transformations between user and application (or something like that)
 
 #+INCLUDE: "./ui.org"
@@ -1162,6 +1158,17 @@ basic framework to fit the examples to.
 
 # Summarize by selecting a few code smells and briefly describing,
 # conceptually, how they were removed/avoided/bypassed
+
+Many (actual and potential) problems related to legacy code were
+encountered during development, and they were dealt with in various
+ways using different features of the language and libraries provided.
+The resulting application is written in a purely functional language,
+but also both embeds a legacy system within it, as well as providing
+tools for extending said legacy system. Last but not least, it is an
+extensible foundation for a new genome browser. In the Discussion that
+follows, some more general ways that pure FP had an impact on this
+project are considered, and an effort is made to extrapolate these
+results to other legacy systems.
 
 
 
@@ -1174,51 +1181,6 @@ on the whole does not, arguably, suffer from the problems of legacy
 code as defined in this report.
 
 
-#+begin_comment
-
-Discuss results -- each of the code parts (subsections from Results)
-
-Does the various FP features/tools from the Method help in producing
-"good" code in the Results?
-
-On a higher level, is the resulting codebase "easy" to understand,
-and to work with? How difficult is it to understand the overall
-architecture, to know what areas to change, and what changes in
-system behavior ones' modifications to the code leads to?
-  And how much of this can be attributed to FP?
-  This will all need to be argued for.
-
-How do the various parts from the Background/FP section fit in?
-  Purity
-  Static types
-  (CT) Abstractions
-
-Discuss refactoring; something that happened many times during the project,
-  and something a good type system assists with to a great extent
-
-Discuss future work *on GGB*, i.e. predict how easy it will be to extend;
-  how the abstractions will help or hinder this, and why
-
-Concede that it is entirely possible to write "bad" code in PS
-also that pure FP and PS have their own antipatterns/code smells
-  (though I'm not sure if they're comparable to imperative/OOP ones wrt.
-   their effect on codebases)
-
-
-
-Sections:
-how does it fill the requirements? both browser & codebase (brief)
-what problems were encountered during development?
-why does it not suffer from legacy problems?
-  1. why do we think it does not
-  2. why do we think that the reason it does not is due to FP/PS
-
-learning PS during development -- something that will happen "IRL" as well
-
-
-#+end_comment
-
-
 The code from the previous chapter is examined to see if and how it
 stuck to the ideas of "good" code, including what FP features
 contributed. Problems experienced during development are presented,
@@ -1229,9 +1191,8 @@ browser are also looked at from the view of BD, to examine how
 difficult it would be to extend BD without the support of GGB.
 
 
-
 # TODO maybe combine these two following sections
-** Purescript as a tool for working with legacy JS
+** PureScript for Working with Legacy JavaScript
 
 PureScript was an excellent tool for developing GGB; in the author's
 opinion, it was no doubt the best choice. PS's FFI capabilities made
@@ -1243,14 +1204,16 @@ time. Even JS code, which due to its untyped dynamic nature
 tends to lead to bugs in unexpected places, becomes easy to debug when
 restricted to the very edges of the program.
 
+
 However, it is possible that BD was uncharacteristically simple to
 hook into with another application. While the JS API that is exposed
 by BD is minimalistic, the "incisions" that had to be made into BD's
 source code to make it possible for GGB to add some given functionality,
 were few and quite small.
 
+
 As an example, adding support for external renderers (something
-done before this project as a part of GSoC 2016[fn:gsoc2016-renderers]),
+done before this project as a part of Google Summer of Code 2016[fn:gsoc2016-renderers]),
 while a large undertaking in terms of the time required to understand
 what had to be done, and rewriting functions to better understand
 the rendering system as a whole, very few changes were made to the
@@ -1258,13 +1221,13 @@ control flow of the rendering system. That is, few, if any, changes
 that may have led to undesired changes of system behavior, were required.
 
 
-[fn:gsoc2016-renderers] The process is detailed in the blog post
-at this URL: https://chfi.se/posts/2016-07-26-gsoc-render-complete.html
+[fn:gsoc2016-renderers] For more details, see the author's blog post:
+https://chfi.se/posts/2016-07-26-gsoc-render-complete.html
 
 
 On the GGB side, this can be seen in the fact that the entire `Glyph`
 system of defining new ways of displaying data is mapped to BD by
-one relatively small function, seen in code block [[code:glyph-together-1]].
+one relatively small function, seen in listing [[code:glyph-together-1]].
 
 `Glyph` is also an excellent argument for PS and GGB being extensible
 and easy to maintain. For example, if a more precise way of checking
@@ -1273,34 +1236,6 @@ done by providing axis-aligned bounding boxes) is desired, it is simple
 to create a new interpreter that maps glyphs to some other more exact
 collision shape.
 
-# TODO add this example if it ends up looking good (later anyway)
-#+begin_comment
-#+name: code:discussion-glyph-collision-example
-#+caption:
-#+BEGIN_SRC purescript :exports none
-
-probably actually want
-
-glyphCoverN :: GlyphF
-            ~> Writer (Disj (Tuple Number Number -> Boolean))
-
-not super readable but lol
-
-
-not this:
-glyphCoverN :: GlyphF a -> Const (Tuple Number Number -> Boolean) a
-glyphCoverN (Stroke _ a) = pure a
-glyphCoverN (Circle p r a) = do
-  tell $ GlyphPosition { min: p.x - (r * 1.5)
-                       , max: p.x + (r * 1.5)
-                       , minY: p.y - (r * 1.5)
-                       , maxY: p.y + (r * 1.5)
-                       }
-  pure a
--- ..
-#+END_SRC
-
-#+end_comment
 
 Another potential change that is easily facilitated by `Glyph`'s
 construction using the `Free` monad would be to add support for new
@@ -1319,8 +1254,8 @@ projects may or may not present difficulties for the approach
 taken here.
 
 
-** Purely functional programming
-# ** Functional programming and code quality
+# ** Purely Functional programming
+** Purely Functional Programming and Code Quality
 
 Recall that our definition of "good code" is code which is easy
 to understand when looked at. Our heuristics for good code include
@@ -1343,7 +1278,7 @@ correspond to their actual units as semantically relevant to the
 program behavior, rather than their runtime representation.
 
 *Abstractions* such as `Semigroup`, `Functor`, etc. provide the
-programmer with information about what a function does. Code blocks
+programmer with information about what a function does. Listings
 [[code:discussion-concrete-types]] and [[code:discussion-constraints]] show
 the type signatures for two functions, `mystery1` and `mystery2`. The
 function implementations are in fact the same, but the information
@@ -1365,15 +1300,15 @@ and we can create an empty value. Code block [[code:discussion-fold]]
 shows the implementation.
 
 #+name: code:discussion-concrete-types
-#+caption: A concretely typed
-#+BEGIN_SRC purescript :exports none
+#+caption: A concrete type for some function on an array of lists
+#+BEGIN_SRC purescript
 mystery1 :: Array (List Int)
          -> List Int
 #+END_SRC
 
 #+name: code:discussion-constraints
-#+caption:
-#+BEGIN_SRC purescript :exports none
+#+caption: A general type for some function on some foldable of a monoid
+#+BEGIN_SRC purescript
 mystery2 :: forall f m.
             Foldable f
          => Monoid m
@@ -1383,8 +1318,8 @@ mystery2 :: forall f m.
 
 # TODO add description of Foldable typeclass?
 #+name: code:discussion-fold
-#+caption:
-#+BEGIN_SRC purescript :exports none
+#+caption: The mystery is solved
+#+BEGIN_SRC purescript
 mystery2 = fold
 mystery1 = mystery2
 #+END_SRC
@@ -1406,7 +1341,7 @@ inversion is that code cannot cause far-reaching consequences; there
 is none of the "spooky action at a distance" that is one of the main
 problems when trying to comprehend legacy code.
 
-** Developmental difficulties
+** Developmental Difficulties
 
 There was not much of a design specification for GGB at the start,
 and as the author did not have previous experience with developing
@@ -1467,26 +1402,15 @@ by the support of the type system and purity; nor is it likely
 that other problems would not have occurred if GGB was developed
 using in imperative language and idioms.
 
+Other legacy systems are likely to present their own difficulties if
+one were to attempt a similar project with them, however the opposite
+may also be true. In the next chapter, other tools that could provide
+similar benefits are considered, along the extent to which PS was
+responsible for the benefits in this case. Potential future areas of
+research are also examined, as is the future of GGB.
+
 
 * Conclusion
-
-
-#+begin_comment
-Encourage using PS with old JS projects
-
-Case-study nature as a limitation;
-will probably want to argue that the results are thanks in large part to the
-nature of pure FP and PS; not merely happenstance even though n=1.
-
-Also relatively "easy" because BD is open source and JS; it also has nearly
-no external dependencies. Other legacy systems are likely to be much more
-difficult to apply this approach to. Java/JVM has some tools and languages;
-C or something becomes even more difficult.
-
-Future work:
-  Looking at open source projects; is functional OSS "better"?
-#+end_comment
-
 
 Pure FP was a good tool for GGB and BD, however other legacy systems
 may be more difficult to use the techniques presented in this thesis.
@@ -1499,8 +1423,8 @@ its benefits. Pure functions can be written in practically any
 language, and they provide the same benefit as shown in this report.
 Abstractions such as provided by the `Monoid` and `Functor`
 typeclasses can also be represented in other languages. Doing this
-will lead to code that
-
+will lead to code that solves problems in ways much like code written
+in PS.
 
 Why use a language such as PS, then? What one misses out on by using
 an impure language is the enforced purity and encapsulated effects;
@@ -1540,8 +1464,9 @@ future.
 
 More generally, there has been little research comparing programming
 languages, and even less research on the user experience of languages,
-i.e. on what actually makes a good language\cite[p.~252]{seibel2009coders}. That is
-another avenue for future research.
+i.e. on what actually makes a good
+language\cite[p.~252]{seibel2009coders}. That is another avenue for
+future research.
 
 This is an area of research that it is difficult to do studies in, as
 while there are plenty of legacy systems to go around, maintaining one
@@ -1559,7 +1484,7 @@ Nevertheless, some studies have been done in this area
 recently\cite{Ray2014}, and the future may be promising.
 
 
-** Future of GGB
+** Future of the Graph Genetics Browser
 
 GGB will continue to evolve beyond what has been described in this
 report, including more tools for interactive exploration of
