@@ -68,6 +68,28 @@
 
 
 * Acknowledgements
+#+BEGIN_ABSTRACT
+Legacy systems are everywhere. Immense resources are placed on fixing
+problems caused by them, and on legacy system maintenance and reverse
+engineering. After decades of research, a solution has yet to be
+found. In this thesis, both the viability of using purely functional
+programming to mitigate problems of legacy systems is investigated, as
+well as the possibility that purely functional programming can lead to
+code that is less likely to lead to legacy problems in the first
+place. This was done by developing a genome browser in PureScript that
+embeds, interfaces with, and extends, an existing genome browser
+written in JavaScript. The resulting codebase is examined, and various
+characteristics of purely functional programming, and how they helped
+solve or avoid problems related to legacy systems, are presented. In
+Conclusion, PureScript is found to be an excellent tool for working
+with legacy JavaScript, and while the nature of the project limits
+the conclusions that can be drawn, it appears likely that using purely
+functional programming, especially with a language such as PureScript
+that provides a powerful type-system for ensuring program correctness,
+leads to code that is more easily understandable, and thus avoids
+the problems of legacy code.
+
+#+END_ABSTRACT
 
 
 * Introduction
@@ -1131,7 +1153,7 @@ https://github.com/chfi/purescript-genetics-browser
 #+INCLUDE: "./config.org"
 
 
-** Working With Units
+** Semantic Certainty with Typed Units
 # or: domain-based type checking of transformations
 #     (or something like that)
 
@@ -1412,7 +1434,7 @@ research are also examined, as is the future of GGB.
 
 * Conclusion
 
-Pure FP was a good tool for GGB and BD, however other legacy systems
+Pure FP is a good tool for GGB and BD, however other legacy systems
 may be more difficult to use the techniques presented in this thesis.
 For example, it may not be possible to find single points of entry a
 lá the glyphs in BD's rendering system, or it may simply not be

@@ -457,7 +457,8 @@ listing [[code:bdcy-cytoscape-predicate-3]].
 #+BEGIN_SRC purescript
 hasName :: Predicate Json
 hasName = Predicate f
-  where f json = maybe false (const true) $ json ^? _Object <<< ix "name"
+  where f json = fromMaybe false
+                 $ json ^? _Object <<< ix "name"
 
 elemHasName :: Predicate Element
 elemHasName = elementJson >$< hasName
@@ -480,6 +481,11 @@ briefly describes how a subset of the module is tested.
 
 
 *** Tests
+
+PS has a testing framework called `purescript-spec`, which these unit
+tests are written to use. The `fail` function fails the test with the given
+string, and the `shouldEqual` function fails if the two arguments are not
+equal.
 
 `CyCollection` is unit tested to help ensure that the graph operations work
 as expected. For example, the edges and nodes from a graph should both
@@ -506,8 +512,6 @@ original graph, and this should be commutative, see listing [[code:bdcy-cytoscap
 (edges <> nodes) `shouldEqual` (nodes <> edges)
 #+END_SRC
 
-These tests are run using `purescript-spec`, using some dummy data,
-and
 
 ** Summary
 # TODO summary
@@ -517,6 +521,6 @@ were written using PS's FFI, allowing for some degree of correctness
 even when working with JS code, with additional safety created using
 some unit tests in the case of the more complex parts.
 
-These modules are, on their own, useless. Thus the next section
-describes the configuration system used by GGB, and how it is
-used together with these modules to create BD and Cy.js browser instances.
+These modules are, on their own, useless. The next section thus
+describes the configuration system used by GGB, and how it is used
+together with these modules to create BD and Cy.js browser instances.

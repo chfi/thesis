@@ -9,90 +9,113 @@
 # TODO Add captions to code blocks
 # TODO requires a big rewrite
 
-Software needs to be configurable.  The Genetics Graph Browser (GGB)
-has many pieces that can and/or need to be configured by the user or system
-administrator. For example, what tracks are currently in the view.
+Software needs to be configurable. GGB has many pieces that can and/or
+need to be configured by the user, such as what data to display. There
+are also functions that need to be provided from an external source,
+such as the BD browser constructor.
 
-There are also functions that need to be provided from the external JS,
-such as the Biodalliance browser constructor, and the wrapper for
-Purescript-defined renderers.
+Configuration in standard JS solutions is not safe. A problem that can
+arise in JS is, if a configuration is given as a regular JS object
+(i.e. a key-value map with strings as keys), and each configuration
+piece is simply assigned to its respective application variable, large
+amounts of (boilerplate) code need to be written to validate and
+verify that the configuration object is correct. Otherwise, there is
+risk of some subpiece being misconfigured, or simply missing, leading
+to strange program behavior, or crashes at runtime.
 
-Configuration in standard JS solutions is not safe. A problem that can arise in
-JS is, if a configuration is given as a regular JS object (string, dictionary,
-etc.), and each configuration piece is simply assigned to the respective place
-in the application, there is risk of some subpiece being misconfigured, or
-simply missing. Worst case, the application can then crash.
+In this section, we examine how configuration is done in BD, and some
+problems associated with it. Next, the configuration system used in
+GGB, and how it avoids those problems, is presented. The section ends
+by showing how the configuration of the embedded BD and Cy.js browsers
+in GGB works.
 
 
 ** Configuring Biodalliance
 
-To give an idea of how configuration can take place in a legacy JS codebase,
-we look at BD. Many parts of BD can be configured, not just the tracks
-to display. All of this is provided by the user as a single JS object,
-and passed to the browser constructor which takes care of configuring
-the browser.
-
-# WIP example config
-A very basic browser configuration could look like this:
+To give an idea of how configuration can take place in a legacy JS
+codebase, we look at BD. BD is highly configurable, beyond which
+tracks to display and how. This information is provided by the user as
+a JS object, see example in listing [[code:config-bd-example]], which is
+passed to the browser constructor. The constructor then takes care of
+configuring the browser.
 
 # TODO this one needs to be reformatted
 #+name: code:config-bd-example
-#+caption:
+#+caption: Slimmed down BD instance configuration.
 #+BEGIN_SRC javascript
-  var biodalliance = new Browser({
-    prefix: '../',
-    fullScreen: true
+var biodalliance = new Browser({
+  prefix: '../',
+  fullScreen: true
 
-    chr:        '19',
-    viewStart:  30000000,
-    viewEnd:    40000000,
+  chr:        '19',
+  viewStart:  30000000,
+  viewEnd:    40000000,
 
-    sources:
-      [{name: 'Genome',
-        twoBitURI:  'http://www.biodalliance.org/datasets/GRCm38/mm10.2bit',
-        desc: 'Mouse reference genome build GRCm38',
-        tier_type: 'sequence'
-      }]
-  });
+  sources:
+    [{name:
+        'Genome',
+      twoBitURI:
+        'http://www.biodalliance.org/datasets/GRCm38/mm10.2bit',
+      desc:
+        'Mouse reference genome build GRCm38',
+      tier_type:
+        'sequence'
+    }]
+});
 #+END_SRC
 
-This object contains configuration of basic browser functionality (the
-properties `prefix`, which is the relative URL for icons and such data, and
-`fullScreen` which controls how the browser itself is rendered); initial browser
-state (`chr`, `viewStart`, `viewEnd`, which together define the chromosome and
-range of basepairs the browser displays at start); and an array of track source
-definitions (`sources`), which define what data to show, and how. In this case a
-mouse genome sequence is the only track.
+The configuration in listing [[code:config-bd-example]] configures some
+basic browser functionality (the properties `prefix`, which is the
+relative URL for icons and such data, and `fullScreen` which controls
+how the browser itself is rendered); initial browser state (`chr`,
+`viewStart`, `viewEnd`, which together define the chromosome and range
+of basepairs the browser displays at start); and an array of track
+source definitions (`sources`), which define what data to show, and
+how. In this case there is only one track, a mouse genome sequence
+fetched from the BD website.
 
-There are many more options and ways to customize the browser itself, likewise
-there are many different kinds of sources, and ways to configure them. All
-configuration is provided as JS objects, and the configuration data is used
-in various functions to initialize objects, from the browser itself to the
-tracks it displays. Since these functions are the place where the configuration
-options are defined, it is easy to add new configuration options; for the
-same reason, there is no easy way to know what a configuration option does,
-nor what values are legal.
 
-We'll have a brief look at some code smells in the configuration process,
-before moving on to the configuration of GGB, and how it is implemented.
+There are many more parts of BD that can be customized, and all
+options are passed in the same object. All such options are provided
+as JS objects, which are then passed to various functions that e.g.
+initialize of parts of the browser UI.
 
-*** Code Examples
 
-**** Defaults and browser state
-BD has many features, and makes use of a lot state in its main Browser object
-to function. Due to this, much of the browser construction sets various
-pieces of state to default values, and sets others to values from the
-configuration, or uses some configuration data to create an initial value.
+Since the options are used as function arguments, the specification
+of the entire system configuration, including what parts of the
+configuration object are used, and what values are legal, are spread
+out over the definitions of all the functions that options are passed to.
 
-As a prime example of primitive obsession, nearly all of the fields set
-by the browser constructor are numbers or strings, with only a few
-objects. Since this is JavaScript, there is no real type checking,
-though some of the code makes use of basic validation. However, it is
-wordy, and does not provide much:
+
+Next, we take a brief look at some parts of the BD initialization process
+to get an idea of how the BD configuration object is used.
+
+*** The Biodalliance Initialization Process
+
+The initialization of a BD browser instance is highly complex, spread
+out over many functions and thousands of lines of source code. As it is
+infeasible to provide even an overview here, we will only examine
+some components.
+
+**** Defaults and Initial Browser State
+
+BD has many features which make use of data stored in the main browser
+instance. Thus a large part of the initialization process consists of
+initializing these fields, either by setting them to hardcoded initial
+values, to values provided by the configuration, or defaults if no
+option was provided.
+
+BD makes an effort to perform some validation for some of the
+configuration options. For example, in listing [[code:config-bd-init-1]]
+BD ensures that the provided initial viewport (i.e. the point in the
+chromosome that the left edge of the browser begins at) is a number.
+If it is not, BD crashes with an appropriate error. It is unfortunate
+that several lines of code are required to ensure that a provided
+value is in fact a number.
 
 # TODO this one needs to be reformatted
 #+name: code:config-bd-init-1
-#+caption:
+#+caption: Basic validation of configuration in BD.
 #+BEGIN_SRC javascript
 if (opts.viewStart !== undefined &&
     typeof(opts.viewStart) !== 'number') {
@@ -102,131 +125,62 @@ if (opts.viewStart !== undefined &&
 this.viewStart = opts.viewStart;
 #+END_SRC
 
-Verbosity alone makes it is understandable that only a few of the many values
-set are checked like this. After various defaults are set, all other
-options from the configuration object are set on the browser object:
+
+However, most of the options are accepted without question, no matter
+their value, as seen in listing [[code:config-bd-init-2]]. These options
+are not only accepted, but the corresponding fields of the browser
+instance are set to them. This introduces a risk of a user overwriting
+vital browser state.
+
 #+name: code:config-bd-init-2
-#+caption:
+#+caption: Other parts of the configuration are not validated.
 #+BEGIN_SRC javascript
-// 140 lines of setting default options
 for (var k in opts) {
     this[k] = opts[k];
 }
 #+END_SRC
 
-Meaning if the user has somehow set an option with the same name as one
-of the fields used by BD, the browser will silently use the provided
-value, even though it may be entirely incorrect. E.g. providing a number
-to a function expecting a HTML DOM element.
-
-**** Entangled types (probably remove this)
-
-Sources and styles are both tightly coupled and separate -- problematic...
-
-Neat solutions in PS include mapping `Source` -> `SourceSansStyle`,
-Modelling type as (Source, Style), etc. (Isomorphic)
-# TODO this one needs to be reformatted
-#+name: code:config-bd-init-3
-#+caption:
-#+BEGIN_SRC javascript
-var sourcesAreEqual =
-      sourcecompare.sourcesAreEqual;
-var sourcesAreEqualModuloStyle =
-      sourcecompare.sourcesAreEqualModuloStyle;
-#+END_SRC
+Now, a look at the control flow during initialization.
 
 
 **** Indirection
-The constructor itself calls a method `browser.realInit()` as it finishes.
-This function continues much like the constructor, preparing the browser.
-Finally, the method `browser.realInit2()` is called.
 
-# TODO rewrite:
-Basically, the entire constructor, and its "subroutines" realInit and realInit2
-(those names are themselves code smells), create ad-hoc browser elements,
-set a bunch of default state, some of which are just values, others are
-derived from other configuration or data, until the whole thing is "ready".
+The browser constructor calls several functions during its execution.
+Some of these are highly complex; in fact, the constructor ends by calling
+a function that continues to initialize many parts of the browser such
+as the UI. This question continues the chain by calling another function,
+which initializes the event listeners used to interact with the browser.
 
-**** Event handlers
+This indirection is used to overcome problems of asynchronicity, which
+can happen e.g. if the application tries to add elements to the web page
+before the page has actually fully loaded. However, it vastly increases
+the complexity of the initialization process, especially concerning
+the time and effort required by a programmer trying to understand and
+make changes to it.
+
+One of the initialization procedures concern setting up event handlers.
+These, and their impact on working with the UI are worth further thought.
+
+
+**** Event Handlers and User Interactions
 # WIP last sentence probably needs rewording
-The browser constructor also sets the various DOM event handlers used
-by the browser's UI. A handler can be any function that takes an event
-as argument, meaning it is easy to write a handler that directly takes
-care of e.g. updating a UI element. That is also a problem, as every
-handler that modifies some UI state is another possibility for interference
-when working with the UI.
+The user interactions with the browser, from clicking on a button to
+open a menu to scrolling the mouse to zoom the view in and out, are
+defined using event handlers. The actions performed by these event
+handlers are defined in the same place as the handlers.
 
+That is, the code for opening a menu, i.e. manipulating the web page
+to hide, transform, and display the appropriate elements, is tightly
+woven into the code that triggers those changes. This makes it
+extremely difficult to perform changes to parts of the UI. Worse,
+as BD has a complex UI with many features, changing the UI state
+requires modifying large amounts of state.
 
-#+begin_comment
-**** Validation and transformations
-# WIP
-This style of code is commonly seen in code throughout BD, including
-configuration:
-
-# TODO this one needs to be reformatted
-# TODO This one is good to keep as a general example; not here, though
-
-#+BEGIN_SRC javascript
-while (sti < st.length &&
-       ry > st[sti].height &&
-       sti < (st.length - 1)) {
-    ry = ry - st[sti].height - tier.padding;
-    ++sti;
-}
-if (sti >= st.length) {
-    return;
-}
-#+END_SRC
-
-This code removes the sum of the height in pixels of the tracks from a value.
-It does this with external effects and state.
-
-#+end_comment
-
-#+begin_comment
-# TODO these are only relevant to the new native track; probably not applicable to report
-
-Stuff like this:
-
-# TODO this one needs to be reformatted
-#+BEGIN_SRC javascript
-if (thisB.isDragging && rx != dragOrigin && tier.sequenceSource) {
-    var a = thisB.viewStart + (rx/thisB.scale);
-    var b = thisB.viewStart + (dragOrigin/thisB.scale);
-
-    var min, max;
-    if (a < b) {
-        min = a|0; max = b|0;
-    } else {
-        min = b|0; max = a|0;
-    }
-
-    thisB.notifyRegionSelect(thisB.chr, min, max);
-}
-#+END_SRC
-
-
-# TODO this one needs to be reformatted
-#+BEGIN_SRC javascript
-if (hit && hit.length > 0 && !thisB.isDragging) {
-    if (doubleClickTimeout) {
-        clearTimeout(doubleClickTimeout);
-        doubleClickTimeout = null;
-        thisB.featureDoubleClick(hit, rx, ry);
-    } else {
-        doubleClickTimeout = setTimeout(function() {
-            doubleClickTimeout = null;
-            thisB.notifyFeature(ev, hit[hit.length-1], hit, tier);
-        }, 500);
-    }
-}
-#+END_SRC
-
-All of that to handle double clicks. Using purescript-behaviors, we could
-define an Event on double clicks by composition (I think). Compare
-to debouncing a switch with electronics vs assembly (maybe).
-
-#+end_comment
+However, as this section concerns configuration, UI is only brought up
+here as it is in BD so closely coupled with the configuration and
+initialization process. Solutions to these problems are provided in
+the User Interface section below; first, configuration in GGB must be
+solved.
 
 **** Code smell summary
 # REWRITE
@@ -244,69 +198,92 @@ works as it should, nor is there any structure to it. These functions:
   is a good example: The *same* code, 80 lines long, duplicated, right after
   another.
 
-*** Another approach
+*** Summary
 
-The solution used in GGB is to parse the configuration at the start of the
-program, from a raw Javascript JSON object into a Purescript type, with
-validation and error handling and reporting. For this I opted for
-purescript-foreign and purescript-argonaut, annotating all failures with error
-messages, which bubble up to the main configuration parser, which returns an
-error object or a successfully parsed configuration.
+The configuration and initialization processes of many parts of BD, both
+user-facing and internal, are woven into one single process. These
+processes are difficult to understand, as they conflate many different
+parts of program behavior, and have far-reaching consequences by passing
+options to other parts of the program without validation. There is also
+not a centralized specification of what options are
+valid or even what can be configured, as all parts of the provided
+configuration can be used by other parts of the program, as shown in
+listing [[code:config-bd-init-2]].
 
-** BrowserConfig
+GGB attempts to avoid these problems, and the next section shows how.
+The configuration provided by the user is validated at the start of the
+program, providing errors that make it clear what went wrong,
+making it impossible to use an incomplete or incorrect configuration. The result
+is a configuration object whose type is defined in a single place; in
+this way there is a clear and canonical specification of the possible
+configuration options, even when other parts of the program actually
+perform the parsing and use the options.
 
-The type BrowserConfig represents the highest level of the GGB configuration
-hierarchy; it is the parsed version of the JS object provided by the user.
-This is the definition:
+** A Browser Configuration Type
+
+In listing [[code:config-browser-type]] the type of the configuration object
+used to initialize GGB is defined --- this is what the user-provided
+configuration is parsed to.
 
 # TODO this one needs to be reformatted
 #+name: code:config-browser-type
-#+caption:
+#+caption: The `BrowserConfig` type defines the configuration options.
 #+BEGIN_SRC purescript :tangle yes :file Config.purs :prologue Imports/Config.purs
 newtype BrowserConfig =
   BrowserConfig
     { wrapRenderer :: RenderWrapper
-      , bdRenderers :: StrMap RendererInfo
-      , browser :: BrowserConstructor
-      , tracks :: TracksMap
-      , events :: Maybe
-          { bdEventSources :: Array SourceConfig
-          , cyEventSources :: Array SourceConfig
-          }
+    , bdRenderers :: StrMap RendererInfo
+    , browser :: BrowserConstructor
+    , tracks :: TracksMap
+    , events :: Maybe
+        { bdEventSources :: Array SourceConfig
+        , cyEventSources :: Array SourceConfig
+        }
     }
 #+END_SRC
 
-At this point, the specific types of the values in the record are irrelevant; the
-important part is that they're all Purescript types, and have been parsed
-and validated. The parsing is done by the parseBrowserConfig function, which
-has the following type signature:
+Some of the types may be familiar, others less so --- the details are irrelevant.
+What matters is that they are all PS types, rather than arbitrary JS values.
+That is, a value of type `BrowserConfig` /must/ have the appropriate configuration
+options. Creating such a value is done using the `parseBrowserConfig`, the
+type signature for which is given in listing [[code:config-parse-config-type-sig]].
+This function takes a `Foreign` value, i.e. an unknown JS value, and produces
+a `BrowserConfig` wrapped in the type `F`.
 
 #+name: code:config-parse-config-type-sig
-#+caption:
+#+caption: Type signature of function that validates a user-provided configuration object.
 #+BEGIN_SRC purescript :tangle no
 parseBrowserConfig :: Foreign -> F BrowserConfig
 #+END_SRC
 
-NOTE: add link to source, ideally make parseBrowserConfig and
-BrowserConfig clickable, or add links below the script (you could
-generate them from Emacs tags). Also make sure this code passes the
-current version. Same for all others. Note that this will be your
-documentation too.
+# NOTE: add link to source, ideally make parseBrowserConfig and
+# BrowserConfig clickable, or add links below the script (you could
+# generate them from Emacs tags). Also make sure this code passes the
+# current version. Same for all others. Note that this will be your
+# documentation too.
 
-parseBrowserConfig is a function that reads a JS object containing the necessary
-information to start the GGB, for example which tracks are included in the view,
-and functions for interfacing with BD.
+# parseBrowserConfig is a function that reads a JS object containing the necessary
+# information to start the GGB, for example which tracks are included in the view,
+# and functions for interfacing with BD.
 
-The pattern `Foreign -> F a` really says that a function named
-parseBrowserConfig is applied to Foreign type F and returns a BrowserConfig.
-This type of action is ubiquitous in the modules concerning configuration,
-because we use the library `purescript-foreign`. The type `Foreign` is part of
-Purescript and is simply anything that comes from outside Purescript, and thus
-must be parsed before any information can be extracted from them. `F` is a type
-synonym:
+# The pattern `Foreign -> F a` really says that a function named
+# parseBrowserConfig is applied to Foreign type F and returns a BrowserConfig.
+# This type of action is ubiquitous in the modules concerning configuration,
+# because we use the library `purescript-foreign`. The type `Foreign` is part of
+# Purescript and is simply anything that comes from outside Purescript, and thus
+# must be parsed before any information can be extracted from them. `F` is a type
+# synonym:
+
+
+The `F` type is defined in listing [[code:config-F-type]]. In English,
+`Except` lets us represent and handle exceptions within the type
+system. Thus `F` encodes the effect of possible failure, where failure
+is indicated by a list containing at least one `ForeignError`, which
+describes the error in question. The compiler thus enforces us to
+provide an error message if parsing fails.
 
 #+name: code:config-F-type
-#+caption:
+#+caption: The types used to encode errors when parsing.
 #+BEGIN_SRC purescript :tangle no
 type F = Except (NonEmptyList ForeignError)
 
@@ -318,224 +295,106 @@ data ForeignError =
   | ForeignError String
 #+END_SRC
 
-`Except` is practically `Either`, and lets us represent and handle exceptions within
-the type system. In this case, the error type is a non-empty list of these possible
-error values. If something has gone wrong, there is at least one error message
-connected to it; it is simply impossible to fail a parse without providing an error message!
 
-From the type signature, then, we see that the function name does not lie: it does
-attempt to parse Foreign data into BrowserConfigs, and must fail with an error
-otherwise. We know this, because the function does not have access to anything
-other than the raw configuration data, which means all the pieces of the completed
+From the type signature of `parseBrowserConfig`, we see that it attempts
+to parse a JS value into a `BrowserConfig`, providing errors upon failure.
+We also know that there the data in the resulting configuration must come
+from the given value; as functions are pure, all the pieces of the completed
 BrowserConfig must be extracted from the provided configuration, or there are
-default values provided in the function itself.
+default values provided in the `parseBrowserConfig` function itself. There
+is no risk of some other part of the program providing its own defaults
+if it needs some configuration not provided by the user.
 
-Let's look at one of the lines from the function definition (note: if you are new to Purescript
-the syntax may look strange - ignore the details, it will slowly make sense and you
-may appreciate the terseness in time).
+# Let's look at one of the lines from the function definition (note: if you are new to Purescript
+# the syntax may look strange - ignore the details, it will slowly make sense and you
+# may appreciate the terseness in time).
+
+The whole of `parseBrowserConfig` is too large to include here, but it
+is worthwhile to take a closer look at a subset of it. Listing
+[[code:config-parse-config-1]] shows the beginning of the parsing
+function, specifically the part that parses the provided BD browser
+constructor function. If the reader has no experience with PS
+or a similar language, the syntax may be difficult to understand;
+however the terseness belies how much is being done for us. See below.
 
 # TODO this one needs to be reformatted
 #+name: code:config-parse-config-1
-#+caption:
+#+caption: Basic validation on the provided BD constructor.
 #+BEGIN_SRC purescript :tangle no
-parseBrowserConfig :: Foreign -> F BrowserConfig
+parseBrowserConfig :: Foreign
+                   -> F BrowserConfig
 parseBrowserConfig f = do
-  browser <- f ! "browser" >>= readTaggedWithError "Function" "Error on 'browser':"
+  browser <- f ! "browser"
+               >>= readTaggedWithError
+                     "Function" "Error on 'browser':"
 #+END_SRC
 
-`F` is a monad, which in this case is simply an object containing state (Either
-a NonEmptyList or an error), so what is happening here is first an attempt to
-index into the "browser" property of the supplied Foreign value, followed by an
-attempt to read the Javascript "tag" of the value. If the tag says the value is
-a function, we're happy and cast the value to the type BrowserConstructor bound
-to the name browser, which is later referred to when putting the eventual
-BrowserConfig together. If the object doesn't have a "browser" property, or said
-property is not a JS function, we fail, and tell the user what went wrong.
+The first two lines specify the type of the function, as seen earlier.
+The third is the beginning of the function body, where `f` is the provided
+`Foreign` value (i.e. the user-provided configuration). The right hand side
+of the = is the function body, while the `do` keyword is used to make it
+easier to work with the `F` type.
+
+This is because `F` (specifically `Except`, which `F` is a type
+synonym for) is a monad, one of the more well-known (if possibly
+infamous) abstractions used in pure FP. This report is not a monad
+tutorial, however, and it is best to keep the definition of the `F`
+type in mind.
+
+On line 4 in listing [[code:config-parse-config-1]], the `<-` operator is
+used to extract the result of the attempt to parse the browser constructor,
+binding the result to the `browser` identifier, which can then be used
+in the final `BrowserConfig`. To the right of the `<-` is the parsing
+logic in question.
+
+First, `f ! "browser"` attempts to extract the value at the "browser"
+key in the provided object. If this does not exist, an error is
+instead returned (the `!` operator does this), at which point
+`parseBrowserConfig` returns that error. If the value at that key does
+exist, we make sure it is a function. If not, another error is returned.
+
+The rest of the parsing is done analogously, making use of these general
+tools for working with potentially failing functions, and propagating errors.
+However, the
 
 
-# TODO move this section to a general error-handling section
-# TODO create error-handling section
+** Configuring Browser Data
+Tracks configurations are different for BD tracks and Cy.js graphs.
+They are both provided as arrays of JSON data, but obviously have
+different requirements, and are parsed and validated in different ways.
 
-#+begin_comment
+While Cy.js supports highly complex data, graphs in GGB are currently
+configured simply by providing a name and a URL from which to fetch
+the elements in JSON format.
 
-# NOTE: I would move the rest of the section to a chaptor on error handling
-# because it is actually generic:
+Tracks using BD simply use BD configurations; they are directly
+compatible with Biodalliance configurations. Thus it is difficult to
+perform much validation on these track configurations, for reasons
+pointed out above. One example specific to track configurations is
+that numerous properties which can describe the URL from where the
+track will fetch data, and what parser to use. They are logically
+disjoint yet allowed by BD.
 
-`readTaggedWithError` is actually simple:
+Because of this, GGB takes a hands-off approach to BD tracks, and the
+only validation that takes place is that a track must have a name.
 
-# TODO this one needs to be reformatted
-#+name: code:config-read-tagged
-#+BEGIN_SRC purescript :tangle no
--- The type is:
-readTaggedWithError :: forall a. String -> String -> Foreign -> F a
--- The implementation:
-readTaggedWithError s e f = withExcept (append (pure $ ForeignError e)) $ unsafeReadTagged s f
-#+END_SRC
+** Summary
 
-In words, it tries to read the tag, and if unsuccessful, appends the provided error
-message to the error message from unsafeReadTagged. Let's look at the types:
+One of the greatest problems with the configuration system in BD is that
+it provides very little information as to what options do what, or even
+what options are available, much less what values are legal for what
+options. With an incorrect configuration, things can go wrong in parts
+far from the parts of the code that manage configuration and initialization.
+These ring many bells concerning the legacy code problem of not understanding
+what code does, and difficulties of predicting the consequences of code.
 
-#+BEGIN_SRC purescript :tangle no
-unsafeReadTagged :: forall a. String -> Foreign -> F a
+The configuration system provided by GGB, on the other hand, collects all
+options in one place, and one type. Since it is type-checked, no part of
+the program can receive an invalid value. Validation is done in such a way that
+errors are discovered and reported before the program can attempt to use
+any of them, preventing silent failure, or failure in some part of the
+program far away from the configuration system.
 
-withExcept :: forall e1 e2 a.
-              (e1 -> e2)
-           -> Except e1 a
-           -> Except e2 a
-
-append :: forall m. Monoid m => m -> m -> m
-#+END_SRC
-
-
-In this case (of the type F), the use of `withExcept` would specialize to have the type:
-#+BEGIN_SRC purescript :tangle no
-withExcept :: a.
-             (a -> a)
-           -> F a -> F a
-#+END_SRC
-
-Another way to look at it is that `withExcept` is `map` but for the error type.
-
-
-#+end_comment
-
-** Tracks
-Tracks configurations are different for BD tracks and Cy.js graphs, though both
-are provided as arrays of JSON, under different properties in the `tracks`
-property of the configuration object, they are treated in their respective
-sections.
-
-*** Biodalliance
-
-Tracks using BD are configured using BD source configurations; they are
-directly compatible with Biodalliance configurations. Because of this, there
-is little validation on these track configurations, as there would be no
-reasonable way of representing the options in Purescript, as they are
-spread out over the entire BD codebase. There are, for example, numerous
-properties which can describe from where the track will fetch data and what
-kind of data it is, which are logically disjoint but nevertheless technically
-allowed by Biodalliance (though likely with undesired results).
-
-So, the GGB takes a hands-off approach to BD tracks, and the only validation
-that takes place is that a track must have a name. If it does, the JSON object
-is later sent, unaltered, to the Biodalliance constructor.
-
-The Biodalliance constructor is another parameter that the configuration requires.
-This and the `wrapRenderer :: RenderWrapper` function are required for the BD
-interface to function properly, and are JS functions provided by Biodalliance.
-# TODO note that wrapRenderer is only in a modified repo?
-
-*** Cytoscape.js
-# TODO expand on this
-# TODO add example
-Cytoscape graphs are currently configured by providing a name and a URL from
-which to fetch the elements in JSON format.
-
-
-
-# NOTE remove the rest of the file? none of it is really relevant
-
-#+begin_comment
-
-** Events
-# DONE? the first line should be made clearer for novices:
-When a user interacts with a track, e.g. by clicking on a data point, the track
-can communicate the interaction to the rest of the system, including other
-tracks. The user can configure the structure of the events that a track
-produces, and what a track does when receiving an event of some specific
-structure, e.g. scrolling the track on receiving an event containing a position.
-
-
-
-TODO: remove below text into the source files for documentation. You can refer
-to that, but I would just continue with TrackSink here.
-
-**** Parsing the user-provided SourceConfigs
-
-The SourceConfig and TrackSource validation is done in Either String,
-while the BrowserConfig parsing is done in the type Except (NonEmptyList ForeignError).
-To actually use these functions when parsing the user-provided configuration,
-we need to do a transformation like this:
-
-# TODO this one needs to be reformatted
-#+BEGIN_SRC purescript :tangle no
-toF :: Either String ~> Except (NonEmptyList ForeignError)
-#+END_SRC
-
-Fortunately, Either and Except are isomorphic - the difference between the two is
-only in how they handle errors, not what data they contain. There already exists a function
-that does part of what we need:
-
-# TODO this one needs to be reformatted
-#+BEGIN_SRC purescript :tangle no
-except :: forall e m a. Applicative m => Either e a -> Except e a
-#+END_SRC
-
-Now we need a function that brings Either String to Either (NonEmptyList ForeignError).
-We can use the fact that Either is a bifunctor, meaning it has lmap:
-#+BEGIN_SRC purescript :tangle no
-lmap :: forall f a b c.
-	Bifunctor f
-     => (a -> b)
-     -> f a c -> f b c
-#+END_SRC
-
-It's exactly the same as map on a normal functor, except it's on the left-hand type.
-
-# TODO: idk if this is actually a good comparison
-The bifunctor instance on Either can be seen as letting us build up a
-chain of actions to perform on both success and failure, a functional
-alternative to nested if-else statements.
-
-The final piece we need is a way to transforming a String to a
-(NonEmptyList ForeignError). Looking at the definition of the
-ForeignError type, there are several data constructors we could use.
-Easiest is (ForeignError String), as it simply wraps a String and
-doesn't require any more information. To create the NonEmptyList, we
-exploit the fact that there is an Applicative instance, and use
-`pure`:
-
-# TODO this one needs to be reformatted
-#+BEGIN_SRC purescript :tangle no
-f :: String -> NonEmptyList ForeignError
-f = pure <<< ForeignError
-#+END_SRC
-
-Putting it all together, we have this natural transformation:
-
-#+BEGIN_SRC purescript :tangle no
-eitherToF :: Either String ~> F
-eitherToF = except <<< lmap (pure <<< ForeignError)
-#+END_SRC
-
-Now we can parse the events configuration in the BrowserConfig parser:
-
-# TODO this one needs to be reformatted
-#+name: code:config-parse-config-2
-#+BEGIN_SRC purescript :tangle no
-events <- do
-  evs <- f ! "eventSources"
-
-  bd <- evs ! "bd" >>= readArray >>= traverse parseSourceConfig
-  cy <- evs ! "cy" >>= readArray >>= traverse parseSourceConfig
-
-  _ <- eitherToF $ traverse validateSourceConfig bd
-  _ <- eitherToF $ traverse validateSourceConfig cy
-
-  pure $ Just $ { bdEventSources: bd
-		, cyEventSources: cy
-		}
-#+END_SRC
-
-# TODO: should probably just validate in the parseSourceConfig
-Note how we discard (_ <- ...) the results from the config validation;
-we only care about the validation error, since the configuration
-values have already been parsed.
-
-
-**** Future work
-# TODO more of this
-Typing events -- types are there, just not checked (also only makes
-sense w/ some kinda DSL/interpreter)
-
-#+end_comment
+The next section continues on the theme of increasing program correctness
+while staying compatible with BD, by introducing one way of differentiating
+values of different units.
