@@ -64,10 +64,8 @@
 #+LATEX_HEADER: \usepackage[numbers]{natbib}
 #+OPTIONS: H:6
 
-* Abstract
 
 
-* Acknowledgements
 #+BEGIN_ABSTRACT
 Legacy systems are everywhere. Immense resources are placed on fixing
 problems caused by them, and on legacy system maintenance and reverse
@@ -91,6 +89,15 @@ the problems of legacy code.
 
 #+END_ABSTRACT
 
+* Acknowledgements
+This thesis would not have been possible without the support and
+(near endless?) patience of my supervisor and mentor, Pjotr Prins.
+I am also grateful for the help of my university supervisor, Anders
+Broberg, for vital help especially in structuring this report.
+Last but not least, I would like to thank Professor Rob Williams
+for providing me with the opportunity to present my work-in-progress
+at Complex Trait Community in Memphis, TN, June 2017.
+
 
 * Introduction
 
@@ -100,9 +107,9 @@ It conjures images of slogging through a murky swamp of tangled
 undergrowth with leaches beneath and stinging flies above. It conjures
 odors of murk, slime, stagnancy, and offal. Although our first joy of
 programming may have been intense, the misery of dealing with legacy
-code is often sufficient to extinguish that flame. --- Robert C.
-Martin, Foreword to Working Effectively with Legacy Code
-\cite{feathers2004working}
+code is often sufficient to extinguish that flame.
+
+Robert C. Martin \cite{feathers2004working}
 #+END_QUOTE
 
 # TODO redo this probably; opinionated & without citations~~
@@ -114,13 +121,13 @@ become "legacy" tomorrow. In fact, one does not need to go back far in
 time to find "legacy" code, as any code that is difficult to
 understand, and it is difficult to make changes to such that the
 effects of the changes on the system are predictable, can be
-considered "legacy" code\cite{Bennett1995}.
+considered "legacy" code \cite{Bennett1995}.
 
 Many solutions have been proposed and tried, yet legacy code continues
 to be a problem. It will continue to be a problem, and be solved not
 not when a way to "repair" legacy code is found, but when a way to
 write code that does not /become/ legacy code is
-found\cite{weide1995reverse}.
+found \cite{weide1995reverse}.
 
 This thesis is concerned with evaluating purely functional programming
 as one potential solution to and preventative measure against legacy
@@ -134,13 +141,13 @@ problems, as defined in the Method chapter.
 ** Context
 
 GeneNetwork 2 (GN2) is a web-based database and toolset for doing
-genetics online\cite{mulligan2017genenetwork}, developed at University
+genetics online \cite{mulligan2017genenetwork}, developed at University
 of Tennessee Health Science Center. One feature yet to be implemented
 in GN2 is an interactive genome browser.
 
 Biodalliance (BD) is one such genome browser, which is written in
 JavaScript (JS) and can be embedded in web
-pages\cite{down2011dalliance}. However, BD is several years old, and
+pages \cite{down2011dalliance}. However, BD is several years old, and
 has accumulated a lot of code and features, which have led to
 difficulties when adding new functionality that is desired in GN2.
 
@@ -249,8 +256,8 @@ legacy code.
 *** Definition
 
 There is no formal definition of "legacy code", but
-\cite{feathers2004working} gives the definition "Legacy code is code
-that we've gotten from someone else." \citeauthor{Bennett1995}
+\citeauthor{feathers2004working} gives the definition "Legacy code is code
+that we've gotten from someone else". \citeauthor{Bennett1995}
 provides a definition of legacy systems in general, which gives an
 idea of why it may be problematic: "large software systems that we
 don't know how to cope with but that are vital to our organization"
@@ -262,7 +269,7 @@ were:
 #+BEGIN_QUOTE
 [..] legacy code, i.e., programs in which too much has been invested
 just to throw away but which have proved to be obscure, mysterious,
-and brittle in the face of maintenance.
+and brittle in the face of maintenance. \cite{weide1995reverse}
 #+END_QUOTE
 
 In other words, legacy code is code that continues to be relevant, e.g. by
@@ -297,7 +304,7 @@ managers such as Nix \cite{dolstra2004nix} and Guix
 \cite{courtes2013functional}.
 
 Why would changes need to be made to a legacy codebase? When the
-behavior of the system needs to be changed. \cite{feathers2004working}
+behavior of the system needs to be changed. \citeauthor{feathers2004working}
 identifies four general reasons:
 
   1. Adding a feature
@@ -372,16 +379,16 @@ In short, the problem with legacy code is lack of knowledge in what
 the system does, and how the code relates to the system and its parts.
 This makes it difficult to know what changes to make to the code to
 produce the desired change in system behavior, and if a change made is safe,
-i.e.\ that /no/ undesired change in system behavior results.
+i.e. that /no/ undesired change in system behavior results.
 
 
 *** Solutions
 
 Legacy code has been a recognized problem for decades, and people have
-been trying to solve it for as long.
+been trying to solve it for as long
 \cite{lehman1980programs}
 \cite{weide1995reverse}
-\cite{Mntyl2006}
+\cite{Mntyl2006}.
 This section will present some general approaches and tools that have
 been applied when working with legacy systems. First, techniques that
 help with manual reverse-engineering, which is the most widely used
@@ -400,8 +407,8 @@ As previously mentioned, the
 greatest problems stem from insufficient knowledge of the system; from
 not knowing what code does, or what happens when a change is made.
 Thus, adding tests is one of the main tools for increasing understanding,
-as tests provide the programmer with feedback on their code changes.
-\cite{siebra2016anticipated}
+as tests provide the programmer with feedback on their code changes
+\cite{siebra2016anticipated}.
 
 However, this feedback is only as good as the test suite; if a
 system behavior is not covered by the tests, the programmer has a blind
@@ -426,9 +433,9 @@ Automated tools that assist with legacy systems are largely concerned
 with increasing the knowledge of the system, understanding how it works,
 extracting modules, etc. One example
 is extracting OOP abstractions such as classes from imperative code,
-e.g. by analyzing which functions and variables are used together.
+e.g. by analyzing which functions and variables are used together
 \cite{Etzkorn1997}
-\cite{Silva2017}
+\cite{Silva2017}.
 
 # TODO this paragraph may be wrong :) read the paper
 Another interesting route is creating a "modularization proposal," i.e.
@@ -437,7 +444,7 @@ more modular system while minimizing change each step,
 by constructing
 a concept lattice based on where different global variables are used.
 This lattice can then be used to create descriptions on how to
-modularize the codebase. \cite{lindig1997assessing}
+modularize the codebase \cite{lindig1997assessing}.
 
 Another approach is using automated tools to detect potentially
 problematic parts of a codebase, such as overly complex controllers
@@ -508,17 +515,18 @@ the system communicates with the outside world in this manner, nor
 that the system /depends/ on said service. It could also modify global
 state, which potentially changes the behavior of all other parts of
 the codebase that interact with said state, despite there being no
-direct interaction between the different parts. This has been called
-"spooky action at a distance,"\cite{feathers2004working} a reference
-to what Einstein thought of quantum mechanics.
-# TODO REF or footnote for Einstein
+direct interaction between the different parts. This has been compared
+to the intuitively strange interactions of entangled particles in
+quantum mechanics:
 
-# TODO keep this or the "spooky action at a distance" quote
+# TODO make sure this ends up on one and not two pages in the report...
 #+BEGIN_QUOTE
 Most large software systems, even if apparently well-engineered on
 a component-by-component basis, have proved to be incoherent as a
 whole due to unanticipated long-range "weird interactions" among
-supposedly independent parts. \cite{weide1995reverse}
+supposedly independent parts.
+
+\cite{weide1995reverse}
 #+END_QUOTE
 
 # TODO this needs to be reworded & expanded.
@@ -580,8 +588,8 @@ and its strengths. In short, pure FP enforces "referential transparency,"
 which means that any piece of code can be replaced with the value it evaluates
 to, wherever it appears in the source code. This makes it easier to understand
 the code, any function can be reduced, on a cognitive level, to a black box
-that can be passed around and used without having to think about its contents.
-\cite{hughes1989functional}
+that can be passed around and used without having to think about its contents
+\cite{hughes1989functional}.
 
 Pure FP achieves this by using immutable data structures, eliminating side effects
 in code, and using a powerful type system to express effectful computations
@@ -594,8 +602,8 @@ in code, and using a powerful type system to express effectful computations
    # transformations?
 The functional paradigm can be seen as a natural extension to the lambda
 calculus, a model of computation invented by Alonzo Church, where a
-small set of variable binding and substitution rules is used to express
-computations.
+small set of variable binding and substitution rules are used to express
+computation.
 # TODO REF
 
 # TODO this paragraph could use some more work; give examples of Turing machine-based "languages" e.g. brainfuck
@@ -722,9 +730,9 @@ category theory, they gain access to 70 years of documentation
 concerning their problem. This may appear unlikely, but in fact
 category theory appears to provide tools to naturally express many
 problems encountered in software development. One example is
-constructing and combining 2D vector diagrams\cite{yorgey2012monoids};
+constructing and combining 2D vector diagrams \cite{yorgey2012monoids};
 another, defining UIs in a declarative
-manner\cite{freeman2017Comonads}.
+manner \cite{freeman2017Comonads}.
 
 If the abstractions used can be expressed in
 the type system, the compiler can help prove that the program is
@@ -799,7 +807,8 @@ holding the banana and the entire jungle.
 If you have referentially transparent code, if you have pure functions
 — all the data comes in its input arguments and everything goes out
 and leave no state behind — it’s incredibly reusable.
---- Joe Armstrong\cite{seibel2009coders}
+
+Joe Armstrong \cite{seibel2009coders}
 #+END_QUOTE
 
 This section begins by introducing PureScript, the programming
@@ -850,8 +859,7 @@ in general.
 [fn:immutable-caveat] There are some mutable data structures in PS, e.g.
 arrays that support in-place mutation for efficiency. These are separate
 from the immutable versions; transforming between the two must be done
-explicitly. As mutation is an effect, it too is captured by the type system
-and must be done in the `Eff` type; see # TODO add ref to Purity section!!
+explicitly. As mutation is an effect, so it too is captured by the type system.
 
 # TODO not sure about the order of these two sections; purity & types are closely connected
 *** Purity
@@ -1111,7 +1119,7 @@ judgements as to the validity of the hypothesis.
 
 In this chapter, the resulting product, that is, GGB, is presented.
 After a brief overview of the browser itself, the rest of the chapter
-consists of deeper dives into some of the parts of the code that is
+consists of deeper dives into the parts of the source code that are
 most relevant to the thesis objective.
 
 
@@ -1153,7 +1161,7 @@ https://github.com/chfi/purescript-genetics-browser
 #+INCLUDE: "./config.org"
 
 
-** Semantic Certainty with Typed Units
+** Semantic Correctness with Typed Units
 # or: domain-based type checking of transformations
 #     (or something like that)
 
@@ -1269,7 +1277,7 @@ this new rendering system.
 
 # TODO is it worthwhile to embed JS apps in a PS app
 In short, embedding a legacy JS app in a PS app was in this case
-an efficient way of adding achieving the developmental goals of
+an efficient way of achieving the development goals of
 the project, as interfacing with BD required little overhead.
 It helped that work had already been done in that area; other
 projects may or may not present difficulties for the approach
@@ -1372,7 +1380,7 @@ dead-ends on the way to the current state of the product, as it was
 difficult to decide on the architecture of the application, and
 sometimes how to approach and solve smaller problems. Deciding on
 some abstraction too early was a mistake repeatedly made, leading
-to refactoring to a more specific implementation. [fn:author-apology]
+to refactoring to a more specific implementation[fn:author-apology].
 Often, once the problem was solved, a more general solution showed
 itself, and another refactoring was made. Thanks to the type system,
 even large refactorings were quite easy, as the compiler largely
@@ -1385,14 +1393,15 @@ newly learned (but not necessarily understood) concepts and abstractions
 throughout the project.
 
 
-Pure FP is a very different beast from imperative programming, not only
-when it comes to larger-scale program design. Many of the techniques
-used in this project require considerably more knowledge to understand
-than similar solutions in imperative languages. Using typeclass constraints
-(`Semigroup` etc.) require the programmer to know their meaning, which
-can become overwhelming when a function uses half a dozen or more constraints. [fn:abstraction-apology]
-Highly abstract code also tends to become small and terse, which can
-also be a problem, especially for newcomers to the language and paradigm.
+Pure FP is a very different beast from imperative programming, not
+only when it comes to larger-scale program design. Many of the
+techniques used in this project require considerably more knowledge to
+understand than similar solutions in imperative languages. Using
+typeclass constraints (`Semigroup` etc.) require the programmer to
+know their meaning, which can become overwhelming when a function uses
+half a dozen or more constraints[fn:abstraction-apology]. Highly
+abstract code also tends to become small and terse, which can also be
+a problem, especially for newcomers to the language and paradigm.
 
 
 # TODO maybe could do with a better example (one with more methods, filterable?)
@@ -1484,10 +1493,10 @@ conclusions that are in any way definite with a sample size of 1;
 hopefully larger, more quantitative studies are undertaken in the
 future.
 
-More generally, there has been little research comparing programming
+More generally, there has been little research performed on comparing programming
 languages, and even less research on the user experience of languages,
 i.e. on what actually makes a good
-language\cite[p.~252]{seibel2009coders}. That is another avenue for
+language \cite[p.~252]{seibel2009coders}. That is another avenue for
 future research.
 
 This is an area of research that it is difficult to do studies in, as
@@ -1503,7 +1512,7 @@ data already exists in the form of source control repositories, commit
 logs, etc. There would be other difficulties, such as controlling for
 e.g. community culture and other differences between languages used.
 Nevertheless, some studies have been done in this area
-recently\cite{Ray2014}, and the future may be promising.
+recently \cite{Ray2014}, and the future may be promising.
 
 
 ** Future of the Graph Genetics Browser

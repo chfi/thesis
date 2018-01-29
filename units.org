@@ -46,7 +46,7 @@ basepairs on a chromosome.
 
 
 
-[fn:daggy] https://github.com/fantasyland/daggy
+[fn:daggy-url] https://github.com/fantasyland/daggy
 
 
 
@@ -190,7 +190,7 @@ puzzle, as detailed next.
 
 When drawing data to the screen, we need to be able to transform
 between screen coordinates and the coordinates used by data. As `Bp`
-and `MBp` are isomorphic [fn:floating-point], here we only look at
+and `MBp` are isomorphic[fn:floating-point], here we only look at
 transforming between basepairs and pixels. In listing
 [[code:units-scale-1]] we represent this scaling factor with another
 newtype.
@@ -330,7 +330,7 @@ featureBpToMBp :: forall r.
 featureBpToMBp = lmap bpToMBp
 #+END_SRC
 
-Let us end this section with an example: listing [[code:units-feature-4]]
+Let us end this section with an example: listing [[code:units-feature-5]]
 shows the entire definition of a function that transforms features with
 coordinates as basepairs to features with coordinates as megabasepairs.
 

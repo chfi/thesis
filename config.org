@@ -355,7 +355,6 @@ exist, we make sure it is a function. If not, another error is returned.
 
 The rest of the parsing is done analogously, making use of these general
 tools for working with potentially failing functions, and propagating errors.
-However, the
 
 
 ** Configuring Browser Data

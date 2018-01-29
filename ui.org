@@ -290,8 +290,8 @@ render :: State
             m
 #+END_SRC
 
-The function itself is simple, constructing the HTML tree with
-arrays of functions for creating HTML elements. Listing [[code:ui-algebras-11]
+The function itself is simple, constructing the HTML tree with arrays
+of functions for creating HTML elements. Listing [[code:ui-algebras-11]]
 shows a version simplified for brevity.
 
 #+name: code:ui-algebras-11
@@ -473,8 +473,6 @@ io.subscribe $ CR.consumer $ case _ of
       Left err -> log err
       Right ts -> subscribeBDEvents ts bd busFromBD
 
-      --TODO remove BDRef? debug stuff...
-    liftEff $ setBDRef bd
     pure Nothing
 
   _ -> pure $ Just unit

@@ -14,15 +14,14 @@ kinds of events.
 
 In short, the system consists of four parts:
 
-1. The browser, e.g. BD, producing raw events in response to user interaction, in whatever
-format it uses
+1. The browser, e.g. BD, producing raw events in response to user interaction, in whatever format it uses
 2. A track source, mapping the raw event to one used by GGB
 3. A track sink, consuming GGB events into some callback that performs effects on...
 4. ... another browser, e.g. Cy.js.
 
-Each part of this system should also be user-configurable, and constructed in such
-a way as to minimize the risk of callbacks receiving events they cannot process
---- we want event type safety.
+Each part of this system should also be user-configurable, and
+constructed in such a way as to minimize the risk of callbacks
+receiving events they cannot process --- we want event type safety.
 
 We begin by looking at what events are provided by BD and Cy.js.
 
@@ -71,11 +70,13 @@ same format.
 
 
 ** JSON Configuration and Semantics
+
 # TODO rewrite to fit with rewritten previous section
 
-   What was needed was using a single type for all the possible events,
-but also providing enough data to do some kind of validation -- validation
-on data coming from and going to the FFI, meaning it cannot be trusted whatsoever.
+   What was needed was using a single type for all the possible
+events, but also providing enough data to do some kind of validation
+-- validation on data coming from and going to the FFI, meaning it
+cannot be trusted whatsoever.
 
 Since ease of configuration was another important factor, I decided to start
 there. JSON was the natural format to use for configuration; upon
@@ -144,18 +145,20 @@ which the next section describes.
 # TODO rewrite this to be more focused on the objective;
 #      write about JCursor from the viewpoint of maintenance, code reuse, etc.
 
-Argonaut is a library for working with JSON in PS, including serializing
-and deserializing, as well as working with the JSON trees.
+Argonaut is a library for working with JSON in PS, including
+serializing and deserializing, as well as working with the JSON trees.
 
-One key difference to purescript-foreign and its Foreign type, Argonaut's Json
-type only corresponds to actual JSON, i.e. things that are legal in JSON
-formatted files. Thus, functions and other values that cannot be serialized to
-JSON, cannot be represented in the Json type.
+One key difference to purescript-foreign and its Foreign type,
+Argonaut's Json type only corresponds to actual JSON, i.e. things that
+are legal in JSON formatted files. Thus, functions and other values
+that cannot be serialized to JSON, cannot be represented in the Json
+type.
 
-Values of type Json can be decoded, or parsed, in several ways. In this case
-we're interested in walking arbitrary JSON trees and transforming lists of
-paths. Before looking at how the parsing works, in listin [[code:events-sourceconfig-1] is an example of a
-legal SourceConfig.
+Values of type Json can be decoded, or parsed, in several ways. In
+this case we're interested in walking arbitrary JSON trees and
+transforming lists of paths. Before looking at how the parsing works,
+in listin [[code:events-sourceconfig-1]] is an example of a legal
+SourceConfig.
 
 #+name: code:events-sourceconfig-1
 #+caption: Example SourceConfig.

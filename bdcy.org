@@ -42,7 +42,7 @@ String, however JS has no such qualms.
 
 # TODO: this might be a *terrible* example... typewise and everything
 
-#+caption: Unsafe function that "adds" two values and prints the result to the browser console.
+#+caption: Unsafe function prints the result of "summing" two values, to the browser console.
 #+name: code:bdcy-js-untyped-example
 #+BEGIN_SRC javascript
 exports.showStuff = function(a) {
@@ -55,7 +55,7 @@ exports.showStuff = function(a) {
 #+END_SRC
 
 JS knows nothing about the types, however when defining an FFI function
-in PS, a type signature must be provided. Using the type in [[code:bdcy-purs-typed-example-1]]
+in PS, a type signature must be provided. Using the type in [[listing code:bdcy-purs-typed-example-1]]
 limits using the `showStuff` function on strings, and returns an effect,
 making the function pure and behave reasonably.
 # TODO make sure caption exports correctly

@@ -616,7 +616,7 @@ four edges of the box.
 
 #+name: code:glyph-bounding-box-2
 #+caption: Newtype wrapper for bounding boxes.
-#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
+#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs
 newtype GlyphPosition =
   GlyphPosition { min :: Number
                 , max :: Number
@@ -634,7 +634,7 @@ in listing [[code:glyph-bounding-box-3]].
 
 #+name: code:glyph-bounding-box-3
 #+caption: How to append bounding boxes.
-#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
+#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs
 instance semigroupGlyphPosition
   :: Semigroup GlyphPosition where
     append (GlyphPosition p1)
@@ -669,7 +669,7 @@ infinity, as in listing [[code:glyph-bounding-box-5]].
 
 #+name: code:glyph-bounding-box-5
 #+caption: The identity of bounding boxes.
-#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
+#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs
 instance monoidGlyphPosition
   :: Monoid GlyphPosition where
     mempty =
@@ -687,7 +687,7 @@ transformation, see listing [[code:glyph-bounding-box-6]].
 
 #+name: code:glyph-bounding-box-6
 #+caption: The bounding box interpreter.
-#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
+#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs
 glyphPosN :: GlyphF ~> Writer GlyphPosition
 glyphPosN (Stroke _ a) = pure a
 glyphPosN (Circle p r a) = do
@@ -713,7 +713,7 @@ exactly as the previous Writer-based interpreters were.
 
 #+name: code:glyph-bounding-box-7
 #+caption: Function for extracting the bounding box from an arbitrary glyph.
-#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs :exports none
+#+BEGIN_SRC purescript :file GlyphBB.purs :prologue Imports/GlyphBB.purs
 glyphToGlyphPosition :: forall a.
                         Glyph a
                      -> GlyphPosition
