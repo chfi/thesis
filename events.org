@@ -1,188 +1,205 @@
-# * Events
-
-
-# TODO clean up a bunch
-# TODO clean up language
-
-   When working with connected data, we want to be able to interact
-with the data in multiple ways, to explore one data set by examining
+When working with connected data, we want to be able to interact with
+the data in multiple ways, to explore one data set by examining
 another. In the architecture of GGB, this comes down to sending events
-between tracks -- when clicking on some data point in one track, an
+between tracks --- when clicking on some data point in one track, an
 event containing information derived from that data point is created,
 and sent to other tracks that have been configured to react to those
 kinds of events.
 
-In short, the system consists of four parts:
+Briefly, the system consists of four parts:
 
-1. The browser, e.g. BD, producing raw events in response to user interaction, in whatever format it uses
+1. The browser, e.g. BD, producing raw events in response to user
+   interaction, in whatever format it uses
 2. A track source, mapping the raw event to one used by GGB
-3. A track sink, consuming GGB events into some callback that performs effects on...
+3. A track sink, consuming GGB events into some callback that performs
+   effects on...
 4. ... another browser, e.g. Cy.js.
 
 Each part of this system should also be user-configurable, and
 constructed in such a way as to minimize the risk of callbacks
-receiving events they cannot process --- we want event type safety.
+receiving events they cannot process. That is, we want to be able to
+validate and make sure only compatible sources and sinks are hooked
+together; a sort of type safety, except at runtime, not compilation
+time.
 
-We begin by looking at what events are provided by BD and Cy.js.
+The next two sections describe the events used by BD and Cy.js, what
+data they contain and what requirements they entail; what GGB must
+provide. Next, the reasoning behind the configuration language is
+presented, followed by implementation and usage details.
 
 ** Biodalliance
-# TODO move examples from bdcy.org & config.org to here
-   BD provides several facilities for the user to add event handlers, functions
-that are called when the user interacts with the browser, or the browser performs
-some action. We are interested in only one, `addFeatureListener`. This function
-adds a handler that is called when the user clicks on a feature, i.e. on a data point
-in a BD track.
+BD provides several facilities for the user to add event handlers,
+functions that are called when the user interacts with the browser, or
+the browser performs some action. We are interested in only one,
+\verb|addFeatureListener|. This function adds a handler that is called
+when the user clicks on a feature, i.e. on a data point in a BD track.
 
-It receives several parameters, the DOM MouseEvent that triggered the handler,
-the BD feature clicked on, the track the click occured in, and an array of other
-objects; for simplicity's sake, we only look at the feature clicked on. This
-feature is a JS object, and can contain any information that BD parsed from the raw data,
-meaning two features from two different tracks can look very different, and
+It receives several parameters, but for our purposes we will only be
+concerned with one, namely, the feature itself. This feature is a JS
+object, and can contain any information that BD parsed from the raw
+data, meaning two features can be different, and be arbitrarily
+complex, yet the user can add event handlers that work with them.
 
 ** Cytoscape.js
-# TODO move examples from bdcy.org to here
+Cy.js has a greater array of exposed interactions and event handlers
+than BD, but we will, again, keep it simple. We focus on regular
+clicks, and so are interested in the \verb|cy.on("click")| function,
+which can be used in a similar way as BD's \verb|addFeatureListener|.
 
-   Cy.js has a vast array of potential interactions and event handlers. We will
-focus on regular click-events, and thus are interested in the `cy.on("click")`
-function, which adds on-click event handlers to the elements matching the provided
-selector. When no selector is provided, this matches all elements, and the handler
-functions similarly to the one provided to BD's `addFeatureListener`.
+Handlers attached with \verb|cy.on()| receive numerous parameters,
+including the element that caused the event, which is what we will be
+using. Analogous to the "feature" provided to the BD handler, the
+"target" value provided to the Cy.js handler contains the entire
+element clicked on. As with BD, this can can contain arbitrary data.
 
-Handlers attached with `cy.on()` receive the core Cy.js graph instance, the target
-element (or graph) that caused the event, as well as information of what
-kind of event it was and when it was triggered. We're mainly interested in
-the `target` value, which is similar to the `feature` argument in BD's handler.
-Like with BD, this value contains the entire element clicked on; a big and
-complex JS object which can contain arbitrary data.
-
-
-Both BD and Cy.js, then, produce events with unordered information of arbitrary
-complexity -- unordered in the sense that knowledge of the data is required
-to extract information such as genomic position from it. Even though two pieces
-of data may both contain position information, there is no reason to expect the
-data to be found in the same place in the respective JS objects, or be of the
+Both BD and Cy.js, then, produce events with unstructured information
+of arbitrary complexity --- unstructured in the sense that knowledge
+of the data is required to extract information such as genomic
+position from it. Even though two pieces of data may both contain
+position information, there is no reason to expect the data to be
+found in the same place in the respective JS objects, or be of the
 same format.
 
+** Graph Genetics Browser
+GGB must be able to make use of both BD and Cy.js events, in a way
+that is user-configurable. It must provide an interface that makes it
+possible to describe what events consist of, i.e. what data they
+contain and what they can be used for. This interface must be
+universal enough to work with both BD and Cy.js, and simple enough for
+users to be able to express some semantics (such as position on a
+genome, or expression of some phenotype) of their JSON-encoded data.
 
-# TODO this reads more like a blog post than thesis report,
-#      and is not directly relevant to the thesis.
-#      Extract what's usable, move the rest to a blog post or something
-
-
-** JSON Configuration and Semantics
-
-# TODO rewrite to fit with rewritten previous section
-
-   What was needed was using a single type for all the possible
-events, but also providing enough data to do some kind of validation
--- validation on data coming from and going to the FFI, meaning it
-cannot be trusted whatsoever.
-
-Since ease of configuration was another important factor, I decided to start
-there. JSON was the natural format to use for configuration; upon
-reflection, it also turned out to be a good type for events in GGB.
-
-Having decided on JSON as the configuration format still leaves the
-question: what does configuring an event entail? We want the user to
-be able to describe what the events that come from some track look
-like and contain, as well as describe how the raw events are
-transformed into GGB events.
-
-In most cases, this focus on the configuration format, versus the actual
-semantics of what the configuration data will provide, would be a sign
-of something being quite wrong -- the format is an implementation detail.
-
-However, in this case the format and semantics overlap. If an Event is JSON,
-and the configuration is given in JSON, why not use the Event as configuration?
-That was the inspiration that led to the current system. The user configures
-the event system by providing templates, or patterns, that map between
-raw events and the various events a track produces and consumes. It can be
-seen as a kind of pattern matching.
+In other words, the user must be able to describe, for example, "this
+is what a position on the genome looks like", and "this is how to find
+the position in a BD event". Then, a Cy.js event handler that is
+configured to filter the Cy.js graph when it receives a genome
+position, should do its thing when BD produces an event containing
+position data.
 
 
-** TrackSource and TrackSink
+What would this configuration interface look like? JSON is the
+configuration language used elsewhere by GGB, and so is the natural
+choice here. There is also the fact that the events from BD and Cy.js
+are JSON objects to keep in mind.
 
-# TODO garbage paragraph
-The solution consists of two types, `TrackSource` and `TrackSink`. The former
-transforms events from browsers to GGB events, the latter handles received
-events on browser tracks.
+The question then becomes, what is a good way of describing a mapping
+between "raw" (i.e. untouched BD or Cy.js elements) events, and
+semantically-annotated events? The answer is that it looks like a
+subset of the "raw" event JSON tree, flipped on its head and shaken
+somewhat.
 
-*** TrackSource
-The definition in PS of a `TrackSource` can be seen in listing
-[[code:events-tracksource-def]]. It is simply a newtype wrapper over
-the type of arrays of JSON parsers to some given type `a`. A `Functor`
-instance is derived so that we can apply functions to the output
-of a `TrackSource`, and `Semigroup` and `Monoid` instances are
-defined so that multiple `TrackSource a`s can be combined into one.
+The annotated event is a collection of key/value pairs. The
+configuration for such an event is, simply, the event itself, with the
+values swapped for strings annotating their eventual types. The rule
+for creating such an event, given a raw event (e.g. from BD), consists
+of, for each value in the annotated event, a path describing where in
+the raw event said value can be found.
+
+What the user needs to provide, then, is two JSON trees, whose values
+are all strings. The structures of the trees are the same as that of
+the raw event (specifically, a subset of the raw event) and that of
+the annotated event. By providing what are essentially example raw
+events and annotated events, the user tells GGB how to transform the
+former into the latter; the semantics of this part of the system and
+the configuration are, in a sense, one-to-one. The fact that JSON is
+the language in both cases, makes the implementation even simpler.
+
+The difference between the configuration and the actual events are, in
+the "raw" case, that each leaf node contains the name of the
+corresponding "hole" that value will fill in the annotated event, and
+in the annotated case, that the leaf node contains a string with the
+"type"[fn:types-unimplemented] of the value.
+
+
+[fn:types-unimplemented] The word "type" is in quotes here, as there
+is no correspondence between the leaf node values and PS types, nor is
+there (as of yet) any kind of runtime "type"-checking implemented in
+GGB.
+
+
+The following sections provide more concrete configuration examples,
+and detail the implementation of these JSON transformation and parsing
+machinery. The implementation consists of two types,
+\verb|TrackSource| and \verb|TrackSink|. The former transforms events
+from browsers to GGB events, the latter handles received events on
+browser tracks.
+
+
+** TrackSource
+The definition in PS of a the \verb|TrackSource| type can be seen in
+listing [[code:events-tracksource-def]]. It is a newtype over the type of
+arrays of JSON parsers to some given type \verb|a|. A \verb|Functor|
+instance is derived so that we can apply functions to the output of a
+TrackSource, and \verb|Semigroup| and \verb|Monoid| instances are
+defined so that multiple TrackSources can be combined into one.
 
 #+name: code:events-tracksource-def
 #+caption: Definition of TrackSource.
 #+BEGIN_SRC purescript :file Events.purs :prologue Imports/Events.purs
-newtype TrackSource a = TrackSource (Array (Json -> Maybe a))
+newtype TrackSource a =
+  TrackSource (Array (Json -> Maybe a))
 
-derive instance functorTrackSource :: Functor TrackSource
+derive instance functorTrackSource
+  :: Functor TrackSource
 
-instance semigroupTrackSource :: Semigroup (TrackSource a) where
-  append (TrackSource s1) (TrackSource s2) = TrackSource (s1 <> s2)
+instance semigroupTrackSource
+  :: Semigroup (TrackSource a) where
+    append
+      (TrackSource s1)
+      (TrackSource s2) = TrackSource (s1 <> s2)
 
-instance monoidTrackSource :: Monoid (TrackSource a) where
-  mempty = TrackSource mempty
+instance monoidTrackSource
+  :: Monoid (TrackSource a) where
+    mempty = TrackSource mempty
 #+END_SRC
 
-A `TrackSource` can be constructed by providing a parsing function.
+A TrackSource can be constructed by providing a parsing function.
 However, we want to let the user configure track sources, and not have
-to write them in PS. The configuration needed for a `TrackSource` is a
+to write them in PS. The configuration needed for a TrackSource is a
 name, the JSON structure for the event to be produced, and the JSON
-structure of the event produced by the underlying track (e.g.
-Biodalliance).
+structure of the event produced by the underlying track (e.g. BD).
 
-For parsing all this JSON, the purescript-argonaut library was used,
-which the next section describes.
-# TODO REF/FOOTNOTE
+For parsing all this JSON, the \verb|purescript-argonaut|
+package[fn:argonaut-url] was used. The next section describes how the
+TrackSource event templates are parsed, and how JSON structures are
+used to work with other JSON structures.
 
-**** Json Decoding with Argonaut
 
-# TODO rewrite this to be more focused on the objective;
-#      write about JCursor from the viewpoint of maintenance, code reuse, etc.
+[fn:argonaut-url] Available on Pursuit at \newline
+https://pursuit.purescript.org/packages/purescript-argonaut
+
+
+
+*** Parsing templates and events
 
 Argonaut is a library for working with JSON in PS, including
-serializing and deserializing, as well as working with the JSON trees.
+serializing and deserializing, as well as working with JSON trees. In
+this case we are interested in walking arbitrary JSON trees and
+transforming collections of paths.
 
-One key difference to purescript-foreign and its Foreign type,
-Argonaut's Json type only corresponds to actual JSON, i.e. things that
-are legal in JSON formatted files. Thus, functions and other values
-that cannot be serialized to JSON, cannot be represented in the Json
-type.
+Listing [[code:events-sourceconfig-1]] shows an example of a
+\verb|SourceConfig|, which describes how to parse an event such as the
+one in listing [[code:events-raw-event-1]], to the object in listing
+[[code:events-parsed-event-1]].
 
-Values of type Json can be decoded, or parsed, in several ways. In
-this case we're interested in walking arbitrary JSON trees and
-transforming lists of paths. Before looking at how the parsing works,
-in listin [[code:events-sourceconfig-1]] is an example of a legal
-SourceConfig.
 
 #+name: code:events-sourceconfig-1
-#+caption: Example SourceConfig.
+#+caption: Example SourceConfig, mapping a feature from BD to a range of basepairs on a chromosome.
 #+BEGIN_SRC json
 {
   "eventName": "range",
   "eventTemplate": { "chr": "Chr",
-		     "minPos": "Bp",
-		     "maxPos": "Bp"
-  },
+		                 "minPos": "Bp",
+		                 "maxPos": "Bp" },
   "rawTemplate": { "segment": "chr",
-		   "min": "minPos",
-		   "max": "maxPos"
-  }
+		               "min": "minPos",
+		               "max": "maxPos" }
 }
 #+END_SRC
 
-This defines a source that parses objects/events like the one in
-listing [[code:events-raw-event-1]], the JS object
-passed to the event handler when clicking on a feature in BD,
-into a JS object as seen in listing [[code:event-parsed-event-1]].
 
 #+name: code:events-raw-event-1
-#+caption: A raw event.
+#+caption: A raw event from BD.
 #+BEGIN_SRC javascript
 {
   // ...
@@ -194,7 +211,7 @@ into a JS object as seen in listing [[code:event-parsed-event-1]].
 #+END_SRC
 
 #+name: code:events-parsed-event-1
-#+caption: A parsed event.
+#+caption: A parsed event constructed using the BD event.
 #+BEGIN_SRC javascript
 {
   chr: "chr11",
@@ -203,24 +220,31 @@ into a JS object as seen in listing [[code:event-parsed-event-1]].
 }
 #+END_SRC
 
-This is useful if several tracks produce events with the same data but in
-objects that look different; the consumer of the event will only see events of
-this last format. The templates provided can be of arbitrary depth and
-complexity; the only rule is that each leaf is a key, and all properties be
-strings (i.e. no arrays). There is some validation too, detailed later.
+These are simple (and real) examples, however the templates provided
+can be of arbitrary depth and complexity; as mentioned earlier, the
+only rule is that each leaf is a string, and that all field names are
+strings as well.
 
-`eventTemplate` and `rawTemplate` are both whole structures which we're interested in.
-For each leaf in the eventTemplate (including its property name), we create a path
-to where the corresponding value will be placed in the finished event. Similarly,
-we need to grab the path to each leaf in the rawTemplate, so we know how to grab
-the value we need in the finished event, from the provided raw event.
+To determine how to create these annotated events, we extract a list
+of each of the key/value pairs in \verb|eventTemplate|, and, for each
+one, we create a path to where the corresponding value will be placed
+in the finished event.
 
-Fortunately, Argonaut provides functions for dealing with exactly
-this. First, the JCursor type, in listing [[code:events-jcursor-1]],
-describes a path to a point in a JSON tree. It can be seen as
-a list of accessors. As an example, listing
-[[code:events-jcursor-2]] shows a JSON object and accessing a deep
-part of the tree.
+Next, to find out how to transform the raw event into an annotated
+one, the path to each leaf in the \verb|rawTemplate| is extracted, and
+the named with the leaf node value. The result is a a mapping from
+keys in the annotated event, to a path describing where in the raw
+event the corresponding value can be found.
+
+
+
+Argonaut provides functions for extracting and manipulating exactly
+JSON paths like this. The JCursor type, seen in listing
+[[code:events-jcursor-1]], represents a path to a point in a JSON tree, at
+each step describing which key name or array index to go to next. As
+an example, listing [[code:events-jcursor-2]] shows a JSON object and
+accessing a deep part of the tree, and the same path as a JCursor.
+
 
 #+name: code:events-jcursor-1
 #+caption: JCursor definition.
@@ -231,36 +255,25 @@ data JCursor
   | JCursorTop
 #+END_SRC
 
-It can be seen as a list of accessors. If we have an object in JS:
 
 #+name: code:events-jcursor-2
 #+caption: JSON tree and accessor example.
 #+BEGIN_SRC javascript
 let thing = { x: [{a: 0},
-                  {b: {c: true}}
-		             ]};
+                  {b: {c: true}} ]};
 
-let cIs = thing.x[1].b.c;
+let cIs = thing.x[1].b.c; // (cIs == c) == true
 
-// (cIs == c) == true
+// or as a JCursor:
+JField "x" (JIndex 1 (JField "b" (JField "c" JCursorTop)))
 #+END_SRC
 
-Representing the same accessor list with JCursor would look
-like in listing [[code:events-jcursor-4]].
 
-#+name: code:events-jcursor-4
-#+caption: Example JCursor accessor.
-#+BEGIN_SRC purescript
-(JField "x"
-   (JIndex 1
-    (JField "b"
-       (JField "c" JCursorTop))))
-#+END_SRC
-
-It does not look pretty, so it is fortunate that we do not need
-to directly manipulate these values. We create these JCursors from a
-JSON structure like the templates above with the function toPrims,
-seen in [[code:events-jcursor-5]].
+Argonaut provides the \verb|toPrims| function (type in listing
+[[code:events-jcursor-5]]) for transforming a JSON object into a list of
+pairs of paths to each value in the object (\verb|JsonPrim| represents
+a JSON primitive value, i.e. anything that is not an array or map).
+Incidentally, this is exactly what we want to do with \verb|rawTemplate|.
 
 #+name: code:events-jcursor-5
 #+caption: Creating cursors from a JSON tree.
@@ -268,65 +281,56 @@ seen in [[code:events-jcursor-5]].
 toPrims :: Json -> List (Tuple JCursor JsonPrim)
 #+END_SRC
 
-The type JsonPrim can be viewed as exactly what it sounds like -- it
-represents the legal JSON primitives: null, booleans, numbers,
-strings. In this case we only care that they are strings.
-
-This function walks through a given JSON object, and produces a list
-of each leaf paired to the JCursor describing how to get to it. That
-is, it does exactly what we want to do with the rawTemplate from
-earlier.
-
-With the eventTemplate we don't want to pick out the leaf, but the
-label of the leaf. In this case we do need to step into the JCursor
-structure, but only a single step, after reversing it, as seen
-in listing [[code:events-jcursor-6]].
+The \verb|eventTemplate| component is more complex, as it is not the
+leaf value itself that is desired, but the label of the path leading
+to it. In this case a step into the \verb|JCursor| structure is
+required, as seen in listing [[code:events-jcursor-6]].
 
 #+name: code:events-jcursor-6
 #+caption: Grabbing the label of a leaf.
 #+BEGIN_SRC purescript
 insideOut :: JCursor -> JCursor
 
-eventName <- case insideOut cursor of
-	       JField s _ -> Just s
-	       _          -> Nothing
+eventName :: JCursor -> Maybe String
+eventName c = case insideOut cursor of
+	             JField s _ -> Just s
+	             _          -> Nothing
 #+END_SRC
 
-The function `insideOut` does what expected and reverses the path through the tree.
-We then match on the now first label, and save it as the name. If it was an array,
-we fail with a Nothing.
 
-Argonaut, especially the functions concerning JCursor, largely uses the Maybe type.
-This is fine for the most part, but as this will be used in configuration,
-and thus needs to tell the user what has gone wrong if the provided configuration
-is faulty, it's not enough.
+# CLEAN UP
+\verb|insideOut| is a Argonaut library function that reverses a
+\verb|JCursor| --- once more, a simple JSON library function is
+exactly what is required to solve our problem. We also ensure that the
+name is in fact a \verb|String|, returning it wrapped in \verb|Just|.
+If the leaf value was some other primitive, including \verb|null|,
+\verb|undefined|, etc., \verb|Nothing| is returned.
 
-A more appropriate type would be Either String, which allows for failure to come
-with an error message. To "lift" the functions using Maybe into Either String.
-See [[source code]] for an example.
 
-To provide the user with additional help when configuring, the source configurations
-are validated to make sure the given JSON structures are legal, or "match". Given
-some value that we want to have in the finished event, and all of the values we know
-we can get from the raw event, if we can't find the first value among the latter,
-something's wrong.
+As this will be used in configuration, it is desirable to provide the
+user with information on what went wrong, and a value of
+\verb|Nothing| does not say much. Thus, to provide the user with
+additional help when configuring, the source configurations are
+validated to make sure the given JSON structures "match", and errors
+are signaled using \verb|Either String| instead of \verb|Maybe|,
+providing some information.
 
-The implementation is simple, and provided in listing
-[[code:events-validate-templates-1]]. The Cursors are grabbed from the
-result of toPrims; the JCursors themselves are unaltered.
+Given any value that is going to be part of the annotated event,
+and all of the values we know we can get from the raw event,
+the name of the first value should be among names of the latter. If not,
+something is wrong, and some information can be provided to the user.
 
-# TODO this one needs to be reformatted (Done?)
+Listing [[code:events-validate-templates-1]] shows the implementation of
+the template validation function. The \verb|Cursor|s are grabbed from
+the result of \verb|toPrims|; the \verb|JCursor|s themselves are
+unaltered.
+
 #+name: code:events-validate-templates-1
 #+caption: Validating templates.
 #+BEGIN_SRC purescript :file Events.purs :prologue Imports/Events.purs
--- Labelled version of Tuple JCursor String
-type Cursor = { cursor :: JCursor
-              , name :: String
-              }
-
-type RawCursor = Cursor
+type Cursor = { cursor :: JCursor, name :: String }
+type RawCursor   = Cursor
 type ValueCursor = Cursor
-
 
 validateTemplate :: Array RawCursor
                  -> ValueCursor
@@ -334,27 +338,19 @@ validateTemplate :: Array RawCursor
 validateTemplate rcs vc =
   if any (\rc -> vc.name == rc.name) rcs
   then pure vc
-  else throwError $ "Event property "
-                 <> vc.name
-                 <> " is not in raw template"
+  else throwError $ "Event property '" <> vc.name
+                 <> "' is not in raw template"
 #+END_SRC
 
-In words, if one of the many raw event cursors has the same name as the given
-value cursor, it's good, otherwise throw an error. To expand this to validate
-the array of cursors defining a finished event, we can make use of Either's
-Applicative instance, and traverse, as in listing [[code:events-validate-templates-3]].
+To expand this to validate the array of cursors that define an
+annotated event, we use the fact that \verb|Either| is an instance of
+the \verb|Applicative| typeclass, and use \verb|traverse|, as in
+listing [[code:events-validate-templates-3]].
 
-# TODO these two need to be reformatted
-# TODO these two are probably overkill
-# #+name: code:events-traverse-type
-# #+caption:
-# #+BEGIN_SRC purescript
-# -- specialized to Either String and Array
-# traverse :: forall a b.
-# 	    (a -> Either String b)
-# 	 -> Array a
-# 	 -> Either String (Array b)
-# #+END_SRC
+In English: if our collection of templates \verb|rcs| contains a
+rule explaining where in a raw event to find the desired value
+at path \verb|vc| in the annotated event, return the \verb|vc|
+path to the value; if not, throw an error.
 
 #+name: code:events-validate-templates-3
 #+caption: Easily expanding from one to multiple.
@@ -366,49 +362,39 @@ validateTemplates rcs = traverse (validateTemplate rcs)
 #+END_SRC
 
 The function tries to validate all given templates, and returns the
-first failure if there are any. Validation of a collection of things
-for free! TrackSink is describe next, and makes use of similar tools.
+first failure if there are any; we get validation of a collection of
+things practically for free. The TrackSink concept, and its type,
+\verb|TrackSink|, was implemented using similar tools, and is detailed
+next.
 
-*** TrackSink
 
-TrackSinks are configured by providing an event name and a callback. On the PS
-side, these are type-safe, but there is no way to ensure that functions passed
-from JS to PS are type-safe. BD and Cy.js TrackSinks, respectively, should
-have the types in listing [[code:events-tracksinks-1]].
+** TrackSink
 
-# TODO: PS 0.12 will be out soon; effect rows won't be used then
-# TODO this one needs to be reformatted
+TrackSinks are configured by providing an event name and a callback.
+On the PS side, these are type-safe, but there is no way to ensure
+that functions passed from JS to PS are type-safe. BD and Cy.js
+TrackSinks, respectively, should have the types in listing
+[[code:events-tracksinks-1]].
 
 #+name: code:events-tracksinks-1
 #+caption: TrackSink types.
 #+BEGIN_SRC purescript
-newtype TrackSink a = TrackSink (StrMap (Json -> a))
+newtype TrackSink a =
+  TrackSink (StrMap (Json -> a))
 
-type BDTrackSink = TrackSink (Biodalliance -> Eff Unit)
+type BDTrackSink =
+  TrackSink (Biodalliance -> Eff Unit)
 type CyTrackSink = TrackSink (Cytoscape -> Eff Unit)
 #+END_SRC
 
-# These are the "expanded" types, for clarity. Note that they are extremely
-# similar; the only difference is what type of browser they work on:
-
-# # TODO this one needs to be reformatted
-# #+name: code:events-tracksinks-2
-# #+caption:
-# #+BEGIN_SRC purescript
-# BDTrackSink = TrackSink
-#   (StrMap (Json -> Biodalliance -> Eff Unit)
-
-# CyTrackSink = TrackSink
-#   (StrMap (Json -> Cytoscape    -> Eff Unit)
-# #+END_SRC
-
-The event name is used to place the function in the correct index of the StrMap.
-The callback uses currying to take both the event (as JSON) and the respective
-browser instance, to be used e.g. when scrolling the Biodalliance view to an event.
+The event name is used to place the function in the correct index of
+the \verb|StrMap|. The callback uses currying to take both the event (as
+JSON) and the respective browser instance, to be used e.g. when
+scrolling the Biodalliance view to an event.
 
 In listing [[code:events-tracksinks-3]] a BD TrackSink is defined that
 scrolls the BD viewport upon receiving an event.
-# TODO this one needs to be reformatted
+
 #+name: code:events-tracksinks-3
 #+caption: BD track sinks for moving viewport when receiving event with location data.
 #+BEGIN_SRC javascript
@@ -428,27 +414,24 @@ var bdTrackSinkConfig =
       eventFun: bdConsumeLoc } ];
 #+END_SRC
 
-# NOTE: add example of passing this information into PS.
-
-These functions can be provided to GGB in the general browser configuration.
-The next section describes how they actually are used to allow communication
+These functions can be provided to GGB when configuring it. The next
+section describes how they actually are used to allow communication
 and interaction.
 
-*** Running TrackSources and TrackSinks
+** Using TrackSource and TrackSink
 
-For TrackSource and TrackSink to be usable we need to be able to create them
-from the provided configurations, and provide functions for applying them to
-events as appropriate.
+For TrackSource and TrackSink to be usable we need to be able to
+create them from the provided configurations, and provide functions
+for applying them to events as appropriate.
 
-**** TrackSource
+*** TrackSource
 
-To create a TrackSource, the provided templates are parsed and validated.
-Since a TrackSource is a list of parsers, if the SourceConfig is correct,
-a function from raw events to parsed events is returned, wrapped in a
-list and the TrackSource type, as seen in listing [[code:events-running-1]].
+To create a TrackSource, the provided templates are parsed and
+validated. Since a TrackSource is a list of parsers, if the
+SourceConfig is correct, a function from raw events to parsed events
+is returned, wrapped in a list and the TrackSource type, as seen in
+listing [[code:events-running-1]].
 
-# TODO this one needs to be reformatted
-# TODO maybe clean it up more, or delete it entirely; the details are unimportant.
 #+name: code:events-running-1
 #+caption: Function for creating a TrackSource from a SourceConfig.
 #+BEGIN_SRC purescript
@@ -465,12 +448,12 @@ makeTrackSource sc = do
     pure $ { name: sc.eventName, evData }
 #+END_SRC
 
-To extend the above function to work on a collection of configuration objects,
-function composition is used in listing [[code:events-running-2]] to first attempt to
-use each provided configuration to create a TrackSource, followed by combining
-the list of parsers into a single one.
+To extend the above function to work on a collection of configuration
+objects, function composition is used in listing
+[[code:events-running-2]] to first attempt to use each provided
+configuration to create a TrackSource, followed by combining the list
+of parsers into a single one.
 
-# TODO this one needs to be reformatted
 #+name: code:events-running-2
 #+caption: Creating a TrackSource from multiple configurations.
 #+BEGIN_SRC purescript
@@ -480,25 +463,25 @@ makeTrackSources =
   map fold <<< traverse makeTrackSource
 #+END_SRC
 
-First `traverse` is used to try to create the TrackSources, which
-returns an array of `TrackSource Event` if all were legal, or an error if
-something went wrong. Next, `map` is used to apply a function to the `Right`
-side of the `Either` from the use of `traverse`, and the applied function
-is `fold`, which concatenates a collection of values of some monoid into
-a single value -- the monoid in question is TrackSource.
+First \verb|traverse| is used to try to create the TrackSources, which
+returns an array of \verb|TrackSource Event| if all were legal, or an
+error if something went wrong. Next, \verb|map| is used to apply a
+function to the \verb|Right| side of the \verb|Either| from the use of
+\verb|traverse|, and the applied function is \verb|fold|, which
+concatenates a collection of values of some monoid into a single value
+-- the monoid in question is TrackSource.
 
-This is not the only reasonable way of defining this function -- one may very
-well want to collect the error messages while returning the successes. As
-`makeTrackSources` demonstrates, not much code is needed to compose functions
-to provide the validation logic that is desired, and there is nothing unique
-about this function; all that is required is swapping out some of the functions.
+This is not the only reasonable way of defining this function -- one
+may very well want to collect the error messages while returning the
+successes. As \verb|makeTrackSources| demonstrates, not much code is
+needed to compose functions to provide the validation logic that is
+desired, and there is nothing unique about this function; all that is
+required is swapping out some of the functions.
 
-# TODO an example of this! e.g. collecting both successes and failures.
-# it's a fold and a tuple, basically
 
-Finally, a way to use a TrackSource, to parse a raw event, is required.
-Listing [[code:events-running-3]] shows the function that does so.
-# TODO this one needs to be reformatted
+Finally, a way to use a TrackSource, to parse a raw event, is
+required. Listing [[code:events-running-3]] shows the function that
+does so.
 #+name: code:events-running-3
 #+caption: Function for parsing a raw event with a TrackSource.
 #+BEGIN_SRC purescript
@@ -509,18 +492,17 @@ runTrackSource (TrackSource ts) raw =
   filterMap (_ $ raw) ts
 #+END_SRC
 
-It works by applying each function in the array wrapped by TrackSource to the
-provided value, filtering out the `Nothing`s and returning an array of
-successfully parsed `Events`.
+It works by applying each function in the array wrapped by TrackSource
+to the provided value, filtering out the \verb|Nothing|s and returning
+an array of successfully parsed \verb|Events|.
 
-**** TrackSink
+*** TrackSink
 
-A TrackSink is a map from event names to a function that handles the event,
-so to make one we create a singleton map from the provided event name to
-the provided function, and wrap it in the TrackSink type, shown in
-listing [[code:events-running-4]].
+A TrackSink is a map from event names to a function that handles the
+event, so to make one we create a singleton map from the provided
+event name to the provided function, and wrap it in the TrackSink
+type, shown in listing [[code:events-running-4]].
 
-# TODO this one needs to be reformatted
 #+name: code:events-running-4
 #+caption: Creating a TrackSink from a sink configuration.
 #+BEGIN_SRC purescript
@@ -532,15 +514,11 @@ makeTrackSink sc =
 #+END_SRC
 
 
-Using a collection of `SinkConfigs` to produce a single `TrackSink` is
-not in itself complicated; see the code is in listing
+Using a collection of \verb|SinkConfigs| to produce a single TrackSink
+is not in itself complicated; see the code is in listing
 [[code:events-running-5]]. The bulk of the logic is in validation, namely
 ensuring that there are not multiple handlers for a given event:
 
-# NOTE/TODO there is no real reason for there to only be one handler...
-# TODO this one needs to be reformatted
-# TODO probably rewrite this code; `count` could be much cleaner,
-#      plus it'd be nicer to just use a case .. of instead of `when`
 #+name: code:events-running-5
 #+caption: Validating and creating a TrackSink from multiple configurations.
 #+BEGIN_SRC purescript
@@ -563,18 +541,15 @@ makeTrackSinks scs = do
   pure $ foldMap makeTrackSink scs
   #+END_SRC
 
-In this case, we use `foldMap` to map the `makeTrackSink` function over the
-provided configurations, and then use the `TrackSink` monoid instance to
-combine them -- similar to `fold <<< traverse` in the case of `TrackSource`.
+In this case, we use \verb|foldMap| to map the \verb|makeTrackSink|
+function over the provided configurations, and then use the
+\verb|TrackSink| monoid instance to combine them -- similar to
+\verb|fold <<< traverse| in the case of TrackSource.
 
+To use a TrackSink, we see if a handler for the provided event exists.
+If it does, we apply it to the contents of the event. The function is
+defined in listing [[code:events-running-6]].
 
-# TODO explain do-notation or remove remark?
-To use a `TrackSink`, we see if a handler for the provided event
-exists. If it does, we apply it to the contents of the event. The
-function is defined in listing [[code:events-running-6]].
-
-# TODO this one needs to be reformatted
-# TODO maybe rewrite this as a one-liner
 #+name: code:events-running-6
 #+caption: Function to choose function to run when a TrackSink receives an event.
 #+BEGIN_SRC purescript
@@ -587,20 +562,13 @@ runTrackSink (TrackSink sink) event = do
   pure $ f event.evData
 #+END_SRC
 
-However, since `TrackSinks` are intended to perform effects, a helper
+However, since TrackSinks are intended to perform effects, a helper
 function for that is useful. In particular, the function
-`forkTrackSink` in listing [[code:events-running-7]] asynchronously reads from
-a message bus, running effectful functions from the
-provided `TrackSink` if the received event has a handler.
+\verb|forkTrackSink| in listing [[code:events-running-7]] asynchronously
+reads from a message bus, running effectful functions from the
+provided TrackSink if the received event has a handler.
 
-#  creates a "thread"
-# # TODO footnote on JS singlethreaded)
-# that reads events from a provided `BusRW`,
-# # TODO define/refer to `BusRW` intro)
 
-# TODO make sure that `forkTrackSink` is correct w/o effect rows
-# TODO this one needs to be reformatted
-# TODO and could be cleaned up
 #+name: code:events-running-7
 #+caption: Helper function for running functions when receiving asynchronous events on a bus.
 #+BEGIN_SRC purescript
@@ -618,14 +586,14 @@ forkTrackSink sink env bus =
       Just f  -> liftEff $ f env
 #+END_SRC
 
+\newpage
+
 ** Summary
-# TODO write summary
-# TODO tie together semi-typesafety of TrackSource & TrackSink to hypothesis
 
 TrackSource and TrackSink provide highly general ways of defining
-interactions between different parts of GGB. They are easily configured
-in a declarative manner by providing JSON templates, and there is a
-good degree of verification on their configuration.
+interactions between different parts of GGB. They are easily
+configured in a declarative manner by providing JSON templates, and
+there is a good degree of verification on their configuration.
 
-In the next section, we finish our tour through the codebase of GGB
-by looking at how all these pieces fit together when creating a UI.
+In the next section, we finish our tour through the codebase of GGB by
+looking at how all these pieces fit together when creating a UI.

@@ -1,7 +1,3 @@
-# * Units
-
-
-
 It is often the case that values in programs are represented using
 primitive types, rather than using the fact that different units in
 fact can be viewed as different types. This section examines why
@@ -9,35 +5,20 @@ that is the case, and how lifting units to the type level gives
 us additional program correctness.
 
 
-# TODO argue for/justify last sentence?
+
+** "Number" means nothing
+
+BD uses the JS \verb|Number| type, a double-precision IEEE 754
+floating point, for all its numerical values. When all values are
+regular JS numbers, there is nothing to stop the programmer from e.g.
+adding a length to a weight, which is likely to lead to unexpected
+program behavior. It also provides no additional information on the
+meaning of what the function does in the program. For other types of
+data, BD uses mainly JS objects and strings.
 
 
-** The Problem of Lacking Units
-
-BD uses the JS `Number` type for all its numerical values. When all
-values are regular JS numbers, there is nothing to stop the programmer
-from e.g. adding a length to a weight, which is likely to lead to
-unexpected program behavior. It also provides no additional
-information on the meaning of what the function does in the program.
-For other types of data, BD uses mainly JS objects and strings.
-
-# While they are displayed in visualizations, graphs, etc., the
-# underlying representation is rarely anything other than a string or a
-# number. That is, to the computer, there is no semantic difference
-# between e.g. the position of a basepair on some chromosome, the volume
-# of a house, or \pi; all of these numbers could be used
-# interchangeably, while they in fact carry vastly different information
-# in their contexts.
-
-# WIP this is the case in Biodalliance
-# BD uses mainly raw JS numbers and strings for representing its state and data,
-# with a few JS objects used mainly for more complex information.
-
-# TODO examples
-
-# WIP "solutions" in JS -- tagged objects
 One way to solve this problem and provide more correctness and
-information in JS would be to use something like the `daggy`
+information in JS would be to use something like the \verb|daggy|
 library[fn:daggy-url], which adds tagged sum "types" to JS. The
 developer still needs to make sure they are used correctly, but at
 least the program will fail with an error if a value representing a
@@ -46,7 +27,8 @@ basepairs on a chromosome.
 
 
 
-[fn:daggy-url] https://github.com/fantasyland/daggy
+[fn:daggy-url] `daggy` can be found on GitHub at
+https://github.com/fantasyland/daggy
 
 
 
@@ -60,7 +42,7 @@ newtypes, introduced in the next section.
 ** Newtypes
 
 Newtypes are one of the ways of creating types in PS, their name
-stemming from the `newtype` keyword used to create them. A newtype can
+stemming from the \verb|newtype| keyword used to create them. A newtype can
 only have one single data constructor, and that constructor must have
 one single parameter, hence the intuition that they wrap an existing
 type. At runtime, values in a newtype are identical to values of the
@@ -70,14 +52,13 @@ to represent units in GGB come next.
 
 
 
-** Positions on a Genome
+** Positions on a genome
    BD uses basepairs (Bp) for all position data, though represented as
-a JS `Number`. It's not uncommon for data to provide its position
-information in megabasepairs (MBp). Obviously, treating a Bp as an
-MBp, or vice versa, leads to problems! Hence GGB has types for
-these units, defined in listing [[code:units-pos-1]].
+a JS \verb|Number| rather than an integer. It is not uncommon for data to
+provide its position information in megabasepairs (MBp). Obviously,
+treating a Bp as an MBp, or vice versa, leads to problems! Hence GGB
+has types for these units, defined in listing [[code:units-pos-1]].
 
-# TODO add link to lines in Units.purs
 #+name: code:units-pos-1
 #+caption: Bp and MBp type definitions.
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
@@ -85,28 +66,13 @@ newtype Bp = Bp Number
 newtype MBp = MBp Number
 #+END_SRC
 
-# In listing [[code:units-pos-2]] functions are defined for converting
-# JS numbers from and to the `Bp` type; functions for `MBp` are
-# defined analogously[fn:newtype-class].
-
-# To work with these, we can use pattern matching:
-
-# #+name: code:units-pos-2
-# #+caption:
-# #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
-# toBp :: Number -> Bp
-# toBp x = Bp x
-
-# fromBp :: Bp -> Number
-# fromBp (Bp x) = x
-# #+END_SRC
-
 
 For transforming between newtypes and their underlying wrapped type,
-PS provides the typeclass `Newtype` typeclass, which defines the functions
-`wrap` and `unwrap` to, in our example, move from a `Number` to a `Bp` or `MBp`,
+PS provides the typeclass \verb|Newtype| typeclass, which defines the functions
+\verb|wrap| and \verb|unwrap| to, in our example, move from a \verb|Number| to a \verb|Bp| or \verb|MBp|,
 and vice versa. The compiler derives the instances for us, and in listing
-[[code:units-pos-3]] an example of transforming from `MBp` to `Bp` is given.
+[[code:units-pos-3]] an example of transforming from \verb|MBp| to \verb|Bp| is given.
+
 
 #+name: code:units-pos-3
 #+caption: Transforming between units using the Newtype class. The compiler infers the `unwrap` function to have the type `MBp -> Number`, and the `wrap` function to have the type `Number -> Bp`.
@@ -126,17 +92,11 @@ etc. with these units[fn:multiplication-correctness].
 
 
 [fn:multiplication-correctness] All of these are derived only for
-convenience, despite it not really making any sense to multiply two
-`Bp` values. The result should really be of some type `Bp^2`, which is
-far beyond the scope of this thesis.
+convenience, despite many not making much semantic sense considering
+the units. E.g. what does it mean to multiply two positions on a
+genome? (Not much.)
 
 
-# TODO: maybe note that most of this doesn't make very much sense, e.g. multiplying
-# two Bp's is in fact pretty silly. Would probably be "better" to use a group
-
-
-# TODO this one needs to be reformatted
-# TODO all of these `derive newtype instance` are unnecessary in both code and report...
 #+name: code:units-pos-4
 #+caption: Deriving instances
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
@@ -167,7 +127,7 @@ true
 
 A basepair is a position on a chromosome, and a genome consists of
 several chromosomes. BD represents chromosomes by their string
-identifiers. As with `Bp`, we use a newtype, as seen in listing
+identifiers. As with \verb|Bp|, we use a newtype, as seen in listing
 [[code:units-chrs-1]].
 
 #+name: code:units-chrs-1
@@ -184,20 +144,20 @@ puzzle, as detailed next.
 
 
 ** Scale
-# NOTE: This is currently only used in the Native track, however the old
-# BD rendering stuff could/should be refactored to use the new
-# BpPerPixel
 
 When drawing data to the screen, we need to be able to transform
-between screen coordinates and the coordinates used by data. As `Bp`
-and `MBp` are isomorphic[fn:floating-point], here we only look at
+between screen coordinates and the coordinates used by data. As \verb|Bp|
+and \verb|MBp| are isomorphic[fn:floating-point], here we only look at
 transforming between basepairs and pixels. In listing
 [[code:units-scale-1]] we represent this scaling factor with another
 newtype.
 
 
-[fn:floating-point] As far as two inverse operations on floating
-point values form isomorphisms.
+[fn:floating-point] This is not a true isomorphism, due to the various
+oddities and problems that are inevitable when dealing with IEEE 754
+floating point arithmetic, but close enough for data visualization
+purposes.
+
 
 
 #+name: code:units-scale-1
@@ -227,7 +187,7 @@ pixelsToBp (BpPerPixel s) p = Bp $ p * s
 
 ** Features
 
-`Feature` is what BD calls basically any data point. While the feature
+\verb|Feature| is what BD calls basically any data point. While the feature
 objects in BD are quite complex, as various data parsers construct
 them in different ways, there are only four necessary pieces to
 them: what chromosome the feature is on, the start and end
@@ -235,11 +195,11 @@ basepairs of the feature, and whatever data the feature contains,
 which may be arbitrary.
 
 A data type consisting of a single possible value constructor containing
-multiple pieces of data is known as a `product` data type, as the type
+multiple pieces of data is known as a "product type", as it is
 is isomorphic to the Cartesian product of the component types. Listing
-[[code:units-feature-1]] shows the definition of the `Feature` type in GGB.
-The type takes two type parameters, `c` and `r`, corresponding to the
-coordinate and contained data, respectively. The `BDFeature` type alias
+[[code:units-feature-1]] shows the definition of the \verb|Feature| type in GGB.
+The type takes two type parameters, \verb|c| and \verb|r|, corresponding to the
+coordinate and contained data, respectively. The \verb|BDFeature| type alias
 concretizes the type to use basepairs as coordinates.
 
 #+name: code:units-feature-1
@@ -251,22 +211,14 @@ type BDFeature r = Feature Chr Bp Bp r
 #+END_SRC
 
 For convenience, we have the compiler derive how to compare two
-`Features` for equality and order. This is shown in listing
+\verb|Features| for equality and order. This is shown in listing
 [[code:units-feature-2]]. The equality and ordering defined on the
 coordinate and data that the feature consists of are used to achieve
 this. Additionally, the compiler can derive a Functor
-instance[fn:functor-ref], with which we can easily transform the data in
-the feature if so desired.
+instance, with which we can easily transform the data
+in the feature if so desired.
 
 
-
-[fn:functor-ref] A simplified, but for our case good enough, view
-is that a functor contains something, and we can apply a function
-to that contained something.
-
-
-
-# TODO this one needs to be reformatted
 #+name: code:units-feature-2
 #+caption: Deriving instances on the `Feature` type.
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
@@ -276,35 +228,38 @@ derive instance functorFeature :: Feature c
 #+END_SRC
 
 
-# TODO show using this bifunctor instance; it's quite nice and handy
 At this point, we have some types that let us work with data closely
 related to the BD representation, using units that both give safety
 and are easy to provide to the type-agnostic BD browser. There is no
 reason to stop here, however. We can further exploit the structure of the
-`Feature` type definition to gain some additional features.
+\verb|Feature| type definition to gain some additional features.
 
-As an example, the `Bifunctor` typeclass, provided by the
-`purescript-bifunctor` package[fn:bifunctor], provides methods for
+As an example, the \verb|Bifunctor| typeclass, provided by the
+\verb|purescript-bifunctor| package[fn:bifunctor], provides methods for
 applying functions to both parts of a compound data structure that has
-a `Bifunctor` instance. Our `Feature` type is a prime example, with
+a \verb|Bifunctor| instance. Our \verb|Feature| type is a prime example, with
 the instance given in listing [[code:units-feature-4]].
 
 
-[fn:bifunctor] https://pursuit.purescript.org/packages/purescript-bifunctors
+[fn:bifunctor] Available on Pursuit at \newline
+https://pursuit.purescript.org/packages/purescript-bifunctors
 
 
 #+name: code:units-feature-bifunctor
 #+caption: Definition of `Bifunctor` typeclass and related functions, from https://github.com/purescript/purescript-bifunctors/blob/v3.0.0/src/Data/Bifunctor.purs
 #+BEGIN_SRC purescript :tangle yes :prologue Imports/Units.purs :file Units.purs
 class Bifunctor f where
-  bimap :: forall a b c d. (a -> b) -> (c -> d) -> f a c -> f b d
+  bimap :: forall a b c d.
+           (a -> b) -> (c -> d) -> f a c -> f b d
 
 -- | Map a function over the first type argument of a `Bifunctor`.
-lmap :: forall f a b c. Bifunctor f => (a -> b) -> f a c -> f b c
+lmap :: forall f a b c.
+        Bifunctor f => (a -> b) -> f a c -> f b c
 lmap f = bimap f id
 
 -- | Map a function over the second type arguments of a `Bifunctor`.
-rmap :: forall f a b c. Bifunctor f => (b -> c) -> f a b -> f a c
+rmap :: forall f a b c.
+        Bifunctor f => (b -> c) -> f a b -> f a c
 rmap = bimap id
 #+END_SRC
 
@@ -318,7 +273,7 @@ instance bifunctorFeature
       Feature chr (f xl) (f xr) (g r)
 #+END_SRC
 
-Now it is easy to modify either or both parts of a `Feature`, leaving
+Now it is easy to modify either or both parts of a \verb|Feature|, leaving
 the chromosome identifier intact.
 
 #+name: code:units-feature-5
@@ -334,6 +289,7 @@ Let us end this section with an example: listing [[code:units-feature-5]]
 shows the entire definition of a function that transforms features with
 coordinates as basepairs to features with coordinates as megabasepairs.
 
+\newpage
 
 ** Summary
 
@@ -342,7 +298,7 @@ compatible with BD while providing type-safety, have been presented,
 together with tools for transforming them.
 
 A more complex data type representing the most basic building block of
-data points as BD sees them, the `Feature` type, was also trivially
+data points as BD sees them, the \verb|Feature| type, was also trivially
 defined using the tools provided by PS, together with highly general
 functions for lifting transformations on the components of a feature
 to the whole. This was in fact a sneak peek at what the next section

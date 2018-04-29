@@ -1,35 +1,12 @@
-# * Interfacing with existing JS
-#+begin_comment
-
-TODO this chapter requires more reasoning;
-     all examples that are brought up should be directly
-     relevant to the hypothesis.
-     for example, I don't think BDEvent applies; it doesn't deserve more than two sentences,
-     and and we shouldn't bash on the reader too much about newtypes.
-     Same with FFI examples in general. Show one impl + foreign import per module,
-     then focus on the actual PS interface.
-
-Idea: Move solid newtype arguments to FFI intro, and then bring up one example for BD and Cy resp.
-TODO need to be more consistent in what code is shown from both modules
-TODO refer to code blocks via labels
-TODO Add captions to code blocks
-
-Code smells (barely applies):
-Primitive obsession
-
-TODO: write about the changes made to BD (i.e. modularized renderers, wrapRenderer)
-
-#+end_comment
-
 The Graph Genetics Browser embeds BD and Cy.js, which are both written
 in JS. To interact with their respective APIs, we must use PS's
 Foreign Function Interface (FFI).
 
-** Foreign Function Interface Introduction
+** PureScript's FFI
 PS's FFI works by creating a JS source file with the same name
 as the PS module which is going to be interfacing with the FFI, in
 which we define the JS functions which we will be calling from PS.
-This FFI module is imported into PS using the `foreign import`
+This FFI module is imported into PS using the \verb|foreign import|
 keywords, and providing type signatures for the values we import.
 
 The type signatures are not validated, and there are no guarantees
@@ -40,12 +17,10 @@ would normally have to make sure it makes sense to add two values
 before attempting to do so, likewise when transforming some value to a
 String, however JS has no such qualms.
 
-# TODO: this might be a *terrible* example... typewise and everything
-
 #+caption: Unsafe function prints the result of "summing" two values, to the browser console.
 #+name: code:bdcy-js-untyped-example
 #+BEGIN_SRC javascript
-exports.showStuff = function(a) {
+exports.showAppend = function(a) {
     return function(b) {
         return function() {
             console.log(a + b);
@@ -55,44 +30,37 @@ exports.showStuff = function(a) {
 #+END_SRC
 
 JS knows nothing about the types, however when defining an FFI function
-in PS, a type signature must be provided. Using the type in [[listing code:bdcy-purs-typed-example-1]]
-limits using the `showStuff` function on strings, and returns an effect,
+in PS, a type signature must be provided. Using the type in listing [[code:bdcy-purs-typed-example-1]]
+limits using the \verb|showAppend| function on strings, and returns an effect [fn:effect-rows],
 making the function pure and behave reasonably.
-# TODO make sure caption exports correctly
-# TODO remove row on 0.12 release
+
 #+caption: A safe type signature for the function defined in listing [[code:bdcy-js-untyped-example]].
 #+name: code:bdcy-purs-typed-example-1
 #+BEGIN_SRC purescript
-foreign import showStuff
-  :: forall eff.
-     String
-  -> String
-  -> Eff (console :: CONSOLE | eff) Unit
+foreign import showAppend
+  :: String -> String -> Eff Unit
 #+END_SRC
+
+
+
+[fn:effect-rows] The currently latest version of PureScript, version
+0.11.7, uses "effect rows" to annotate what native JS effect |Eff|
+functions perform. E.g. |showAppend|'s return value would be |forall
+e. Eff (console :: CONSOLE | e) Unit|, the |console :: CONSOLE| bit
+signifying that the JS console is used. Effect rows have been removed
+from the upcoming version of PS, 0.12, and are elided in this thesis,
+for that reason as well as to reduce space.
+
 
 
 The following sections present how the FFI was used to create the
 modules wrapping the BD and Cy.js APIs.
 
 
-# We can also define types (and kinds, and things of other kinds) using the
-# `foreign import` syntax:
-
-# # TODO this should be inline, or at least not a full-on code block figure
-# #+caption: It is also possible to define data types that can only be instanced from FFI functions.
-# #+NAME: code:bdcy-purs-typed-example-2
-# #+BEGIN_SRC purescript
-# foreign import data JSType :: Type
-# #+END_SRC
-
-# Now, the type `JSType` doesn't have any data constructors in Purescript,
-# so we can only create values of this type by writing an FFI function that
-# returns it. Nor can we inspect the type without the FFI; to PS, it is
-# entirely opaque.
 
 
 ** Biodalliance
-Using `foreign import` it is possible to define types corresponding
+Using \verb|foreign import| it is possible to define types corresponding
 to foreign data structures, as values for such a type can only be
 created with the FFI. To work with BD, a foreign type corresponding to
 instances of the BD browser is defined as in listing [[code:bdcy-bd-types-1]].
@@ -107,23 +75,18 @@ An FFI function to wrap the BD browser constructor is also required.
 As seen in listing [[code:bdcy-bd-init]], this takes the browser
 constructor, another helper function, and the BD configuration as
 arguments. The output of the function is a continuation that takes an
-HTML element to place the BD browser in, and produces the effect to
-create and return the BD instance.
+HTML element to place the BD browser in, and returns an effectful
+function which creates and returns the BD instance.
 
-# TODO this one needs to be reformatted
-# TODO initBDimpl or just initBD? The latter makes more sense I think.
-#      the whole point is to make the FFI as small as possible;
-#
 #+caption: The FFI import signature for the BD browser constructor wrapper.
 #+NAME: code:bdcy-bd-init
 #+BEGIN_SRC purescript
 foreign import initBDimpl
-  :: forall eff.
-     Fn3
+  :: Fn3
      Foreign
      RenderWrapper
      BrowserConstructor
-     (HTMLElement -> Eff (bd :: BD | eff) Biodalliance)
+     (HTMLElement -> Eff Biodalliance)
 #+END_SRC
 
 
@@ -140,17 +103,16 @@ an effect that attaches the callback.
 newtype BDEvent = BDEvent Json
 
 foreign import addFeatureListenerImpl
-  :: forall eff a.
-     EffFn2 (bd :: BD | eff)
+  :: forall a.
+     EffFn2
      Biodalliance
-     (BDEvent -> Eff eff a)
+     (BDEvent -> Eff a)
      Unit
 #+END_SRC
 
 In listing [[code:bdcy-bd-events-purs-ffi]] the actual foreign function
 definition is provided.
 
-# TODO this one needs to be reformatted
 #+NAME: code:bdcy-bd-events-purs-ffi
 #+caption: JS implementation of BD event listener function.
 #+BEGIN_SRC javascript
@@ -160,8 +122,6 @@ exports.addFeatureListenerImpl = function(bd, callback) {
     });
 };
 #+END_SRC
-
-# TODO maybe some more of the interface
 
 This is not the entire BD module, however the other functions are
 similar. The corresponding Cy.js module follows.
@@ -185,209 +145,116 @@ foreign import data Element :: Type
 foreign import data CyCollection :: Type -> Type
 #+END_SRC
 
-
-# #+BEGIN_SRC purescript :tangle yes :file BDCY.purs :prologue Imports/BDCY.purs :exports none
-# foreign import data CY :: Effect
-# #+END_SRC
-
 The Cy.js constructor is similar to BD's. Unlike BD, as
 Cy.js is provided as a dependency to GGB, we can create an instance
 directly with the imported Cy.js library rather than pass the
 constructory explicitly as an argument. The constructor also takes an
 HTML element and an array of JSON objects to be used as the initial
-graph. Listing [[bdcy-cytoscape]] shows the type signature for the constructor.
+graph. Listing [[code:bdcy-cytoscape]] shows the type signature for the constructor.
 
 
-#+BEGIN_COMMENT
-
-#+NAME: code:bdcy-cytoscapeImpl
-#+caption:
-#+BEGIN_SRC purescript
-foreign import cytoscapeImpl
-  :: forall eff.
-     EffFn2 (cy :: CY | eff)
-     (Nullable HTMLElement)
-     (Nullable JArray)
-     Cytoscape
-#+END_SRC
-
-
-# To simplify things, we use this definition when type-checking the report
-#+BEGIN_SRC purescript :tangle yes :file BDCY.purs :prologue Imports/BDCY.purs :exports none
-cytoscapeImpl
-  :: forall eff.
-     EffFn2 (cy :: CY | eff)
-
-     (Nullable JArray)
-     Cytoscape
-cytoscapeImpl = unsafeCoerce unit
-#+END_SRC
-
-`Nullable` is a type for dealing with `null` in the FFI. We don't actually
-use `cytoscapeImpl`, instead we provide more idiomatic wrapper, so the user
-can use the more common and idiomatic `Maybe`:
-
-#+END_COMMENT
-
-# TODO this one needs to be reformatted
-# TODO explain runEffFn2 (or remove example)
 #+NAME: code:bdcy-cytoscape
 #+caption: Type of Cy.js constructor function.
 #+BEGIN_SRC purescript :tangle yes :file BDCY.purs :prologue Imports/BDCY.purs
-cytoscape :: forall eff.
-             Maybe HTMLElement
+cytoscape :: Maybe HTMLElement
           -> Maybe JArray
-          -> Eff (cy :: CY | eff) Cytoscape
+          -> Eff Cytoscape
 #+END_SRC
 
 The Cy.js browser instance can be worked with in various ways. Data can be
 added to the graph, retrieved from it, and deleted, using the functions
 shown in listing [[code:bdcy-cytoscape-graph-1]].
 
-# TODO this one needs to be reformatted
 #+NAME: code:bdcy-cytoscape-graph-1
 #+caption: Types for functions on the Cy.js graph.
 #+BEGIN_SRC purescript
 graphAddCollection
-  :: forall eff.
-     Cytoscape
+  :: Cytoscape
   -> CyCollection Element
-  -> Eff (cy :: CY | eff) Unit
+  -> Eff Unit
 
 graphGetCollection
-  :: forall eff.
-     Cytoscape
-  -> Eff (cy :: CY | eff) (CyCollection Element)
+  :: Cytoscape
+  -> Eff (CyCollection Element)
 
 graphRemoveCollection
-  :: forall eff.
-     CyCollection Element
-  -> Eff ( cy :: CY | eff) (CyCollection Element)
+  :: CyCollection Element
+  -> Eff (CyCollection Element)
 #+END_SRC
 
-The graph layout can be controlled with the `runLayout` function, see
-listing [[code:bdcy-cytoscape-layout-1]], which takes a `Layout` value to
+The graph layout can be controlled with the \verb|runLayout| function, see
+listing [[code:bdcy-cytoscape-layout-1]], which takes a \verb|Layout| value to
 update the Cy.js browser's current layout.
 
 #+NAME: code:bdcy-cytoscape-layout-1
 #+caption: Type of `runLayout`.
 #+BEGIN_SRC purescript
-runLayout :: forall eff.
-             Cytoscape
+runLayout :: Cytoscape
           -> Layout
-          -> Eff (cy :: CY | eff) Unit
+          -> Eff Unit
 #+END_SRC
 
-`Layout` is simply a newtype wrapper over `String`. See listing
-[[code:bdcy-cytoscape-layout-2]]. The native Cy.js layout function takes a
-`String` as an argument, and with this newtype wrapper we can both
-easily support all the layouts supported by Cy.js --- easily adding
-more if appropriate --- while staying type-safe.
+\verb|Layout| is a newtype wrapper over \verb|String|, defined as in listing
+[[code:bdcy-cytoscape-layout-2]], which is what the Cy.js layout
+function expects. This newtype lets us easily support all the layouts
+supported by Cy.js, while minimizing the risk of using a string that
+does not correspond to a layout, which would cause an error at runtime.
 
 #+NAME: code:bdcy-cytoscape-layout-2
 #+caption: Layout newtype and example value.
 #+BEGIN_SRC purescript
 newtype Layout = Layout String
-
-circle :: Layout
 circle = Layout "circle"
 #+END_SRC
 
-
-# *** Events
-# WIP Events
-
-Cy.js produces events in JSON format, like BD. A newtype wrapper is used to keep things safe,
-from listing [[code:bdcy-cytoscape-event-1]].
-
-#+NAME: code:bdcy-cytoscape-event-1
-#+caption: Newtype wrapper for Cy.js events.
-#+BEGIN_SRC purescript
-newtype CyEvent = CyEvent Json
-#+END_SRC
-
-# TODO actually should be CyEvent -> Eff Unit? problem in GGB code
-The `onEvent` FFI function takes an event handler of type `CyEvent -> Eff a`,
-and a `String` representing the type of event, e.g. "click" for adding a
-handler on click events. The function returns an effect that attaches
-the handler to the provided Cytoscape instance, and the type is given
-in listing [[code:bdcy-cytoscape-event-2]].
-
-#+NAME: code:bdcy-cytoscape-event-2
-#+caption: Type for function that adds an event listener to Cy.js instance.
-#+BEGIN_SRC purescript
-onEvent :: forall a.
-           Cytoscape
-        -> String
-        -> (CyEvent -> Eff a)
-        -> Eff Unit
-#+END_SRC
+Cy.js produces events in JSON format, like BD. A function to attach
+event handlers, and a newtype wrapper to keep things safe, are
+used in GGB; they are analogous to the BD implementations, and so
+details are elided here.
 
 
-#+BEGIN_COMMENT
-
-#+NAME: code:bdcy-cytoscape-event-3
-#+caption:
-#+BEGIN_SRC javascript
-exports.onEventImpl = function(cy, evs, callback) {
-    cy.on(evs, function(e) {
-        callback(e)();
-    });
-};
-#+END_SRC
-
-#+END_COMMENT
-
-These are some of the basic functions of the Cy.js API, however
-unlike BD, it gets more complicated. Next some functions for
-manipulating Cy.js collections are described.
-
+Unlike BD, the Cy.js API provides a data structure for working
+with collections of Cy.js elements, and functions on them.
+Some of these are describe next.
 
 *** CyCollection
 
-The `CyCollection` type is used to work with collections of elements
-in the Cytoscape.js browser. As it is implemented in Purescript as a
-`foreign data import`, there is no way to create values of this type
-without using the FFI, e.g. with `graphGetCollection`. Likewise all
-functions that manipulate `CyCollection` values must be implemented in
-terms of the FFI.
+The \verb|CyCollection| type is used to work with collections of
+elements in the Cytoscape.js browser. As it is implemented in
+PureScript as a\verb|foreign data import|, there is no way to create
+values of this type without using the FFI, e.g. with
+\verb|graphGetCollection|. Likewise all functions that manipulate
+\verb|CyCollection| values must be implemented in terms of the FFI.
 
-# WIP Semigroup etc.
-Cy.js provides functions for combining several `CyCollection`s in
+Cy.js provides functions for combining several \verb|CyCollection|s in
 various ways. Listing [[code:bdcy-cytoscape-union-1]] shows the FFI
 definition of the function that returns the union of two provided
 collections, and listing [[code:bdcy-cytoscape-union-2]] the type
 signature in the FFI import, taking the opportunity to also define
-an instance of the Semigroup typeclass on `CyCollection` using `union`.
+an instance of the Semigroup typeclass on \verb|CyCollection| using \verb|union|.
 
 #+NAME: code:bdcy-cytoscape-union-1
 #+caption: Foreign function wrapping the Cy.js union function on two Cy.js collections.
 #+BEGIN_SRC javascript
-exports.union = function(a, b) {
-    return a.union(b);
-};
+exports.union = function(a, b) { return a.union(b) };
 #+END_SRC
 
-# TODO this one needs to be reformatted
-# TODO this one is probably also superfluous. This whole section should only be a page, if that.
 #+NAME: code:bdcy-cytoscape-union-2
 #+caption: FFI import of union and definition of Semigroup instance on CyCollection.
 #+BEGIN_SRC purescript
 foreign import union
   :: forall e.
-     Fn2
-     (CyCollection e)
-     (CyCollection e)
-     (CyCollection e)
+     Fn2 (CyCollection e) (CyCollection e)
+         (CyCollection e)
 
 instance semigroupCyCollection :: Semigroup (CyCollection e) where
   append = runFn2 union
 #+END_SRC
 
 Another common interaction with a collection is extracting a
-subcollection. With `CyCollection`, we can use the `filter` function
+subcollection. With \verb|CyCollection|, we can use the \verb|filter| function
 for this, as seen in listing [[code:bdcy-cytoscape-filter-1]] (foreign
-definition elided). The `Predicate` type is another newtype, wrapping
+definition elided). The \verb|Predicate| type is another newtype, wrapping
 functions from the given type to Boolean.
 
 #+NAME: code:bdcy-cytoscape-filter-1
@@ -396,36 +263,8 @@ functions from the given type to Boolean.
 -- | Filter a collection with a predicate
 filter :: forall e.
           Predicate e
-       -> CyCollection e
-       -> CyCollection e
+       -> CyCollection e -> CyCollection e
 #+END_SRC
-
-
-#+BEGIN_COMMENT
-
-The FFI definition of `filter` uses the Cy.js API:
-
-#+NAME: code:bdcy-cytoscape-filter-2
-#+caption:
-#+BEGIN_SRC javascript
-exports.filterImpl = function(pred, coll) {
-    return coll.filter(pred);
-};
-#+END_SRC
-
-
-
-#  As it is a newtype, it can be provided to the
-# FFI functions without unwrapping it.
-
-#+NAME: code:bdcy-cytoscape-predicate-1
-#+caption:
-#+BEGIN_SRC purescript
-newtype Predicate e = Predicate (e -> Boolean)
-#+END_SRC
-
-
-#+END_COMMENT
 
 The Cytoscape.js API provides some basic predicates on elements,
 nodes, and edges. See listing [[code:bdcy-cytoscape-predicate-2]].
@@ -438,42 +277,34 @@ foreign import isEdge :: Predicate Element
 #+END_SRC
 
 
-Multiple predicates can easily be combined and manipulated. By pre-composing
-a predicate on a JSON value with a function that transforms a Cy.js element into JSON,
-it is easy to create new predicates on Cy.js elements. An example is given in
-listing [[code:bdcy-cytoscape-predicate-3]].
+Multiple predicates can easily be combined and manipulated. By
+composing a predicate on a JSON value with a function that transforms
+a Cy.js element into JSON, it is easy to create new predicates on
+Cy.js elements. In addition, \verb|Predicate| is also an instance of
+the \verb|HeytingAlgebra| typeclass, which generalizes most of the
+common boolean operations, including disjunction and conjunction.
+Listing [[code:bdcy-cytoscape-predicate-3]] uses these tools to construct
+complex predicates on Cy.js elements.
 
-# `Predicates` are "contravariant" in their argument, meaning they can be `contramapped`
-# over, which can be seen as the opposite of normal, `covariant` functors. This is
-# done by precomposing the `Predicate` with a function `(a -> e)`. For example,
-# if we have some `Predicate Json`, i.e. a function from JSON values to Boolean,
-# we can contramap the `elementJson` function over it, ending up with a `Predicate Element`.
-# This lets us filter the Cytoscape graph with all the powerful JSON parsing tools
-# at our disposal.
 
-# TODO better example
+
 #+NAME: code:bdcy-cytoscape-predicate-3
-#+caption: Precomposing predicates.
+#+caption: Combining predicates by composition makes it easy to construct complex filters.
 #+BEGIN_SRC purescript
 hasName :: Predicate Json
 hasName = Predicate f
   where f json = fromMaybe false
                  $ json ^? _Object <<< ix "name"
 
+  -- Composing a JSON-predicate with an element-to-JSON function
 elemHasName :: Predicate Element
 elemHasName = elementJson >$< hasName
-#+END_SRC
 
-`Predicate` is also an instance of the `HeytingAlgebra` typeclass. This lets
-us combine `Predicates` using the normal Boolean logic combinators such as
-`&&` and `||`. See listing [[code:bdcy-cytoscape-predicate-4]] for an example.
-
-#+NAME: code:bdcy-cytoscape-predicate-4
-#+caption: Combining predicates with boolean operators.
-#+BEGIN_SRC purescript
+  -- Using && and || on Predicates to combine filters
 namedNodeOrEdge :: Predicate Element
 namedNodeOrEdge = (elemHasName && isNode) || isEdge
 #+END_SRC
+
 
 The Cy.js API is considerably larger and more complex than that for BD.
 To ensure correctness beyond what the types provide, the next section
@@ -482,45 +313,55 @@ briefly describes how a subset of the module is tested.
 
 *** Tests
 
-PS has a testing framework called `purescript-spec`, which these unit
-tests are written to use. The `fail` function fails the test with the given
-string, and the `shouldEqual` function fails if the two arguments are not
+PS has a testing framework called \verb|purescript-spec|, which these unit
+tests are written to use. The \verb|fail| function fails the test with the given
+string, and the \verb|shouldEqual| function fails if the two arguments are not
 equal.
 
-`CyCollection` is unit tested to help ensure that the graph operations work
-as expected. For example, the edges and nodes from a graph should both
-be subsets of the graph, as shown in listing [[code:bdcy-cytoscape-tests-1]].
+\verb|CyCollection| is unit tested to help ensure that the graph
+operations work as expected. Listing [[code:bdcy-cytoscape-tests-1]] shows
+unit tests that provide some assurance that the set operations on
+\verb|CyCollection|s behave as expected. \verb|eles| is a
+\verb|CyCollection|, \verb|edges| and \verb|nodes| are the
+corresponding subsets of the collection.
 
-# TODO this one needs to be reformatted
+
 #+NAME: code:bdcy-cytoscape-tests-1
-#+caption: The edges and nodes of a graph are each subsets of the graph.
+#+caption: Testing that the edges and nodes of a graph are subsets of the graph, and
 #+BEGIN_SRC purescript
 let edges = filter isEdge eles
     nodes = filter isNode eles
-when (not $ eles `contains` edges) (fail "Graph doesn't contain its edges")
-when (not $ eles `contains` nodes) (fail "Graph doesn't contain its nodes")
-#+END_SRC
 
-Conversely, the union of the edges and nodes should be equal to the
-original graph, and this should be commutative, see listing [[code:bdcy-cytoscape-tests-2]].
+    -- Signal test failure if these subsets of the graph
+    --  are not contained in the graph
+when (not $ eles `contains` edges)
+       (fail "Graph doesn't contain its edges")
 
-#+NAME: code:bdcy-cytoscape-tests-2
-#+caption: The union of the nodes and edges of a graph is equal to the graph.
-#+BEGIN_SRC purescript
+when (not $ eles `contains` nodes)
+       (fail "Graph doesn't contain its nodes")
+
+   -- The union of the nodes and edges of a graph,
+   -- should equal the whole graph.
 (edges <> nodes) `shouldEqual` eles
 (nodes <> edges) `shouldEqual` eles
 (edges <> nodes) `shouldEqual` (nodes <> edges)
 #+END_SRC
 
 
-** Summary
-# TODO summary
+The properties that are tested are, first, that subsets of a
+collection are, in fact, contained in the collection, and second,
+if provided the nodes and edges of a collection, the collection
+itself can be reconstructed.
 
+
+\newpage
+
+** Summary
 Modules providing subsets of the APIs presented by BD and Cy.js
 were written using PS's FFI, allowing for some degree of correctness
 even when working with JS code, with additional safety created using
 some unit tests in the case of the more complex parts.
 
-These modules are, on their own, useless. The next section thus
-describes the configuration system used by GGB, and how it is used
-together with these modules to create BD and Cy.js browser instances.
+The next section describes the configuration system used by GGB, and
+how it is used together with the modules described in this section to
+create BD and Cy.js browser instances.

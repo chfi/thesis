@@ -1,22 +1,18 @@
-# * User interface
-
-Here the construction of the UI of GGB is presented. First, some problems
-of BD's approach are summarized. Next, the UI library used in GGB is
-introduced, after which the components of the UI are presented and composed,
-including using TrackSink and TrackSource for communication between
-BD and Cy.js.
+The construction of the UI of GGB is presented, beginning with a look
+at some of the problems with BD's approach. After, the UI library used
+in GGB is introduced, after which the components of the UI are
+presented and composed, including using TrackSink and TrackSource for
+communication between BD and Cy.js.
 
 
 ** Biodalliance
-# WIP BD intro
 BD has a full-featured UI for exploring genomic data chromosome-wise,
-adding and removing currently displayed tracks, configuring browser options, and
-exporting the current browser view to various formats. BD accomplishes this by
-creating and working with DOM elements and the HTML5 canvas API, and setting
-handlers on DOM events such as clicking and dragging the browser view, or
-pressing the arrow keys to scroll.
+adding and removing displayed tracks, configuring the browser, and
+exporting the current view to publishable formats. BD accomplishes
+this by creating and working with DOM elements and the HTML5 canvas
+API, and setting handlers on DOM events such as clicking and dragging
+the browser view, or pressing the arrow keys to scroll.
 
-# WIP DOM actions
 Because BD does not use any abstracting library for dealing with the DOM, and
 likely because BD has grown features organically over time, the code for
 updating the UI is interleaved with other code, including event handlers,
@@ -24,14 +20,6 @@ fetching data for a track, and more. BD also programmatically sets various CSS
 properties on UI elements, and uses the web browser's computed stylesheet to
 figure what manipulations are necessary.
 
-# TODO example
-
-# TODO Events
-  # NOTE: mainly covered in events.org
-
-# TODO example
-
-# WIP Problems
 In short, BD's UI uses plenty of global state, and is highly complex and
 spread out over the codebase. Adding a UI element would require finding
 a place in the DOM where it would fit -- both in screen estate as well
@@ -40,19 +28,19 @@ that the existing UI elements are not negatively affected by this sudden
 new element, plus that the other UI elements and functionality do not
 interact with the element in some undesired manner.
 
-Another problem, that could arise when adding some feature, not necessarily
-modifying the UI itself, is the risk of the interface ending up in an
-inconsistent state. With all the global state that is used, both in the
-DOM and in the BD browser itself, it is difficult to know what changes
-can be made. One cannot even call a function which performs some action
-when a button is clicked, without risking that the function itself
-toggles some state.
+Another problem, that could arise when adding some feature, not
+necessarily modifying the UI itself, is the risk of the interface
+ending up in an inconsistent state. With all the global state that is
+used, both in the DOM and in the BD browser itself, it is difficult to
+know what changes can be made. One cannot even call a function which
+performs some action when a button is clicked, without risking that
+the function itself toggles some state.
 
-# WIP How we do it in PS
 In PS, we do not juggle DOM elements and events. Instead, we use
-Halogen, from purescript-halogen, a type-safe UI library, similar in purpose to
-React. Event passing between tracks is taken care of by purescript-aff-bus and
-threads from purescript-aff, while DOM events are handled by Halogen.
+Halogen, from \verb|purescript-halogen|, a type-safe UI library, similar in
+purpose to React. Event passing between tracks is taken care of by
+\verb|purescript-aff-bus| and threads from \verb|purescript-aff|, while DOM events
+are handled by Halogen.
 
 Using these tools, we can construct a potentially complex UI, with some,
 albeit not absolute, confidence that the UI will not move to an inconsistent
@@ -61,7 +49,7 @@ DOM of our application. Naturally, there is no implicit global state to
 be concerned about.
 
 
-** The Halogen Library
+** The Halogen library
 Halogen is a component-based UI library, using a virtual DOM
 implementation to render HTML to the browser. A component is a value
 of the (fairly complicated) type Component (removed constraints etc.
@@ -79,21 +67,21 @@ component ::
     monad     -- (6)
 #+END_SRC
 
-The type `Component (1)` takes five type parameters. The first,
-`renderer (2)` is the type used to render the page, we use a HTML
-renderer. Next is `query (3)`, which is filled with our query algebra,
-to be explained later; in short it is the set of commands the
-component can respond to. `state (4)` is the type of the state kept by
-the component. We don't have any, so we set it to `Unit`. `message
-(5)` is the type of messages we can produce, which we can send to
-other parts of the program. Finally, `monad (6)` is the type in which
-all effects produced by the component will happen. In our case, it is
-the `Aff` monad for asynchronous effects --- it could also be a monad
-transformer stack, or some free monad.
+The type \verb|Component| (1) takes five type parameters. The first,
+\verb|renderer| (2) is the type used to render the page, we use a HTML
+renderer. Next is \verb|query| (3), which is filled with our query
+algebra, to be explained later; in short it is the set of commands the
+component can respond to. \verb|state| (4) is the type of the state
+kept by the component; we do not need any, and set it to \verb|Unit|.
+\verb|message| (5) is the type of messages we can produce, which we
+can send to other parts of the program. Finally, \verb|monad| (6) is
+the type in which all effects produced by the component will happen.
+In our case, it is the \verb|Aff| monad for asynchronous effects ---
+it could also be a monad transformer stack, or some free monad.
 
 
 
-*** Query Algebras
+*** Query algebras
 
 The "Query algebra" is the type describing the possible actions we can query
 the component to perform. The query algebra for the main component of GGB
@@ -103,10 +91,8 @@ is given in listing [[code:ui-algebras-1]].
 #+caption: The main browser query algebra.
 #+BEGIN_SRC purescript
 data Query a
-  = CreateBD (forall eff.
-              HTMLElement
-           -> Eff (bd :: BD | eff)
-              Biodalliance) a
+  = CreateBD (HTMLElement
+              -> Eff Biodalliance) a
   | PropagateMessage Message a
   | BDScroll Bp a
   | BDJump Chr Bp Bp a
@@ -114,15 +100,14 @@ data Query a
   | ResetCy a
 #+END_SRC
 
-From top to bottom, we can ask it to `CreateBD`, providing a function that
+From top to bottom, we can ask it to \verb|CreateBD|, providing a function that
 creates a BD instance given a HTML element to place it in;
 we can propagate messages from the child components; we can scroll and
 jump the BD instance; and we can create and reset the Cy.js instance.
 
-Listing [[code:ui-algebras-2]] shows the type of the `eval` function in
+Listing [[code:ui-algebras-2]] shows the type of the \verb|eval| function in
 our main component. This is the function that maps queries to Halogen actions.
 
-# TODO this one needs to be reformatted
 #+name: code:ui-algebras-2
 #+caption: The type of the main component evaluation function.
 #+BEGIN_SRC purescript
@@ -136,10 +121,10 @@ eval :: Query
           monad
 #+END_SRC
 
-The type parameters of `HalogenM` are the same as those of
-`Component`, adding a `childQuery` type, the Query type of values
-which this component can use to communicate with its children, and
-`childSlot`, the type which is used to index into the child
+The type parameters of \verb|HalogenM| are the same as those of
+\verb|Component|, adding a \verb|childQuery| type, the Query type of
+values which this component can use to communicate with its children,
+and \verb|childSlot|, the type which is used to index into the child
 components. Listing [[code:ui-algebras-3]] shows those in the main GGB
 component they are.
 
@@ -151,47 +136,15 @@ type ChildSlot = Either2 UIBD.Slot UICy.Slot
 type ChildQuery = Coproduct2 UIBD.Query UICy.Query
 #+END_SRC
 
-# `ChildSlot` is a coproduct of the two child Slot /types/ (Either2) of the
-# child components; we can query the BD slot or the Cy.js slot at once,
-# not both. `Either2` is a generalization of `Either` to a variable
-# number of types, a convenience that makes it easy to change the
-# number of slots, without more work than a type synonym. `ChildQuery`
-# is a coproduct of the two child Query /functors/ (Coproduct2).
 
-# # TODO This product/coproduct stuff is probably overkill
-# #+name: code:ui-algebras-4
-# #+caption:
-# #+BEGIN_SRC purescript
-# data Either a b =
-#   Left a | Right b
-
-# data Coproduct f g a =
-#   Coproduct (Either (f a) (g a))
-# -- can be viewed as (pseudocode):
-# data Coproduct f g a =
-#   Coproduct (Left (f a)) | (Right (g a))
-
-# type ChildQuery a =
-#   Either (UIBD.Query a) (UICy.Query a)
-# #+END_SRC
-
-# TODO: not sure, but it may even be impossible to do this; may not compile
-# (certainly doesn't compile when applied to Halogen)
-
-# We can't use normal `Either` for ChildQuery, as we wouldn't be able to be
-# parametric over the `a` type in both child queries. If we were to map a function
-# `UICy.Query (a -> b)` on the Right component of the Either ChildQuery, we'd end
-# up with the type `Either (UIBD.Query a) (UICy.Query b)`, which obviously is not
-# congruent to `ChildQuery a`.
-
-Listing [[code:ui-algebras-5]] shows the start of the `eval` function. We
+Listing [[code:ui-algebras-5]] shows the start of the \verb|eval| function. We
 pattern match on the input query, and produce effects in the HalogenM
 type. Creating BD is done by querying the BD child using its
 respective slot and a ChildPath --- a type describing a path to the
 child component, and providing an action to tell the child component
-to perform. `H.action` is a Halogen
+to perform. \verb|H.action| is a Halogen
 function mapping ChildQuery constructors to concrete actions, by simply
-applying the `Unit` type to it. Finally, the next command is returned.
+applying the \verb|Unit| type to it. Finally, the next command is returned.
 
 #+name: code:ui-algebras-5
 #+caption: Evaluation of `CreateBD` query.
@@ -205,19 +158,8 @@ eval = case _ of
     pure next
 #+END_SRC
 
-# `H.action` is a Halogen
-# function mapping ChildQuery constructors to concrete actions, by simply
-# applying the `Unit` type to it.
 
-# #+name: code:ui-algebras-6
-# #+caption:
-# #+BEGIN_SRC purescript
-# type Action f = Unit -> f Unit
-# action :: forall f. Action f -> f Unit
-# action f = f unit
-# #+END_SRC
-
-The next query is `PropagateMessage`, which receives a Message sent
+The next query is \verb|PropagateMessage|, which receives a Message sent
 from the function handling messages from the children. The messages
 handled by the main GGB component can be seen in listing [[code:ui-algebras-7]].
 
@@ -229,27 +171,20 @@ data Message
   | CyInstance Cytoscape
 #+END_SRC
 
-The evaluation of `PropagateMessage` is shown in listing
+The evaluation of \verb|PropagateMessage| is shown in listing
 [[code:ui-algebras-8]]. Depending on which message it is, we print a log
-message, and then use `H.raise` to send the message out from Halogen.
+message, and then use \verb|H.raise| to send the message out from Halogen.
 
-# TODO this one needs to be reformatted?
 #+name: code:ui-algebras-8
 #+caption: Messages are handled by passing them along.
 #+BEGIN_SRC purescript
-  PropagateMessage msg next -> do
-    case msg of
-      BDInstance _ -> liftEff $ log "propagating BD"
-      CyInstance _ -> liftEff $ log "propagating Cy"
-    H.raise msg
-    pure next
+  PropagateMessage msg next ->
+    H.raise msg *> pure next
 #+END_SRC
 
 The rest are simple queries to the respective child component, practically
-the same as `CreateBD`. See listing [[code:ui-algebras-9]].
+the same as \verb|CreateBD|. See listing [[code:ui-algebras-9]].
 
-# TODO this one is probably *also* overkill. more detail than necessary; doesn't actually give much
-# TODO this one needs to be reformatted
 #+name: code:ui-algebras-9
 #+caption: Most of the actions delegate to the BD and Cy.js components.
 #+BEGIN_SRC purescript
@@ -274,9 +209,9 @@ dealt with next.
 
 *** Rendering
 Rendering the component is done by providing a function from the
-component `state` to a description of the DSL used by the `renderer`
-type. In our case, we render to `HTML`, and so use the type
-`ParentHTML`, which contains all the types required to interact with
+component \verb|state| to a description of the DSL used by the \verb|renderer|
+type. In our case, we render to \verb|HTML|, and so use the type
+\verb|ParentHTML|, which contains all the types required to interact with
 the children, see listing [[code:ui-algebras-10]].
 
 #+name: code:ui-algebras-10
@@ -317,10 +252,10 @@ render _ =
 #+END_SRC
 
 This produces a button with the text "Scroll left 1MBp", and clicking on it
-sends a query to `eval` to scroll the BD view 1 MBp to the left; as well as a
+sends a query to \verb|eval| to scroll the BD view 1 MBp to the left; as well as a
 div with the BD child component. Adding the child component here is how we
 create the component, so we must also provide a handler in the parent for
-messages from the child, namely `handleBDMessage`.
+messages from the child, namely \verb|handleBDMessage|.
 
 *** Messages
 A component can send messages to its parent, or the rest of the application
@@ -342,7 +277,7 @@ Note that the main container uses its own messages (from listing
 passing is limited by Halogen, and anything more complex than this
 should be done on another channel. This is what is what GGB does with
 events. The messages from the BD and Cy.js components are handled by
-the functions `handleBDMessage` and `handleCyMessage` in listing
+the functions \verb|handleBDMessage| and \verb|handleCyMessage| in listing
 [[code:ui-messages-3]].
 
 #+name: code:ui-messages-3
@@ -362,36 +297,36 @@ handleCyMessage (UICy.SendCy cy) =
 Note that these produce Queries on the main component. We want to send the
 messages containing the references to the instances out from the component to
 the outside application, hence creating a PropagateMessage query wrapping the
-reference. As seen in `eval` above, this in turn callse `H.raise` on the
+reference. As seen in \verb|eval| above, this in turn calls \verb|H.raise| on the
 message, sending it to the outside world.
 
-*** Creating the Main Component
+*** Creating the main component
 These functions, including one to produce the initial state, are all
-put together and provided to the `parentComponent` function, producing
-the Component itself. This can then be provided to Halogen's `runUI`
+put together and provided to the \verb|parentComponent| function, producing
+the Component itself. This can then be provided to Halogen's \verb|runUI|
 function, along with the initial state and an HTML element to be
 placed in, to create and run the Halogen component.
 
 First, however, we need a main function application to run.
 
-** The Main Application
+** The main application
 
 Listing [[code:ui-main-1]] shows the type and beginning of the function
 which will be called by the user to run the browser. It takes a
-`Foreign` object, the one to parse into a browser configuration,
-and then does some effects in Eff, effects such as being a genetics browser.
+\verb|Foreign| object, the one to parse into a browser configuration, and
+then does some effects in Eff. In our case, effects such as being a
+genetics browser.
 
-# TODO: remove row blank when compiling with 0.12
-# TODO: explain runHalogenAff
 #+name: code:ui-main-1
 #+caption: Type of the main function.
 #+BEGIN_SRC purescript
-main :: Foreign -> Eff _ Unit
+main :: Foreign -> Eff Unit
 main fConfig = HA.runHalogenAff do
 #+END_SRC
 
-In listing [[code:ui-main-2]] we attempt to parse the provided configuration, logging all errors to
-config on failure, otherwise continuing.
+In listing [[code:ui-main-2]] we attempt to parse the provided
+configuration, logging all errors to config on failure, otherwise
+continuing.
 
 #+name: code:ui-main-2
 #+caption: Running the browser configuration parser.
@@ -407,7 +342,6 @@ case runExcept $ parseBrowserConfig fConfig of
 With a validated config, we can create the track/graph configs, and create
 the function which will later be used to create Biodalliance, in listing [[code:ui-main-3]].
 
-# TODO this one needs to be reformatted
 #+name: code:ui-main-3
 #+caption: Validating tracks and reporting eventual errors.
 #+BEGIN_SRC purescript
@@ -416,17 +350,20 @@ let {bdTracks, cyGraphs} = validateConfigs config.tracks
     opts' = sources := bdTracks.results <>
             renderers := config.bdRenderers
 
-liftEff $ log $ "BDTrack errors: " <> foldMap ((<>) ", ") bdTracks.errors
-liftEff $ log $ "CyGraph errors: " <> foldMap ((<>) ", ") cyGraphs.errors
+liftEff $ log $ "BDTrack errors: "
+             <> foldMap ((<>) ", ") bdTracks.errors
 
-let mkBd :: (forall eff. HTMLElement -> Eff (bd :: BD | eff) Biodalliance)
+liftEff $ log $ "CyGraph errors: "
+             <> foldMap ((<>) ", ") cyGraphs.errors
+
+let mkBd :: (HTMLElement -> Eff Biodalliance)
     mkBd = initBD opts' config.wrapRenderer config.browser
 #+END_SRC
 
 After picking the element to run in, we create the Halogen component,
 and create the Buses to be used by the events system. This is shown in
-listing [[code:ui-main-4]]. Note that we bind the value of `runUI` to
-`io`. `io` can be used to subscribe to messages sent from the main component,
+listing [[code:ui-main-4]]. Note that we bind the value of \verb|runUI| to
+\verb|io|. \verb|io| can be used to subscribe to messages sent from the main component,
 as well as send queries to it, which we do momentarily.
 
 #+name: code:ui-main-4
@@ -442,14 +379,15 @@ In listing [[code:ui-main-5]] we use the provided TrackSink and
 TrackSource configurations to create the BD TrackSink and TrackSource,
 adding an error message if something went wrong.
 
-# TODO this one needs to be reformatted
 #+name: code:ui-main-5
 #+caption: Creating the BD TrackSink and TrackSource.
 #+BEGIN_SRC purescript
-let bdTrackSink =   makeTrackSinks <<< _.bdEventSinks =<<
-                      note "No BD event sinks configured" (config.events)
-    bdTrackSource = makeTrackSources <<< _.bdEventSources =<<
-                      note "No BD event sources configured" (config.events)
+bdTrackSink =
+  makeTrackSinks <<< _.bdEventSinks =<<
+    note "No BD event sinks configured" (config.events)
+bdTrackSource =
+  makeTrackSources <<< _.bdEventSources =<<
+    note "No BD event sources configured" (config.events)
 #+END_SRC
 
 Finally, in listing [[code:ui-main-6]], we attach a callback to the Halogen component
@@ -458,7 +396,6 @@ upon creation. We then use the TrackSink and TrackSource configurations
 to hook BD up to the event system. After that is set up, the main Halogen
 component is told to initialize the BD browser.
 
-# TODO this one needs to be reformatted
 #+name: code:ui-main-6
 #+caption: Hooking of TrackSink and TrackSource and starting BD.
 #+BEGIN_SRC purescript
@@ -480,16 +417,17 @@ io.subscribe $ CR.consumer $ case _ of
 io.query $ H.action (CreateBD mkBd)
 #+END_SRC
 
-If the `TrackSink` was correctly configured, `forkTrackSink` is used
-to pipe events from the Cytoscape.js instance to the handler defined
-by said `TrackSink`. We don't care about being able to kill the
-"thread" using the `Canceler`, so we throw away the result with `*>
-pure unit`. Similarly, the `TrackSource` is used with the helper
-function `subscribeBDEvents`, defined in [[code:ui-main-7]]. It adds an
-event listener to the provided BD browser instance and writes the
-successful parses to the provided Bus.
+If the TrackSink was correctly configured, \verb|forkTrackSink|
+is used to pipe events from the Cytoscape.js instance to the handler
+defined by said TrackSink. \verb|forkTrackSink| returns a
+\verb|Canceler| that can be used to kill the "thread", which is not
+needed, so we throw it away with \verb|*> pure unit|.
 
-# TODO this one needs to be reformatted
+Conversely, the TrackSource is used with the helper function
+\verb|subscribeBDEvents|, defined in [[code:ui-main-7]]. It adds an event
+listener to the provided BD browser instance and writes the successful
+parses to the provided Bus.
+
 #+name: code:ui-main-7
 #+caption: Helper function to produce events from BD.
 #+BEGIN_SRC purescript
@@ -497,21 +435,24 @@ subscribeBDEvents :: forall r.
                      (TrackSource Event)
                   -> Biodalliance
                   -> BusRW Event
-                  -> Eff _ Unit
+                  -> Eff Unit
 subscribeBDEvents h bd bus =
-  Biodalliance.addFeatureListener bd $ \obj -> do
+  Biodalliance.addFeatureListener bd \obj -> do
     let evs = runTrackSource h (unwrap obj)
-    traverse_ (\x -> Aff.launchAff $ Bus.write x bus) evs
+    traverse_ (\x -> Aff.launchAff
+                     $ Bus.write x bus) evs
 #+END_SRC
 
 
 The code to set up the Cy.js TrackSource and TrackSink, and the
 Cy.js browser instance, is analogous, and elided.
 
+\newpage
+
 ** Summary
 
 The UI defined here wraps both BD and Cy.js, allows communication between
 them and GGB, and does this in a type-safe manner. The tools provided by
 Halogen makes it possible to construct complex UIs with a great degree
-of correctness, and the `Aff` monad makes it trivial to write asynchronous
+of correctness, and the \verb|Aff| monad makes it trivial to write asynchronous
 code.
